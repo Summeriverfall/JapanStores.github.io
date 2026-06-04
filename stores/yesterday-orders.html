@@ -614,17 +614,21 @@
         }
 
         /* ── Per-order checkbox column ──────────────────── */
-        .col-chk { min-width: 52px; text-align: center; padding: 0.35rem 0.2rem !important; vertical-align: middle; }
+        .col-chk { width: 2.2rem; text-align: center; padding: 0.35rem 0.2rem !important; vertical-align: middle; }
         .col-chk input[type="checkbox"] {
             width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary-gold);
             margin: 0; vertical-align: middle;
         }
         .desktop-table tr.row-checked td { background: rgba(76, 175, 80, 0.06); }
         .desktop-table tr.row-checked:hover td { background: rgba(76, 175, 80, 0.13); }
-        .review-badge {
-            display: block; font-size: 0.6rem; color: #4CAF50; line-height: 1.35;
-            margin-top: 2px; text-align: center; word-break: keep-all;
+
+        /* Review sub-row below checked orders (desktop) */
+        .review-row td {
+            padding: 0.3rem 0.75rem 0.6rem;
+            font-size: 0.78rem; color: #4CAF50; font-weight: 500;
+            border-bottom: 1px solid #F2EFE9; background: rgba(76, 175, 80, 0.04);
         }
+        .review-row td .review-dot { color: #4CAF50; margin-right: 0.3rem; }
 
         /* ── Checked mobile card ────────────────────────── */
         .order-card-chk {
@@ -637,6 +641,12 @@
         }
         .order-card.card-checked { border-color: #4CAF50; background: rgba(76, 175, 80, 0.03); }
         .order-card.card-checked .order-card-head { background: rgba(76, 175, 80, 0.07); }
+
+        /* Review info inside checked mobile card */
+        .review-info {
+            padding: 0.45rem 0.9rem; font-size: 0.8rem; color: #4CAF50; font-weight: 500;
+            border-top: 1px solid rgba(76, 175, 80, 0.2); background: rgba(76, 175, 80, 0.04);
+        }
 
         /* ── Batch buttons in confirmation panel ────────── */
         .confirm-batch-row {
@@ -1367,50 +1377,63 @@
 
     function applyConfirmationToRows(items, staffName) {
         var reviewedItems = items || {};
-        // Desktop rows
+        var timeLabel = tx('reviewed_by') || 'Reviewer';
+
+        // Count columns in desktop table for review-row colspan
+        var theadRow = document.querySelector('.desktop-table thead tr');
+        var colSpan = theadRow ? theadRow.children.length : 1;
+
+        // ── Desktop rows ──
         document.querySelectorAll('.desktop-table tr[data-event-id]').forEach(function(tr) {
             var eid = tr.dataset.eventId;
             var item = reviewedItems[eid];
             var chk = tr.querySelector('.item-chk');
-            var chkCell = tr.querySelector('.col-chk');
+
+            // Remove any existing review sub-row
+            var next = tr.nextElementSibling;
+            if (next && next.classList.contains('review-row')) {
+                next.remove();
+            }
+
             if (chk && item && item.reviewed) {
                 chk.checked = true;
                 tr.classList.add('row-checked');
-                var badge = chkCell.querySelector('.review-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'review-badge';
-                    chkCell.appendChild(badge);
-                }
-                badge.textContent = (staffName || '') + '\n' + timeFmtShort(item.time);
+                var reviewTr = document.createElement('tr');
+                reviewTr.className = 'review-row';
+                reviewTr.innerHTML = '<td colspan="' + colSpan + '">' +
+                    '<span class="review-dot">✅</span> ' + tx('staff_done') + ' — ' +
+                    timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
+                    '  <span style="color:var(--text-light);font-size:0.74rem;">' + timeFmtShort(item.time) + '</span>' +
+                    '</td>';
+                tr.parentNode.insertBefore(reviewTr, tr.nextSibling);
             } else if (chk) {
                 chk.checked = false;
                 tr.classList.remove('row-checked');
-                var b = chkCell.querySelector('.review-badge');
-                if (b) b.remove();
             }
         });
-        // Mobile cards
+
+        // ── Mobile cards ──
         document.querySelectorAll('.order-card[data-event-id]').forEach(function(card) {
             var eid = card.dataset.eventId;
             var item = reviewedItems[eid];
             var chk = card.querySelector('.item-chk');
-            var chkWrap = card.querySelector('.order-card-chk');
+
+            // Remove any existing review-info
+            var existing = card.querySelector('.review-info');
+            if (existing) existing.remove();
+
             if (chk && item && item.reviewed) {
                 chk.checked = true;
                 card.classList.add('card-checked');
-                var badge = chkWrap.querySelector('.review-badge');
-                if (!badge) {
-                    badge = document.createElement('div');
-                    badge.className = 'review-badge';
-                    chkWrap.appendChild(badge);
-                }
-                badge.textContent = (staffName || '') + '\n' + timeFmtShort(item.time);
+                var info = document.createElement('div');
+                info.className = 'review-info';
+                info.innerHTML = '✅ ' + tx('staff_done') + ' — ' +
+                    timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
+                    '  <span style="color:var(--text-light);font-size:0.72rem;">' + timeFmtShort(item.time) + '</span>';
+                card.appendChild(info);
             } else if (chk) {
                 chk.checked = false;
                 card.classList.remove('card-checked');
-                var b = chkWrap.querySelector('.review-badge');
-                if (b) b.remove();
             }
         });
     }
