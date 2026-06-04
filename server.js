@@ -53,15 +53,43 @@ function writeConfirmations(data) {
   fs.writeFileSync(CONFIRM_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
+// Auto-migrate old format (staff/name+time, store/time) to new format (staff_name, items, store_confirm)
+function migrateIfNeeded(data) {
+  let migrated = false;
+  for (const date of Object.keys(data)) {
+    for (const store of Object.keys(data[date])) {
+      const entry = data[date][store];
+      if (entry.staff && !entry.staff_name) {
+        entry.staff_name = entry.staff.name || 'unknown';
+        entry.items = {};
+        delete entry.staff;
+        migrated = true;
+      }
+      if (entry.store && !entry.store_confirm) {
+        entry.store_confirm = entry.store;
+        delete entry.store;
+        migrated = true;
+      }
+      if (!entry.items) { entry.items = {}; migrated = true; }
+    }
+  }
+  if (migrated) writeConfirmations(data);
+  return data;
+}
+
 function handleGetConfirm(res, query) {
-  const data = readConfirmations();
+  const data = migrateIfNeeded(readConfirmations());
   const date = query.date;
   const store = query.store;
   if (date && store) {
-    const day = data[date] || {};
-    const entry = day[store] || {};
+    const entry = data[date]?.[store] || {};
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify({ date, store, staff: entry.staff || null, store_confirm: entry.store || null }));
+    res.end(JSON.stringify({
+      date, store,
+      staff_name: entry.staff_name || null,
+      items: entry.items || {},
+      store_confirm: entry.store_confirm || null
+    }));
   } else if (date) {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify(data[date] || {}));
@@ -73,25 +101,62 @@ function handleGetConfirm(res, query) {
 
 function handlePostConfirm(req, res, body) {
   try {
-    const { date, store, role, name } = JSON.parse(body);
+    const { date, store, role, action, name, eventId, reviewed, eventIds } = JSON.parse(body);
     if (!date || !store || !role) {
       res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: 'Missing date, store, or role' }));
       return;
     }
-    const data = readConfirmations();
+    const data = migrateIfNeeded(readConfirmations());
     if (!data[date]) data[date] = {};
-    if (!data[date][store]) data[date][store] = {};
+    if (!data[date][store]) data[date][store] = { staff_name: null, items: {}, store_confirm: null };
+    const entry = data[date][store];
     const time = new Date().toISOString();
+
     if (role === 'staff') {
-      data[date][store].staff = { name: name || 'unknown', time };
+      if (action === 'set_name') {
+        entry.staff_name = name || 'unknown';
+      } else if (action === 'set_item') {
+        if (!eventId) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Missing eventId' }));
+          return;
+        }
+        entry.items[eventId] = { reviewed: !!reviewed, time };
+      } else if (action === 'set_all') {
+        if (!Array.isArray(eventIds)) {
+          res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ error: 'Missing eventIds array' }));
+          return;
+        }
+        for (const id of eventIds) {
+          entry.items[id] = { reviewed: !!reviewed, time };
+        }
+      } else {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Unknown action: ' + (action || 'none') }));
+        return;
+      }
     } else if (role === 'store') {
-      data[date][store].store = { time };
+      // Validate all known items are reviewed
+      const itemKeys = Object.keys(entry.items || {});
+      if (itemKeys.length > 0 && !itemKeys.every(k => entry.items[k].reviewed)) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Not all items have been reviewed' }));
+        return;
+      }
+      entry.store_confirm = { time };
     }
+
     writeConfirmations(data);
-    console.log('[confirm] Saved:', date, store, role);
+    console.log('[confirm] Saved:', date, store, role, action || '');
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify({ ok: true, date, store, staff: data[date][store].staff || null, store_confirm: data[date][store].store || null }));
+    res.end(JSON.stringify({
+      ok: true, date, store,
+      staff_name: entry.staff_name,
+      items: entry.items,
+      store_confirm: entry.store_confirm
+    }));
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({ error: e.message }));

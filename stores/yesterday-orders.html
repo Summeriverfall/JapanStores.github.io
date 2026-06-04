@@ -606,11 +606,61 @@
         /* ── Print ──────────────────────────────────────── */
         @media print {
             body { background: #fff; }
-            .btn-action, .lang-btn, .date-picker-row { display: none !important; }
+            .btn-action, .lang-btn, .date-picker-row, .col-chk, .order-card-chk { display: none !important; }
             .page-header, .table-card, .stat-card, .order-card { box-shadow: none; border-color: #ccc; }
             .container { padding: 0; }
             .mobile-cards { display: none !important; }
             .desktop-table { display: table !important; }
+        }
+
+        /* ── Per-order checkbox column ──────────────────── */
+        .col-chk { width: 2.0rem; text-align: center; padding: 0.35rem 0.25rem !important; vertical-align: middle; }
+        .col-chk input[type="checkbox"] {
+            width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary-gold);
+            margin: 0; vertical-align: middle;
+        }
+        .desktop-table tr.row-checked td { background: rgba(76, 175, 80, 0.06); }
+        .desktop-table tr.row-checked:hover td { background: rgba(76, 175, 80, 0.13); }
+        .review-badge {
+            display: block; font-size: 0.58rem; color: #4CAF50; line-height: 1.3;
+            margin-top: 2px; white-space: nowrap; max-width: 62px;
+            overflow: hidden; text-overflow: ellipsis; text-align: center;
+        }
+
+        /* ── Checked mobile card ────────────────────────── */
+        .order-card-chk {
+            flex-shrink: 0; margin-right: 2px; display: flex;
+            flex-direction: column; align-items: center;
+        }
+        .order-card-chk input[type="checkbox"] {
+            width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary-gold);
+            margin: 0; vertical-align: middle;
+        }
+        .order-card.card-checked { border-color: #4CAF50; background: rgba(76, 175, 80, 0.03); }
+        .order-card.card-checked .order-card-head { background: rgba(76, 175, 80, 0.07); }
+
+        /* ── Batch buttons in confirmation panel ────────── */
+        .confirm-batch-row {
+            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.4rem;
+        }
+        .confirm-batch-btn {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.4rem 0.7rem; border: 1.5px solid var(--card-border);
+            border-radius: 7px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+            font-family: inherit; min-height: 34px; white-space: nowrap;
+            background: var(--bg-cream); color: var(--text-medium);
+            transition: all 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .confirm-batch-btn:hover { border-color: var(--primary-gold); color: var(--primary-gold); background: #fff; }
+        .confirm-batch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .confirm-progress {
+            font-size: 0.76rem; color: var(--text-light); margin-bottom: 0.5rem;
+        }
+        @media (max-width: 640px) {
+            .confirm-batch-row { gap: 0.35rem; }
+            .confirm-batch-btn { font-size: 0.74rem; padding: 0.35rem 0.55rem; min-height: 36px; }
+            .col-chk input[type="checkbox"] { width: 20px; height: 20px; }
         }
     </style>
 </head>
@@ -780,6 +830,11 @@
             store_done: '確認済み',
             reviewed_by: '確認者',
             confirmed_at: '確認日時',
+            select_all: '全選択',
+            deselect_all: '選択解除',
+            items_reviewed: '件確認済み',
+            enter_name_first: '先に名前を入力してください',
+            not_all_reviewed: 'すべての注文が確認されていません',
             footer: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 生成`,
             access_err: 'データを読み込めません。Google Sheetを「リンクを知っている全員」→「閲覧者」に設定してください',
             row: '件', share: '共有', refresh: '更新', refresh_loading: '更新中...', print_label: '印刷',
@@ -805,6 +860,11 @@
             store_done: '已确认',
             reviewed_by: '复核人',
             confirmed_at: '确认时间',
+            select_all: '全选',
+            deselect_all: '取消全选',
+            items_reviewed: '项已复核',
+            enter_name_first: '请先输入姓名',
+            not_all_reviewed: '尚有订单未复核',
             footer: d => `生成于 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
             access_err: '无法读取数据，请确认 Google Sheet 已设为「任何人可查看」',
             row: '条', share: '分享', refresh: '刷新', refresh_loading: '刷新中...', print_label: '打印',
@@ -830,6 +890,11 @@
             store_done: 'Confirmed',
             reviewed_by: 'Reviewed by',
             confirmed_at: 'Confirmed at',
+            select_all: 'Select All',
+            deselect_all: 'Deselect All',
+            items_reviewed: 'items reviewed',
+            enter_name_first: 'Please enter your name first',
+            not_all_reviewed: 'Not all orders have been reviewed',
             footer: d => `Generated ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
             access_err: 'Cannot load data. Share the Google Sheet as "Anyone with the link – Viewer"',
             row: ' orders', share: 'Share', refresh: 'Refresh', refresh_loading: 'Loading...', print_label: 'Print',
@@ -866,7 +931,10 @@
             localStorage.setItem('stores-lang', lang);
             applyLang();
             if (window._loadedData) renderAll(window._loadedData);
-            loadConfirmation().then(renderConfirmation);
+            loadConfirmation().then(function(cd) {
+                window._currentStaffName = cd.staff_name || '';
+                renderConfirmation(cd);
+            });
         });
     });
 
@@ -958,7 +1026,10 @@
                 url.searchParams.set('date', toDateStr(targetDate));
                 history.replaceState(null, '', url.toString());
                 if (window._loadedData) renderAll(window._loadedData);
-                loadConfirmation().then(renderConfirmation);
+                loadConfirmation().then(function(cd) {
+                    window._currentStaffName = cd.staff_name || '';
+                    renderConfirmation(cd);
+                });
             });
             return el;
         }
@@ -1093,11 +1164,21 @@
         const headers  = data[0] || [];
         const storeIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'store_name');
         const dateIdx  = headers.findIndex(h => String(h).trim().toLowerCase() === 'start_time');
+        const eventIdIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'event_id');
 
         const rows = data.slice(1)
             .filter(r => r.some(c => String(c).trim()))
             .filter(r => storeIdx < 0 || matchStore(r[storeIdx]))
             .filter(r => dateIdx  < 0 || isSameDate(r[dateIdx], targetDate));
+
+        // Build event_id list for per-order confirmation tracking
+        window._rowEventIds = rows.map((r, i) => {
+            if (eventIdIdx >= 0) {
+                const eid = String(r[eventIdIdx] || '').trim();
+                if (eid) return eid;
+            }
+            return 'row_' + i;
+        });
 
         // Stats
         const statsGrid  = document.getElementById('statsGrid');
@@ -1123,6 +1204,7 @@
         const tableMobile  = document.getElementById('tableMobile');
 
         if (rows.length === 0) {
+            window._rowEventIds = [];
             tableDesktop.innerHTML = `<div class="no-data">📭 ${tx('no_data')}</div>`;
             tableMobile.innerHTML  = '';
             return;
@@ -1160,10 +1242,13 @@
         }
 
         // ── Desktop table ──
-        const thead = `<thead><tr><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
-        const tbody = `<tbody>${rows.map((r,i) =>
-            `<tr><td class="col-num">${i+1}</td>${cols.map(c=>`<td>${getCell(c,r)}</td>`).join('')}</tr>`
-        ).join('')}</tbody>`;
+        const thead = `<thead><tr><th class="col-chk"><input type="checkbox" id="selectAllChk" title="Select All"></th><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
+        const tbody = `<tbody>${rows.map((r,i) => {
+            const eid = window._rowEventIds[i];
+            return `<tr data-event-id="${eid}">
+                <td class="col-chk"><input type="checkbox" class="item-chk" data-event-id="${eid}"></td>
+                <td class="col-num">${i+1}</td>${cols.map(c=>`<td>${getCell(c,r)}</td>`).join('')}</tr>`;
+        }).join('')}</tbody>`;
         tableDesktop.innerHTML = `<table class="desktop-table">${thead}${tbody}</table>`;
 
         // ── Mobile cards ──
@@ -1172,6 +1257,7 @@
         const bodyColFilter = c => c.key !== 'title' && c.key !== 'end_time';
 
         tableMobile.innerHTML = rows.map((r, i) => {
+            const eid = window._rowEventIds[i];
             const titleVal = titleIdx >= 0 ? getCell(cols[titleIdx], r) : '—';
             const timeStr  = endIdx   >= 0 ? getCell(cols[endIdx], r) : '';
 
@@ -1184,8 +1270,9 @@
                 </div>`;
             }).join('');
 
-            return `<div class="order-card">
+            return `<div class="order-card" data-event-id="${eid}">
                 <div class="order-card-head">
+                    <div class="order-card-chk"><input type="checkbox" class="item-chk" data-event-id="${eid}"></div>
                     <div class="order-card-num">${i+1}</div>
                     <div class="order-card-head-title">${titleVal}</div>
                     ${timeStr ? `<div class="order-card-time">${timeStr}</div>` : ''}
@@ -1255,21 +1342,82 @@
             const r = await fetch(`/api/confirm?date=${apiDate()}&store=${encodeURIComponent(storeName)}`);
             if (r.ok) return await r.json();
         } catch (_) {}
-        return { staff: null, store_confirm: null };
+        return { staff_name: null, items: {}, store_confirm: null };
     }
 
-    async function submitConfirmation(role, name) {
+    async function submitConfirmation(role, options) {
+        const body = { date: apiDate(), store: storeName, role, ...options };
         const r = await fetch('/api/confirm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: apiDate(), store: storeName, role, name: name || '' }),
+            body: JSON.stringify(body),
         });
-        if (!r.ok) throw new Error('Failed to save');
+        if (!r.ok) {
+            const errData = await r.json().catch(() => ({}));
+            throw new Error(errData.error || 'Failed to save');
+        }
         return await r.json();
     }
 
+    function timeFmtShort(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+            String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    function applyConfirmationToRows(items, staffName) {
+        var reviewedItems = items || {};
+        // Desktop rows
+        document.querySelectorAll('.desktop-table tr[data-event-id]').forEach(function(tr) {
+            var eid = tr.dataset.eventId;
+            var item = reviewedItems[eid];
+            var chk = tr.querySelector('.item-chk');
+            var chkCell = tr.querySelector('.col-chk');
+            if (chk && item && item.reviewed) {
+                chk.checked = true;
+                tr.classList.add('row-checked');
+                var badge = chkCell.querySelector('.review-badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'review-badge';
+                    chkCell.appendChild(badge);
+                }
+                badge.textContent = (staffName || '') + '\n' + timeFmtShort(item.time);
+            } else if (chk) {
+                chk.checked = false;
+                tr.classList.remove('row-checked');
+                var b = chkCell.querySelector('.review-badge');
+                if (b) b.remove();
+            }
+        });
+        // Mobile cards
+        document.querySelectorAll('.order-card[data-event-id]').forEach(function(card) {
+            var eid = card.dataset.eventId;
+            var item = reviewedItems[eid];
+            var chk = card.querySelector('.item-chk');
+            var chkWrap = card.querySelector('.order-card-chk');
+            if (chk && item && item.reviewed) {
+                chk.checked = true;
+                card.classList.add('card-checked');
+                var badge = chkWrap.querySelector('.review-badge');
+                if (!badge) {
+                    badge = document.createElement('div');
+                    badge.className = 'review-badge';
+                    chkWrap.appendChild(badge);
+                }
+                badge.textContent = (staffName || '') + '\n' + timeFmtShort(item.time);
+            } else if (chk) {
+                chk.checked = false;
+                card.classList.remove('card-checked');
+                var b = chkWrap.querySelector('.review-badge');
+                if (b) b.remove();
+            }
+        });
+    }
+
     function renderConfirmation(confirmData) {
-        const panel = document.getElementById('confirmPanel');
+        var panel = document.getElementById('confirmPanel');
         if (!storeName) { panel.style.display = 'none'; return; }
         panel.style.display = 'block';
 
@@ -1277,72 +1425,155 @@
         document.getElementById('staffLabel').textContent = tx('staff_label');
         document.getElementById('storeLabel').textContent = tx('store_confirm_label');
 
-        // Staff
-        const staff = confirmData.staff;
-        const staffDot = document.getElementById('staffDot');
-        const staffAction = document.getElementById('staffAction');
-        const staffDone = document.getElementById('staffDone');
+        var staffName = confirmData.staff_name || '';
+        var items = confirmData.items || {};
+        var storeConfirm = confirmData.store_confirm;
+        var totalItems = (window._rowEventIds || []).length;
+        var reviewedCount = Object.values(items).filter(function(it) { return it.reviewed; }).length;
+        var allReviewed = totalItems > 0 && reviewedCount >= totalItems;
 
-        if (staff) {
-            staffDot.className = 'confirm-status-dot done';
-            staffAction.style.display = 'none';
-            staffDone.style.display = 'block';
-            const d = new Date(staff.time);
-            const timeStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            staffDone.innerHTML = `<span style="color:#4CAF50;font-weight:700;">✅ ${tx('staff_done')}</span> — <strong>${tx('reviewed_by')}: ${staff.name || '—'}</strong> <span class="time">${timeStr}</span>`;
-        } else {
-            staffDot.className = 'confirm-status-dot pending';
-            staffDone.style.display = 'none';
-            staffAction.style.display = 'flex';
-            staffAction.innerHTML = `<input class="confirm-input" id="staffNameInput" placeholder="${tx('staff_name_placeholder')}" maxlength="30">
-                <button class="confirm-btn staff" id="staffConfirmBtn">✅ ${tx('staff_btn')}</button>`;
-            document.getElementById('staffConfirmBtn').addEventListener('click', async function() {
-                this.disabled = true;
-                this.textContent = '...';
-                try {
-                    const name = document.getElementById('staffNameInput').value.trim() || '—';
-                    const result = await submitConfirmation('staff', name);
-                    renderConfirmation(result);
-                } catch (e) {
-                    this.disabled = false;
-                    this.textContent = '✅ ' + tx('staff_btn');
-                    alert('Error: ' + e.message);
-                }
-            });
-        }
+        window._currentStaffName = staffName;
 
-        // Store
-        const storeConfirm = confirmData.store_confirm;
-        const storeDot = document.getElementById('storeDot');
-        const storeAction = document.getElementById('storeAction');
-        const storeDone = document.getElementById('storeDone');
+        // --- Staff section ---
+        var staffAction = document.getElementById('staffAction');
+        var staffDone = document.getElementById('staffDone');
+        var staffDot = document.getElementById('staffDot');
+
+        staffAction.style.display = 'block';
+        staffDone.style.display = 'none';
+        staffDot.className = allReviewed && totalItems > 0 ? 'confirm-status-dot done' : 'confirm-status-dot pending';
+
+        staffAction.innerHTML =
+            '<div class="confirm-batch-row">' +
+            '<input class="confirm-input" id="staffNameInput" placeholder="' + tx('staff_name_placeholder') + '" maxlength="30" value="' + staffName.replace(/"/g, '&quot;') + '">' +
+            '<button class="confirm-batch-btn" id="selectAllBtn">☑ ' + tx('select_all') + '</button>' +
+            '<button class="confirm-batch-btn" id="deselectAllBtn">☐ ' + tx('deselect_all') + '</button>' +
+            '</div>' +
+            '<div class="confirm-progress" id="staffProgress">' + reviewedCount + ' / ' + totalItems + ' ' + tx('items_reviewed') + '</div>';
+
+        // Name input: auto-save on blur
+        var nameInput = document.getElementById('staffNameInput');
+        nameInput.addEventListener('blur', function() {
+            var newName = this.value.trim();
+            if (newName === staffName) return;
+            var savedName = newName || '—';
+            submitConfirmation('staff', { action: 'set_name', name: savedName }).then(function(result) {
+                window._currentStaffName = result.staff_name;
+                applyConfirmationToRows(result.items, result.staff_name);
+                // update progress
+                var rc = Object.values(result.items || {}).filter(function(it) { return it.reviewed; }).length;
+                var pg = document.getElementById('staffProgress');
+                if (pg) pg.textContent = rc + ' / ' + totalItems + ' ' + tx('items_reviewed');
+            }).catch(function(e) { alert('Error: ' + e.message); });
+        });
+
+        // Select All
+        document.getElementById('selectAllBtn').addEventListener('click', function() {
+            var name = document.getElementById('staffNameInput').value.trim();
+            if (!name) { alert(tx('enter_name_first')); return; }
+            var allIds = window._rowEventIds || [];
+            if (!allIds.length) return;
+            var btn = this; btn.disabled = true;
+            // Ensure name saved first
+            var p = name !== staffName
+                ? submitConfirmation('staff', { action: 'set_name', name: name })
+                : Promise.resolve(confirmData);
+            p.then(function() {
+                return submitConfirmation('staff', { action: 'set_all', reviewed: true, eventIds: allIds });
+            }).then(function(result) {
+                renderConfirmation(result);
+                applyConfirmationToRows(result.items, result.staff_name);
+            }).catch(function(e) {
+                alert('Error: ' + e.message);
+            }).finally(function() { btn.disabled = false; });
+        });
+
+        // Deselect All
+        document.getElementById('deselectAllBtn').addEventListener('click', function() {
+            var allIds = window._rowEventIds || [];
+            if (!allIds.length) return;
+            var btn = this; btn.disabled = true;
+            submitConfirmation('staff', { action: 'set_all', reviewed: false, eventIds: allIds }).then(function(result) {
+                renderConfirmation(result);
+                applyConfirmationToRows(result.items, result.staff_name);
+            }).catch(function(e) {
+                alert('Error: ' + e.message);
+            }).finally(function() { btn.disabled = false; });
+        });
+
+        // --- Store section ---
+        var storeDot = document.getElementById('storeDot');
+        var storeAction = document.getElementById('storeAction');
+        var storeDone = document.getElementById('storeDone');
 
         if (storeConfirm) {
             storeDot.className = 'confirm-status-dot done';
             storeAction.style.display = 'none';
             storeDone.style.display = 'block';
-            const d = new Date(storeConfirm.time);
-            const timeStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            storeDone.innerHTML = `<span style="color:#4CAF50;font-weight:700;">✅ ${tx('store_done')}</span> <span class="time">${tx('confirmed_at')}: ${timeStr}</span>`;
+            var d = new Date(storeConfirm.time);
+            var timeStr = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+            storeDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('store_done') + '</span> <span class="time">' + tx('confirmed_at') + ': ' + timeStr + '</span>';
         } else {
             storeDot.className = 'confirm-status-dot pending';
             storeDone.style.display = 'none';
-            storeAction.style.display = 'flex';
-            storeAction.innerHTML = `<button class="confirm-btn store" id="storeConfirmBtn">✅ ${tx('store_btn')}</button>`;
-            document.getElementById('storeConfirmBtn').addEventListener('click', async function() {
-                this.disabled = true;
-                this.textContent = '...';
-                try {
-                    const result = await submitConfirmation('store');
-                    renderConfirmation(result);
-                } catch (e) {
-                    this.disabled = false;
-                    this.textContent = '✅ ' + tx('store_btn');
-                    alert('Error: ' + e.message);
-                }
-            });
+            storeAction.style.display = 'block';
+            var canConfirm = allReviewed || totalItems === 0;
+            storeAction.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn"' +
+                (canConfirm ? '' : ' disabled') +
+                ' title="' + (canConfirm ? '' : tx('not_all_reviewed')) + '">✅ ' + tx('store_btn') + '</button>';
+            if (canConfirm) {
+                document.getElementById('storeConfirmBtn').addEventListener('click', function() {
+                    var btn = this; btn.disabled = true; btn.textContent = '...';
+                    submitConfirmation('store').then(function(result) {
+                        renderConfirmation(result);
+                    }).catch(function(e) {
+                        btn.disabled = false;
+                        btn.textContent = '✅ ' + tx('store_btn');
+                        alert('Error: ' + e.message);
+                    });
+                });
+            }
         }
+
+        // Apply row highlighting
+        applyConfirmationToRows(items, staffName);
     }
+
+    // ─── Delegated checkbox listeners ─────────────────────────────────────────
+    document.addEventListener('change', function(e) {
+        var chk = e.target;
+        // Individual item checkbox
+        if (chk.classList.contains('item-chk')) {
+            var eventId = chk.dataset.eventId;
+            if (!eventId) return;
+            var nameInput = document.getElementById('staffNameInput');
+            var staffName = nameInput ? nameInput.value.trim() : '';
+            if (!staffName) {
+                chk.checked = !chk.checked;
+                alert(tx('enter_name_first'));
+                return;
+            }
+            chk.disabled = true;
+            var p = staffName !== (window._currentStaffName || '')
+                ? submitConfirmation('staff', { action: 'set_name', name: staffName })
+                : Promise.resolve(null);
+            p.then(function() {
+                return submitConfirmation('staff', { action: 'set_item', eventId: eventId, reviewed: chk.checked });
+            }).then(function(result) {
+                window._currentStaffName = result.staff_name;
+                renderConfirmation(result);
+                applyConfirmationToRows(result.items, result.staff_name);
+            }).catch(function(e) {
+                chk.checked = !chk.checked;
+                alert('Error: ' + e.message);
+            }).finally(function() { chk.disabled = false; });
+        }
+        // Header "Select All" checkbox — visual toggle only, no API calls
+        if (chk.id === 'selectAllChk') {
+            var checked = chk.checked;
+            document.querySelectorAll('.item-chk').forEach(function(c) { c.checked = checked; });
+        }
+    });
 
     // ─── Fetch & load ────────────────────────────────────────────────────────
     function xhrGet(url) {
@@ -1403,6 +1634,7 @@
         // Always load confirmation (even if no orders — confirming zero is valid)
         if (storeName) {
             const confirmData = await loadConfirmation();
+            window._currentStaffName = confirmData.staff_name || '';
             renderConfirmation(confirmData);
         }
     }
@@ -1423,6 +1655,7 @@
             document.getElementById('stateMsg').innerHTML = '';
             renderAll(data);
             const confirmData = await loadConfirmation();
+            window._currentStaffName = confirmData.staff_name || '';
             renderConfirmation(confirmData);
         } catch (err) {
             document.getElementById('stateMsg').innerHTML =
