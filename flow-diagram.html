@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画面遷移図 — Store Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ─── Base ──────────────────────────────────────── */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Noto Sans JP','Noto Sans SC','Inter',sans-serif;
+            background: #EBEBEB;
+            color: #1A1A1A;
+            font-size: 11px;
+        }
+
+        /* ─── A4 Landscape Page ─────────────────────────── */
+        .a4-page {
+            width: 277mm;
+            min-height: 190mm;
+            background: #fff;
+            margin: 0 auto 24px;
+            padding: 10mm 12mm 10mm;
+            box-shadow: 0 2px 16px rgba(0,0,0,.14);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ─── Document Header ───────────────────────────── */
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid #1A1A1A;
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+        }
+        .doc-header-left h1 { font-size: 15px; font-weight: 700; letter-spacing:.02em; }
+        .doc-header-left p  { font-size: 9px; color: #666; margin-top:1px; }
+        .doc-meta-row {
+            display: flex;
+            gap: 14px;
+            font-size: 9px;
+            color: #555;
+        }
+        .doc-meta-row span b { color: #1A1A1A; }
+
+        /* ─── Section Title ─────────────────────────────── */
+        .sec-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 8px;
+        }
+        .sec-num {
+            background: #1A1A1A;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 2px;
+        }
+        .sec-label-ja { font-size: 12px; font-weight: 700; }
+        .sec-label-zh { font-size: 10px; color: #888; }
+
+        /* ─── Flow Layout ───────────────────────────────── */
+        .flow-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+        }
+
+        /* Left panel (entry + hub) */
+        .flow-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+        }
+        .flow-left .flow-node { width: 196px; }
+        .flow-left .flow-node .node-img { height: 122px; }
+
+        /* Arrow between left nodes */
+        .v-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            color: #2C3E50;
+            font-size: 9px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 3px 0;
+        }
+        .v-arrow-line {
+            width: 2px;
+            height: 18px;
+            background: #2C3E50;
+        }
+        .v-arrow-head {
+            width: 0; height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 7px solid #2C3E50;
+        }
+        .v-arrow-label { font-size: 8px; color: #555; white-space: nowrap; }
+
+        /* Horizontal arrow connector */
+        .h-connector {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            padding-top: 55px; /* align to mid of left panel */
+        }
+        .h-arrow-line {
+            height: 2px;
+            width: 22px;
+            background: #2C3E50;
+        }
+        .h-arrow-head {
+            width: 0; height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 7px solid #2C3E50;
+        }
+
+        /* Right panel (destinations grid) */
+        .flow-right { flex: 1; min-width: 0; }
+        .dest-section-label {
+            font-size: 8.5px;
+            font-weight: 700;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: 5px;
+            padding-left: 2px;
+        }
+        .dest-grid {
+            display: grid;
+            gap: 6px;
+        }
+        .dest-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .dest-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .dest-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+        .dest-grid .flow-node .node-img { height: 96px; }
+        .dest-grid.cols-4 .flow-node .node-img { height: 86px; }
+
+        /* ─── Node Card ─────────────────────────────────── */
+        .flow-node {
+            border: 1.5px solid #CCC;
+            border-radius: 7px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .node-head {
+            padding: 4px 7px 3px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .node-type-tag {
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            opacity: .9;
+        }
+        .node-filename {
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.3;
+            word-break: break-all;
+        }
+        .node-desc {
+            font-size: 8.5px;
+            opacity: .85;
+            line-height: 1.3;
+        }
+
+        /* ── Node color themes ── */
+        .theme-auth  .node-head { background: #5D6D7E; color:#fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .theme-auth  { border-color: #5D6D7E; }
+        .theme-hub   .node-head { background: #2471A3; color:#fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .theme-hub   { border-color: #2471A3; }
+        .theme-order .node-head { background: #1E8449; color:#fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .theme-order { border-color: #1E8449; }
+        .theme-tool  .node-head { background: #6C3483; color:#fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .theme-tool  { border-color: #6C3483; }
+        .theme-ops   .node-head { background: #117A65; color:#fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .theme-ops   { border-color: #117A65; }
+        .theme-data  .node-head { background: #1A5276; color:#fff; border-bottom: 1px solid rgba(255,255,255,.15); }
+        .theme-data  { border-color: #1A5276; }
+
+        /* ── Screenshot upload area ── */
+        .node-img {
+            position: relative;
+            background: #F2F3F4;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .node-img:hover { background: #E8E9EA; }
+        .node-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            display: none;
+        }
+        .node-img img.loaded { display: block; }
+        .upload-hint {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #B0B3B8;
+            text-align: center;
+            padding: 6px;
+            gap: 3px;
+            transition: opacity .2s;
+        }
+        .upload-hint .u-icon { font-size: 16px; }
+        .upload-hint .u-text { font-size: 8px; line-height: 1.3; }
+        .upload-hint .u-key  { font-size: 7px; color: #C9B07A; font-weight: 600; }
+        .node-img:hover .upload-hint { opacity: .6; }
+        .node-img.has-image .upload-hint { display: none; }
+        .node-img.has-image img { display: block; }
+
+        /* Clear button (shown on hover over image) */
+        .clear-btn {
+            display: none;
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: rgba(0,0,0,.55);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 16px; height: 16px;
+            font-size: 9px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .node-img.has-image:hover .clear-btn { display: flex; }
+
+        /* Hidden file inputs */
+        .file-input { display: none; }
+
+        /* ─── Inline flag ───────────────────────────────── */
+        .inline-badge {
+            display: inline-block;
+            background: #F0F0F0;
+            color: #777;
+            font-size: 7px;
+            font-weight: 600;
+            border: 1px solid #DDD;
+            border-radius: 2px;
+            padding: 0 3px;
+            margin-left: 3px;
+            vertical-align: middle;
+        }
+
+        /* ─── Legend ────────────────────────────────────── */
+        .legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 7px;
+            padding-top: 5px;
+            border-top: 1px solid #E0E0E0;
+            font-size: 8.5px;
+            color: #555;
+        }
+        .leg { display: flex; align-items: center; gap: 4px; }
+        .leg-dot {
+            width: 10px; height: 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ─── Page footer ───────────────────────────────── */
+        .page-footer {
+            position: absolute;
+            bottom: 7mm; left: 12mm; right: 12mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #BBB;
+            border-top: 1px solid #EEE;
+            padding-top: 3px;
+        }
+
+        /* ─── Controls (screen only) ────────────────────── */
+        .controls {
+            text-align: center;
+            padding: 20px;
+            background: #EBEBEB;
+        }
+        .btn-print {
+            padding: .65rem 2.2rem;
+            background: #1A1A1A;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-print:hover { background: #333; }
+        .btn-clear-all {
+            padding: .6rem 1.5rem;
+            background: transparent;
+            color: #888;
+            border: 1px solid #CCC;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 10px;
+        }
+        .controls-hint { font-size: 11px; color: #999; margin-top: 8px; }
+
+        /* ─── Print media ───────────────────────────────── */
+        @media print {
+            @page { size: A4 landscape; margin: 0; }
+            body { background: #fff; }
+            .controls { display: none; }
+            .a4-page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+                width: 100%;
+                padding: 9mm 11mm 12mm;
+            }
+            .a4-page:last-of-type { page-break-after: avoid; }
+            .node-img:hover .upload-hint { opacity: 1; }
+            .clear-btn { display: none !important; }
+            /* Hide empty placeholders in print */
+            .node-img:not(.has-image) {
+                background: #F8F8F8;
+            }
+            .node-img:not(.has-image) .upload-hint {
+                display: flex;
+                opacity: .4;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════
+     PAGE 1 — 門店スタッフ 画面遷移図
+════════════════════════════════════════════════ -->
+<div class="a4-page" id="page1">
+
+    <!-- Doc header -->
+    <div class="doc-header">
+        <div class="doc-header-left">
+            <h1>画面遷移図 / 页面导航流程图</h1>
+            <p>Store Management System — Screen Transition Diagram</p>
+        </div>
+        <div class="doc-meta-row">
+            <span><b>種別</b>：画面遷移図</span>
+            <span><b>作成日</b>：<span id="docDate1">—</span></span>
+            <span><b>Ver</b>：1.0</span>
+        </div>
+    </div>
+
+    <!-- Section title -->
+    <div class="sec-title">
+        <span class="sec-num">図 1</span>
+        <span class="sec-label-ja">門店スタッフ 画面遷移図</span>
+        <span class="sec-label-zh">（门店员工端 操作流程）</span>
+    </div>
+
+    <!-- Flow -->
+    <div class="flow-wrap">
+
+        <!-- LEFT: Login → Portal -->
+        <div class="flow-left">
+
+            <!-- login.html -->
+            <div class="flow-node theme-auth" id="node-login">
+                <div class="node-head">
+                    <span class="node-type-tag">❶ ログイン Login</span>
+                    <span class="node-filename">login.html</span>
+                    <span class="node-desc">門店名 + パスワードを入力して認証</span>
+                </div>
+                <div class="node-img" onclick="triggerUpload('login')" title="クリックでスクリーンショットを追加">
+                    <img id="img-login" alt="login.html screenshot">
+                    <div class="upload-hint">
+                        <div class="u-icon">📸</div>
+                        <div class="u-text">クリックして<br>スクリーンショットを追加</div>
+                        <div class="u-key">login.html</div>
+                    </div>
+                    <button class="clear-btn" onclick="clearImg(event,'login')" title="削除">×</button>
+                </div>
+                <input class="file-input" id="file-login" type="file" accept="image/*" onchange="loadImg(this,'login')">
+            </div>
+
+            <div class="v-arrow">
+                <div class="v-arrow-line"></div>
+                <div class="v-arrow-label" style="margin:1px 0">認証成功</div>
+                <div class="v-arrow-head"></div>
+            </div>
+
+            <!-- portal.html -->
+            <div class="flow-node theme-hub" id="node-portal">
+                <div class="node-head">
+                    <span class="node-type-tag">❷ 門店管理ハブ Store Hub</span>
+                    <span class="node-filename">portal.html</span>
+                    <span class="node-desc">認証済みスタッフのみアクセス可</span>
+                </div>
+                <div class="node-img" onclick="triggerUpload('portal')" title="クリックでスクリーンショットを追加">
+                    <img id="img-portal" alt="portal.html screenshot">
+                    <div class="upload-hint">
+                        <div class="u-icon">📸</div>
+                        <div class="u-text">クリックして<br>スクリーンショットを追加</div>
+                        <div class="u-key">portal.html</div>
+                    </div>
+                    <button class="clear-btn" onclick="clearImg(event,'portal')" title="削除">×</button>
+                </div>
+                <input class="file-input" id="file-portal" type="file" accept="image/*" onchange="loadImg(this,'portal')">
+            </div>
+
+        </div><!-- /flow-left -->
+
+        <!-- Horizontal arrow -->
+        <div class="h-connector">
+            <div class="h-arrow-line"></div>
+            <div class="h-arrow-head"></div>
+        </div>
+
+        <!-- RIGHT: Destinations from portal -->
+        <div class="flow-right">
+            <div class="dest-section-label">portal.html からのリンク先 / Links from portal</div>
+
+            <div class="dest-grid cols-3">
+
+                <!-- 当日注文 -->
+                <div class="flow-node theme-order">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-a 当日注文 Today's Orders</span>
+                        <span class="node-filename">当日注文一覧<span class="inline-badge">ページ内</span></span>
+                        <span class="node-desc">テーブル形式でページ内展開表示</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('today-orders')" title="クリックでスクリーンショットを追加">
+                        <img id="img-today-orders" alt="today orders screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">当日注文（展開後）</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'today-orders')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-today-orders" type="file" accept="image/*" onchange="loadImg(this,'today-orders')">
+                </div>
+
+                <!-- yesterday-orders.html -->
+                <div class="flow-node theme-order">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-b 前日注文 Prev-Day Orders</span>
+                        <span class="node-filename">yesterday-orders.html</span>
+                        <span class="node-desc">前日注文明細 — 共有・確認用ページ</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('yesterday-orders')" title="クリックでスクリーンショットを追加">
+                        <img id="img-yesterday-orders" alt="yesterday-orders.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">yesterday-orders.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'yesterday-orders')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-yesterday-orders" type="file" accept="image/*" onchange="loadImg(this,'yesterday-orders')">
+                </div>
+
+                <!-- stats -->
+                <div class="flow-node theme-order">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-c 実績 Performance</span>
+                        <span class="node-filename">今月実績 / 6ヶ月推移グラフ<span class="inline-badge">ページ内</span></span>
+                        <span class="node-desc">月次統計・折れ線グラフ表示</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('stats')" title="クリックでスクリーンショットを追加">
+                        <img id="img-stats" alt="stats screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">実績セクション</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'stats')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-stats" type="file" accept="image/*" onchange="loadImg(this,'stats')">
+                </div>
+
+                <!-- calendar-viewer.html -->
+                <div class="flow-node theme-tool">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-a カレンダー Calendar</span>
+                        <span class="node-filename">calendar-viewer.html</span>
+                        <span class="node-desc">店舗別 Google カレンダー表示</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('calendar')" title="クリックでスクリーンショットを追加">
+                        <img id="img-calendar" alt="calendar-viewer.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">calendar-viewer.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'calendar')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-calendar" type="file" accept="image/*" onchange="loadImg(this,'calendar')">
+                </div>
+
+                <!-- sop.html -->
+                <div class="flow-node theme-tool">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-b SOP</span>
+                        <span class="node-filename">sop.html</span>
+                        <span class="node-desc">CS 標準作業手順書</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('sop')" title="クリックでスクリーンショットを追加">
+                        <img id="img-sop" alt="sop.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">sop.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'sop')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-sop" type="file" accept="image/*" onchange="loadImg(this,'sop')">
+                </div>
+
+                <!-- multilang-reservation-flow.html -->
+                <div class="flow-node theme-tool">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-c フロー図 Flow</span>
+                        <span class="node-filename">multilang-reservation-flow.html</span>
+                        <span class="node-desc">多言語予約業務フロー図</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('flow')" title="クリックでスクリーンショットを追加">
+                        <img id="img-flow" alt="multilang-reservation-flow.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">multilang-reservation-flow.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'flow')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-flow" type="file" accept="image/*" onchange="loadImg(this,'flow')">
+                </div>
+
+            </div><!-- /dest-grid -->
+        </div><!-- /flow-right -->
+
+    </div><!-- /flow-wrap -->
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#5D6D7E"></div>ログイン・認証</div>
+        <div class="leg"><div class="leg-dot" style="background:#2471A3"></div>管理ハブ</div>
+        <div class="leg"><div class="leg-dot" style="background:#1E8449"></div>注文・実績</div>
+        <div class="leg"><div class="leg-dot" style="background:#6C3483"></div>ツール・ドキュメント</div>
+        <div class="leg" style="color:#aaa"><div class="leg-dot" style="background:#E0E0E0;border:1px solid #ccc"></div>
+            <span class="inline-badge" style="margin:0">ページ内</span> = 別ページへの遷移なし・同一画面内に展開</div>
+    </div>
+
+    <div class="page-footer">
+        <span>Store Management System — 画面遷移図</span>
+        <span>図 1 / 2 — 門店スタッフ端（Store Staff）</span>
+    </div>
+
+</div><!-- /page1 -->
+
+
+<!-- ════════════════════════════════════════════════
+     PAGE 2 — 管理者 画面遷移図
+════════════════════════════════════════════════ -->
+<div class="a4-page" id="page2">
+
+    <!-- Doc header (compact) -->
+    <div class="doc-header">
+        <div class="doc-header-left">
+            <h1>画面遷移図 / 页面导航流程图</h1>
+            <p>Store Management System — Screen Transition Diagram</p>
+        </div>
+        <div class="doc-meta-row">
+            <span><b>種別</b>：画面遷移図</span>
+            <span><b>作成日</b>：<span id="docDate2">—</span></span>
+            <span><b>Ver</b>：1.0</span>
+        </div>
+    </div>
+
+    <!-- Section title -->
+    <div class="sec-title">
+        <span class="sec-num">図 2</span>
+        <span class="sec-label-ja">管理者 画面遷移図</span>
+        <span class="sec-label-zh">（管理员端 操作流程）</span>
+    </div>
+
+    <!-- Flow -->
+    <div class="flow-wrap">
+
+        <!-- LEFT: Hub (login + dashboard in one) -->
+        <div class="flow-left">
+
+            <!-- hub.html -->
+            <div class="flow-node theme-auth" id="node-hub">
+                <div class="node-head">
+                    <span class="node-type-tag">❶ 管理者ログイン Admin Login</span>
+                    <span class="node-filename">hub.html</span>
+                    <span class="node-desc">管理者パスワードを入力して認証</span>
+                </div>
+                <div class="node-img" onclick="triggerUpload('hub-login')" title="クリックでスクリーンショットを追加">
+                    <img id="img-hub-login" alt="hub.html login screenshot">
+                    <div class="upload-hint">
+                        <div class="u-icon">📸</div>
+                        <div class="u-text">クリックして<br>スクリーンショットを追加</div>
+                        <div class="u-key">hub.html（ログイン画面）</div>
+                    </div>
+                    <button class="clear-btn" onclick="clearImg(event,'hub-login')" title="削除">×</button>
+                </div>
+                <input class="file-input" id="file-hub-login" type="file" accept="image/*" onchange="loadImg(this,'hub-login')">
+            </div>
+
+            <div class="v-arrow">
+                <div class="v-arrow-line"></div>
+                <div class="v-arrow-label" style="margin:1px 0">認証成功</div>
+                <div class="v-arrow-head"></div>
+            </div>
+
+            <!-- hub.html (after login) -->
+            <div class="flow-node theme-hub" id="node-hub-main">
+                <div class="node-head">
+                    <span class="node-type-tag">❷ 管理者ハブ Admin Hub</span>
+                    <span class="node-filename">hub.html</span>
+                    <span class="node-desc">全機能へのアクセス — 認証後表示</span>
+                </div>
+                <div class="node-img" onclick="triggerUpload('hub-main')" title="クリックでスクリーンショットを追加">
+                    <img id="img-hub-main" alt="hub.html main screenshot">
+                    <div class="upload-hint">
+                        <div class="u-icon">📸</div>
+                        <div class="u-text">クリックして<br>スクリーンショットを追加</div>
+                        <div class="u-key">hub.html（ダッシュボード）</div>
+                    </div>
+                    <button class="clear-btn" onclick="clearImg(event,'hub-main')" title="削除">×</button>
+                </div>
+                <input class="file-input" id="file-hub-main" type="file" accept="image/*" onchange="loadImg(this,'hub-main')">
+            </div>
+
+        </div><!-- /flow-left -->
+
+        <!-- Horizontal arrow -->
+        <div class="h-connector">
+            <div class="h-arrow-line"></div>
+            <div class="h-arrow-head"></div>
+        </div>
+
+        <!-- RIGHT: Destinations from hub -->
+        <div class="flow-right">
+            <div class="dest-section-label">hub.html からのリンク先 / Links from admin hub</div>
+
+            <div class="dest-grid cols-4">
+
+                <!-- dashboard.html -->
+                <div class="flow-node theme-data">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-a 運営ダッシュボード</span>
+                        <span class="node-filename">dashboard.html</span>
+                        <span class="node-desc">全店舗 売上・注文グラフ</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-dashboard')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-dashboard" alt="dashboard.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">dashboard.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-dashboard')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-dashboard" type="file" accept="image/*" onchange="loadImg(this,'a-dashboard')">
+                </div>
+
+                <!-- stores/index.html -->
+                <div class="flow-node theme-data">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-b 門店データ門戸</span>
+                        <span class="node-filename">stores/index.html</span>
+                        <span class="node-desc">店舗選択 → portal.html</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-store-index')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-store-index" alt="stores/index.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">stores/index.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-store-index')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-store-index" type="file" accept="image/*" onchange="loadImg(this,'a-store-index')">
+                </div>
+
+                <!-- schedule.html -->
+                <div class="flow-node theme-ops">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-c CS シフト表</span>
+                        <span class="node-filename">schedule.html</span>
+                        <span class="node-desc">週次シフト管理</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-schedule')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-schedule" alt="schedule.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">schedule.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-schedule')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-schedule" type="file" accept="image/*" onchange="loadImg(this,'a-schedule')">
+                </div>
+
+                <!-- calendar-viewer.html (all stores) -->
+                <div class="flow-node theme-ops">
+                    <div class="node-head">
+                        <span class="node-type-tag">❸-d Google カレンダー</span>
+                        <span class="node-filename">calendar-viewer.html</span>
+                        <span class="node-desc">全店舗カレンダー表示</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-calendar')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-calendar" alt="calendar-viewer.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">calendar-viewer.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-calendar')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-calendar" type="file" accept="image/*" onchange="loadImg(this,'a-calendar')">
+                </div>
+
+                <!-- yesterday-orders.html -->
+                <div class="flow-node theme-ops">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-a 前日注文一覧</span>
+                        <span class="node-filename">yesterday-orders.html</span>
+                        <span class="node-desc">前日の全店舗注文確認・共有</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-yesterday')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-yesterday" alt="yesterday-orders.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">yesterday-orders.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-yesterday')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-yesterday" type="file" accept="image/*" onchange="loadImg(this,'a-yesterday')">
+                </div>
+
+                <!-- sop.html -->
+                <div class="flow-node theme-tool">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-b CS 作業 SOP</span>
+                        <span class="node-filename">sop.html</span>
+                        <span class="node-desc">CS 標準作業手順書</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-sop')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-sop" alt="sop.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">sop.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-sop')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-sop" type="file" accept="image/*" onchange="loadImg(this,'a-sop')">
+                </div>
+
+                <!-- multilang-reservation-flow.html -->
+                <div class="flow-node theme-tool">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-c 予約フロー図</span>
+                        <span class="node-filename">multilang-reservation-flow.html</span>
+                        <span class="node-desc">多言語予約業務フロー</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-flow1')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-flow1" alt="multilang-reservation-flow.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">multilang-reservation-flow.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-flow1')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-flow1" type="file" accept="image/*" onchange="loadImg(this,'a-flow1')">
+                </div>
+
+                <!-- ar-glasses-homestay-flow.html -->
+                <div class="flow-node theme-tool">
+                    <div class="node-head">
+                        <span class="node-type-tag">❹-d 民泊フロー図</span>
+                        <span class="node-filename">ar-glasses-homestay-flow.html</span>
+                        <span class="node-desc">民泊業務フロー図</span>
+                    </div>
+                    <div class="node-img" onclick="triggerUpload('a-flow2')" title="クリックでスクリーンショットを追加">
+                        <img id="img-a-flow2" alt="ar-glasses-homestay-flow.html screenshot">
+                        <div class="upload-hint">
+                            <div class="u-icon">📸</div>
+                            <div class="u-text">スクリーンショットを追加</div>
+                            <div class="u-key">ar-glasses-homestay-flow.html</div>
+                        </div>
+                        <button class="clear-btn" onclick="clearImg(event,'a-flow2')" title="削除">×</button>
+                    </div>
+                    <input class="file-input" id="file-a-flow2" type="file" accept="image/*" onchange="loadImg(this,'a-flow2')">
+                </div>
+
+            </div><!-- /dest-grid -->
+        </div><!-- /flow-right -->
+
+    </div><!-- /flow-wrap -->
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#5D6D7E"></div>ログイン・認証</div>
+        <div class="leg"><div class="leg-dot" style="background:#2471A3"></div>管理ハブ</div>
+        <div class="leg"><div class="leg-dot" style="background:#1A5276"></div>データ・レポート</div>
+        <div class="leg"><div class="leg-dot" style="background:#117A65"></div>日常オペレーション</div>
+        <div class="leg"><div class="leg-dot" style="background:#6C3483"></div>ドキュメント・フロー</div>
+    </div>
+
+    <div class="page-footer">
+        <span>Store Management System — 画面遷移図</span>
+        <span>図 2 / 2 — 管理者端（Admin）</span>
+    </div>
+
+</div><!-- /page2 -->
+
+
+<!-- ── Controls ───────────────────────────────── -->
+<div class="controls">
+    <button class="btn-print" onclick="window.print()">🖨 PDF に出力 / 导出为 PDF</button>
+    <button class="btn-clear-all" onclick="clearAllImages()">🗑 全画像をリセット</button>
+    <div class="controls-hint">
+        各画面の灰色エリアをクリックしてスクリーンショットを追加 → すべて追加後に「PDF に出力」<br>
+        アップロード済み画像はブラウザを閉じるまで保持されます
+    </div>
+</div>
+
+
+<script>
+    // ─── Date ────────────────────────────────────────────
+    const today = new Date();
+    const ymd = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+    document.getElementById('docDate1').textContent = ymd;
+    document.getElementById('docDate2').textContent = ymd;
+
+    // ─── All node IDs ─────────────────────────────────────
+    const ALL_IDS = [
+        'login','portal','today-orders','yesterday-orders','stats',
+        'calendar','sop','flow',
+        'hub-login','hub-main',
+        'a-dashboard','a-store-index','a-schedule','a-calendar',
+        'a-yesterday','a-sop','a-flow1','a-flow2'
+    ];
+
+    // ─── Upload ───────────────────────────────────────────
+    function triggerUpload(id) {
+        document.getElementById('file-' + id).click();
+    }
+
+    function loadImg(input, id) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setImage(id, e.target.result);
+            // Try to persist in localStorage (may fail if too large)
+            try { localStorage.setItem('flow_img_' + id, e.target.result); } catch(ex) {}
+        };
+        reader.readAsDataURL(file);
+        // Reset input so same file can be re-selected
+        input.value = '';
+    }
+
+    function setImage(id, src) {
+        const img = document.getElementById('img-' + id);
+        const area = img ? img.parentElement : null;
+        if (!img || !area) return;
+        img.src = src;
+        area.classList.add('has-image');
+    }
+
+    function clearImg(event, id) {
+        event.stopPropagation();
+        const img = document.getElementById('img-' + id);
+        const area = img ? img.parentElement : null;
+        if (!img || !area) return;
+        img.src = '';
+        area.classList.remove('has-image');
+        try { localStorage.removeItem('flow_img_' + id); } catch(ex) {}
+    }
+
+    function clearAllImages() {
+        if (!confirm('すべてのスクリーンショットを削除しますか？')) return;
+        ALL_IDS.forEach(id => {
+            const img = document.getElementById('img-' + id);
+            const area = img ? img.parentElement : null;
+            if (img) img.src = '';
+            if (area) area.classList.remove('has-image');
+            try { localStorage.removeItem('flow_img_' + id); } catch(ex) {}
+        });
+    }
+
+    // ─── Restore from localStorage ───────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+        ALL_IDS.forEach(id => {
+            try {
+                const saved = localStorage.getItem('flow_img_' + id);
+                if (saved) setImage(id, saved);
+            } catch(ex) {}
+        });
+    });
+</script>
+
+</body>
+</html>

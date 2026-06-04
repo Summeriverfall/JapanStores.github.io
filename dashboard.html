@@ -1,0 +1,4253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="运营数据仪表盘 - 实时查看和分析运营数据" data-lang="meta-description">
+    <title data-lang="title">运营数据仪表盘</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gold: #C9A961;
+            --secondary-gold: #D4AF37;
+            --bg-cream: #FAF8F3;
+            --bg-white: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #6B6B6B;
+            --success: #1E8E4F;
+            --error: #DC3545;
+            --info: #0D6EFD;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+            --shadow-medium: rgba(0, 0, 0, 0.08);
+            --shadow-heavy: rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .language-switcher {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .lang-btn.active {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--primary-gold); }
+
+        .dashboard-header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-medium);
+            font-size: 1rem;
+        }
+
+        .data-source-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .data-source-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+
+        .tab-button:hover {
+            color: var(--primary-gold);
+        }
+
+        .tab-button.active {
+            color: var(--primary-gold);
+            border-bottom-color: var(--primary-gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: var(--bg-white);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: var(--bg-cream);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-gold);
+            background: rgba(201, 169, 97, 0.05);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary-gold);
+            background: rgba(201, 169, 97, 0.1);
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        .file-upload-text {
+            font-size: 1rem;
+            color: var(--text-medium);
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-hint {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-gold);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--card-border);
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background: #D4D0C8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--error);
+        }
+
+        .section-today .stat-card {
+            border-left: 3px solid var(--primary-gold);
+        }
+
+        .today-date-hint {
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .data-table-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            overflow-x: auto;
+        }
+
+        .landscape-btn {
+            display: none;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+            padding: 0.4rem 0.9rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .landscape-btn:hover { border-color: var(--primary-gold); color: var(--primary-gold); }
+
+        #landscapeOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #fff;
+            flex-direction: column;
+        }
+        #landscapeOverlay.open { display: flex; }
+        #landscapeOverlay .lo-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--bg-cream);
+            flex-shrink: 0;
+        }
+        #landscapeOverlay .lo-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        #landscapeOverlay .lo-close {
+            padding: 0.3rem 0.8rem;
+            background: none;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-medium);
+        }
+        #landscapeOverlay .lo-body {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: var(--bg-cream);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--card-border);
+            font-size: 0.9rem;
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-medium);
+        }
+
+        .data-table tr:hover {
+            background: var(--bg-cream);
+        }
+
+        /* 排行榜前三名高亮 */
+        .data-table tr.rank-top-1 {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.15), transparent);
+        }
+        .data-table tr.rank-top-2 {
+            background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), transparent);
+        }
+        .data-table tr.rank-top-3 {
+            background: linear-gradient(90deg, rgba(205, 127, 50, 0.15), transparent);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: rgba(30, 142, 79, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(30, 142, 79, 0.2);
+        }
+
+        .alert-error {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .alert-info {
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(13, 110, 253, 0.2);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(201, 169, 97, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-gold);
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(201, 169, 97, 0.2);
+            border-top-color: var(--primary-gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(201, 169, 97, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-gold), var(--secondary-gold));
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progressPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 1rem 0.5rem;
+            }
+
+            .dashboard-header {
+                padding: 1.5rem 1rem;
+            }
+
+            .dashboard-title {
+                font-size: 1.5rem;
+            }
+
+            .dashboard-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .data-source-section {
+                padding: 1.5rem 1rem;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .sectionB-desktop-charts {
+                display: none;
+            }
+            .sectionB-mobile-tables {
+                display: block !important;
+            }
+            .landscape-btn {
+                display: inline-flex;
+            }
+
+            .chart-container {
+                height: 300px;
+                overflow: hidden;
+            }
+
+            .chart-title {
+                font-size: 1rem;
+            }
+
+            .chart-card {
+                padding: 1rem;
+                overflow: hidden;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+                overflow-wrap: break-word;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .data-source-tabs {
+                flex-wrap: wrap;
+            }
+
+            .data-table-container {
+                padding: 1rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .data-table {
+                font-size: 0.85rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            /* 月份选择器移动端优化 */
+            #monthSelectorSection .data-source-section {
+                padding: 1rem;
+            }
+
+            #monthSelectorSection .input-group {
+                margin-bottom: 1rem;
+            }
+
+            #monthSelectorSection .input-label {
+                font-size: 0.9rem;
+            }
+
+            #monthSelectorSection .input-field {
+                font-size: 0.95rem;
+                padding: 0.7rem 0.9rem;
+            }
+
+            #monthSelectorSection .btn {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.95rem;
+                white-space: nowrap;
+            }
+
+            #monthSelectorSection .input-hint {
+                font-size: 0.8rem;
+            }
+
+            #currentMonthDisplay {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+
+            /* 按钮组移动端优化 */
+            .btn {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.95rem;
+            }
+
+            /* 月份选择器在小屏下垂直排列 */
+            #monthSelectorSection .month-selector-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            #monthSelectorSection .month-selector-row .input-group {
+                min-width: 100%;
+            }
+
+            #monthSelectorSection .month-selector-row .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* 头部与语言切换 */
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .language-switcher {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .lang-btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .tab-button {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            /* 表格横向滚动优化 */
+            .data-table-container {
+                position: relative;
+            }
+
+            .data-table-container::after {
+                content: '→';
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                font-size: 1.5rem;
+                color: var(--text-light);
+                pointer-events: none;
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard-container {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .dashboard-header {
+                padding: 1.25rem 0.75rem;
+            }
+
+            .dashboard-title {
+                font-size: 1.25rem;
+            }
+
+            .data-source-section {
+                padding: 1.25rem 0.75rem;
+            }
+
+            .chart-container {
+                height: 280px;
+            }
+
+            .chart-title {
+                font-size: 0.95rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.35rem;
+                overflow-wrap: break-word;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .data-table {
+                font-size: 0.8rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.6rem 0.4rem;
+            }
+
+            .file-upload-area {
+                padding: 2rem 1rem;
+            }
+
+            .file-upload-icon {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>sessionStorage.setItem('stores_admin','1');</script>
+    <div class="dashboard-container">
+        <a href="hub.html" class="back-link" data-lang="back-to-hub">← 管理者ハブに戻る</a>
+        <!-- 头部 -->
+        <div class="dashboard-header">
+            <div class="header-content">
+                <h1 class="dashboard-title" data-lang="title">📊 运营数据仪表盘</h1>
+                <p class="dashboard-subtitle" data-lang="subtitle">实时查看和分析您的运营数据</p>
+                <a href="stores/index.html" style="font-size: 0.9rem; color: var(--primary-gold); text-decoration: none; margin-top: 0.5rem; display: inline-block;">🏪 门店数据门户 →</a>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+            </div>
+        </div>
+
+        <!-- 数据源选择（隐藏，自动加载） -->
+        <div class="data-source-section hidden" style="display: none;">
+            <h2 class="section-title" data-lang="data-source">📥 数据源</h2>
+            
+            <div class="data-source-tabs">
+                <button class="tab-button active" data-tab="googlesheets" data-lang="tab-googlesheets">Google Sheets</button>
+                <button class="tab-button" data-tab="upload" data-lang="tab-upload">文件上传</button>
+            </div>
+
+            <!-- Google Sheets 标签页 -->
+            <div id="googlesheets-tab" class="tab-content active">
+                <div class="input-group">
+                    <label class="input-label" data-lang="label-sheets-url">Google Sheets 公开链接</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="sheetsUrl" class="input-field" 
+                               value="https://docs.google.com/spreadsheets/d/1B_GTNGUHYN8xbXYAWjv_FosTAbVghyCbmX5N9fvgrEc/edit?gid=1706509085#gid=1706509085"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0">
+                        <button class="btn btn-secondary" id="saveConfigBtn" data-lang-title="title-save-config" title="保存配置" style="display: none;">
+                            💾
+                        </button>
+                    </div>
+                    <p class="input-hint" data-lang="hint-sheets-public">
+                        💡 提示：请确保您的 Google Sheets 已设置为"任何拥有链接的人都可以查看"
+                        <span id="configSavedHint" style="display: none; color: var(--success); margin-left: 0.5rem;" data-lang="config-saved">✓ 配置已保存</span>
+                    </p>
+                </div>
+                <div class="input-group">
+                    <label class="input-label" data-lang="label-sheet-name">工作表名称（可选）</label>
+                    <input type="text" id="sheetName" class="input-field" 
+                           value="Master"
+                           data-lang-placeholder="placeholder-sheet-name"
+                           placeholder="Master（留空则使用第一个工作表，输入名称会自动查找）">
+                    <p class="input-hint" data-lang="hint-sheet-name">
+                        💡 如果您的表格中有多个 sheet，输入 sheet 名称（如 "Master"）系统会自动查找并加载该 sheet
+                    </p>
+                </div>
+                <div class="input-group">
+                    <label class="input-label" data-lang="label-script-url">Google Apps Script URL（可选）</label>
+                    <input type="text" id="scriptUrl" class="input-field" 
+                           value="https://script.google.com/macros/s/AKfycbyjqTT0VhBHU7lDhT7e-Pbs-dlLskxpw2FPdeWuVAAwOLnP-vl8trRpISaplbXLX9FM/exec"
+                           data-lang-placeholder="placeholder-script-url"
+                           placeholder="https://script.google.com/macros/s/.../exec">
+                    <p class="input-hint" data-lang="hint-script-url">
+                        💡 如需在网页上直接更改月份，请设置 Google Apps Script。
+                        <a href="#" onclick="document.getElementById('appsScriptInfo').classList.remove('hidden'); return false;" style="color: var(--primary-gold); text-decoration: underline;" data-lang="link-script-info">点击查看设置说明</a>
+                    </p>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-primary" id="loadSheetsBtn">
+                        <span data-lang="btn-load-data">📥 加载数据</span>
+                    </button>
+                    <button class="btn btn-secondary" id="clearConfigBtn" style="display: none;">
+                        <span data-lang="btn-clear-config">🗑️ 清除保存的配置</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 文件上传标签页 -->
+            <div id="upload-tab" class="tab-content">
+                <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="file-upload-icon">📁</div>
+                    <div class="file-upload-text" data-lang="upload-text">点击或拖拽文件到此处上传</div>
+                    <div class="file-upload-hint" data-lang="upload-hint">支持 CSV 和 Excel (.xlsx) 格式</div>
+                </div>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+                <p class="input-hint" style="margin-top: 1rem;" data-lang="upload-note">
+                    💡 注意：文件仅在浏览器中处理，不会上传到服务器。数据仅保存在当前浏览器会话中，刷新页面后需要重新上传。
+                </p>
+            </div>
+
+            <!-- 消息提示 -->
+            <div id="messageArea"></div>
+        </div>
+
+        <!-- Google Apps Script 设置说明 -->
+        <div id="appsScriptInfo" class="hidden" style="margin-bottom: 2rem;">
+            <div class="data-source-section">
+                <h2 class="section-title">⚙️ Google Apps Script 设置说明</h2>
+                <div style="background: rgba(201, 169, 97, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--primary-gold);">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-dark);">如何设置 Google Apps Script 以实现网页直接更改月份：</h3>
+                    <ol style="line-height: 2; color: var(--text-medium); padding-left: 1.5rem;">
+                        <li>在 Google Sheets 中，点击 <strong>扩展程序</strong> → <strong>Apps Script</strong></li>
+                        <li>复制以下代码并粘贴到编辑器：</li>
+                        <pre style="background: var(--bg-white); padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 1rem 0;"><code>function doGet(e) {
+  const sheetId = e.parameter.sheetId;
+  const month = e.parameter.month;
+  const action = e.parameter.action;
+  
+  if (action === 'updateMonth') {
+    try {
+      const ss = SpreadsheetApp.openById(sheetId);
+      const dashboardSheet = ss.getSheetByName('Dashboard');
+      
+      if (!dashboardSheet) {
+        return ContentService.createTextOutput(JSON.stringify({
+          success: false,
+          error: '找不到 Dashboard sheet'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // 更新 B2 单元格为选择的月份
+      dashboardSheet.getRange('B2').setValue(month);
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: '月份已更新'
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: error.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  if (action === 'updateDay') {
+    try {
+      const ss = SpreadsheetApp.openById(sheetId);
+      const dashboardSheet = ss.getSheetByName('Dashboard');
+      if (!dashboardSheet) {
+        return ContentService.createTextOutput(JSON.stringify({
+          success: false,
+          error: '找不到 Dashboard sheet'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      dashboardSheet.getRange('E2').setValue(e.parameter.date);
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: '统计日期已更新'
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: error.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: '未知操作'
+  })).setMimeType(ContentService.MimeType.JSON);
+}</code></pre>
+                        <li>点击 <strong>部署</strong> → <strong>新建部署</strong></li>
+                        <li>选择类型为 <strong>网页应用</strong></li>
+                        <li>执行身份选择 <strong>我</strong>，访问权限选择 <strong>任何人</strong></li>
+                        <li>点击 <strong>部署</strong>，复制生成的 Web 应用 URL</li>
+                        <li>将 URL 粘贴到上方的"Google Apps Script URL"输入框中</li>
+                    </ol>
+                    <div style="background: rgba(13, 110, 253, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid var(--info);">
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-dark);">⚠️ 重要：如果您的 Apps Script 中已有代码</h4>
+                        <p style="color: var(--text-medium); line-height: 1.6;">
+                            如果您的 Apps Script 中已经有其他代码，请按照以下方式集成：
+                        </p>
+                        <ol style="line-height: 2; color: var(--text-medium); padding-left: 1.5rem; margin-top: 0.5rem;">
+                            <li><strong>检查是否已有 doGet 函数</strong>：如果已有，需要修改现有函数来支持新的 action</li>
+                            <li><strong>如果没有 doGet 函数</strong>：直接添加提供的代码</li>
+                            <li><strong>如果有 doGet 函数</strong>：在现有函数中添加对 <code>updateMonth</code>、<code>updateDay</code> action 的处理</li>
+                        </ol>
+                        <p style="color: var(--text-medium); margin-top: 0.5rem;">
+                            详见下方"集成到现有代码"部分
+                        </p>
+                    </div>
+                    <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
+                        💡 设置完成后，您可以在网页上选择月份（更新 B2）或选择日期（更新 E2），系统会自动刷新对应统计数据。
+                    </p>
+                </div>
+                
+                <!-- 集成说明 -->
+                <div style="background: var(--bg-white); padding: 1.5rem; border-radius: 8px; margin-top: 1rem; border: 1px solid var(--card-border);">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-dark);">📝 如何集成到现有代码</h3>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="color: var(--text-dark); margin-bottom: 0.5rem;">情况1：没有 doGet 函数（您的情况）</h4>
+                        <p style="color: var(--text-medium); margin-bottom: 0.5rem;">直接将以下代码添加到您的 Apps Script 文件末尾：</p>
+                        <pre style="background: var(--bg-cream); padding: 1rem; border-radius: 4px; overflow-x: auto; max-height: 400px; overflow-y: auto;"><code>// ===== 仪表盘月份更新功能 =====
+// 将此函数添加到您现有代码的末尾
+function doGet(e) {
+  const sheetId = e.parameter.sheetId;
+  const month = e.parameter.month;
+  const action = e.parameter.action;
+  
+  if (action === 'updateMonth') {
+    try {
+      const ss = SpreadsheetApp.openById(sheetId);
+      const dashboardSheet = ss.getSheetByName('Dashboard');
+      
+      if (!dashboardSheet) {
+        return ContentService.createTextOutput(JSON.stringify({
+          success: false,
+          error: '找不到 Dashboard sheet'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      // 更新 B2 单元格为选择的月份
+      // month 格式：YYYY-MM-DD（该月第一天）
+      dashboardSheet.getRange('B2').setValue(month);
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: '月份已更新'
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: error.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: '未知操作'
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+// ===== 仪表盘月份更新功能结束 =====</code></pre>
+                        <div style="background: rgba(30, 142, 79, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 4px solid var(--success);">
+                            <p style="color: var(--text-medium); margin: 0; line-height: 1.6;">
+                                <strong>✅ 您的代码结构：</strong>您的代码主要用于同步 Google Calendar 数据，没有 doGet 函数。<br>
+                                <strong>✅ 添加方式：</strong>直接将上面的 <code>doGet</code> 函数复制到您现有代码的最后即可。<br>
+                                <strong>✅ 不会冲突：</strong>这个函数是独立的，不会影响您现有的 <code>syncAllStoresDaily</code>、<code>syncAllStoresDeep</code> 等函数。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: var(--text-dark); margin-bottom: 0.5rem;">情况2：已有 doGet 函数</h4>
+                        <p style="color: var(--text-medium); margin-bottom: 0.5rem;">在您现有的 doGet 函数中添加以下代码：</p>
+                        <pre style="background: var(--bg-cream); padding: 1rem; border-radius: 4px; overflow-x: auto;"><code>function doGet(e) {
+  // ... 您现有的代码 ...
+  
+  const action = e.parameter.action;
+  
+  // 添加月份更新功能
+  if (action === 'updateMonth') {
+    try {
+      const sheetId = e.parameter.sheetId;
+      const month = e.parameter.month;
+      const ss = SpreadsheetApp.openById(sheetId);
+      const dashboardSheet = ss.getSheetByName('Dashboard');
+      
+      if (!dashboardSheet) {
+        return ContentService.createTextOutput(JSON.stringify({
+          success: false,
+          error: '找不到 Dashboard sheet'
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      dashboardSheet.getRange('B2').setValue(month);
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        message: '月份已更新'
+      })).setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: error.toString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  // ... 您现有的其他代码 ...
+}</code></pre>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(30, 142, 79, 0.1); border-radius: 8px; border-left: 4px solid var(--success);">
+                        <h4 style="color: var(--text-dark); margin-bottom: 0.5rem;">💡 提示</h4>
+                        <ul style="color: var(--text-medium); line-height: 1.8; padding-left: 1.5rem;">
+                            <li>这个新功能不会影响您现有的代码</li>
+                            <li>只有当 action 参数为 'updateMonth' 时才会执行月份更新功能</li>
+                            <li>如果您的 doGet 函数已经有其他逻辑，只需要添加 if (action === 'updateMonth') 这个判断即可</li>
+                            <li>添加代码后，记得重新部署 Web 应用</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="document.getElementById('appsScriptInfo').classList.add('hidden')" style="margin-top: 1rem;" data-lang="btn-close-instructions">
+                    关闭说明
+                </button>
+            </div>
+        </div>
+
+        <!-- 月份选择器 -->
+        <div id="monthSelectorSection" class="hidden">
+            <div class="data-source-section">
+                <h2 class="section-title" data-lang="section-month-select">📅 月份选择</h2>
+                <div class="month-selector-row" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="input-group" style="flex: 1; min-width: 200px;">
+                        <label class="input-label" data-lang="label-select-month">选择月份</label>
+                        <select id="monthSelector" class="input-field">
+                            <!-- 月份选项将通过 JavaScript 动态生成 -->
+                        </select>
+                        <p class="input-hint" data-lang="hint-select-month">
+                            💡 选择月份后点击"更新数据"按钮，系统会自动更新并加载该月份的数据
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" id="updateMonthBtn" style="margin-bottom: 0; min-width: 120px;">
+                        <span data-lang="btn-update-data">🔄 更新数据</span>
+                    </button>
+                </div>
+                <div id="updateProgressContainer" style="margin-top: 1rem; display: none;">
+                    <div style="background: rgba(201, 169, 97, 0.1); border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <div class="progress-spinner"></div>
+                            <span id="updateProgressText" style="color: var(--text-dark); font-weight: 500;" data-lang="msg-updating">正在更新数据...</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="updateProgressBar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="currentMonthDisplay" style="margin-top: 1rem; padding: 0.75rem; background: rgba(201, 169, 97, 0.1); border-radius: 8px; display: none;">
+                    <strong data-lang="label-current-month">当前显示月份：</strong><span id="currentMonthText"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当日数据 -->
+        <div id="sectionToday" class="hidden">
+            <div class="data-source-section section-today">
+                <h2 class="section-title" data-lang="section-today">📅 当日数据</h2>
+                <div class="month-selector-row" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                    <div class="input-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                        <label class="input-label" for="daySelector" data-lang="label-select-day">选择日期</label>
+                        <input type="date" id="daySelector" class="input-field">
+                        <p class="input-hint" data-lang="hint-select-day">💡 选择日期后点击「更新当日数据」，系统会写入 E2 并刷新统计（需配置 Apps Script，或手动改 E2）</p>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="updateDayBtn" style="margin-bottom: 0; min-width: 140px;">
+                        <span data-lang="btn-update-day-data">🔄 更新当日数据</span>
+                    </button>
+                </div>
+                <div id="currentDayDisplay" style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(201, 169, 97, 0.1); border-radius: 8px;">
+                    <strong data-lang="label-current-day">当前统计日期：</strong><span id="currentDayText"></span>
+                </div>
+                <p class="input-hint" style="margin-bottom: 1rem;" data-lang="hint-today-data">💡 E2 为统计日期；E3:E6 纵向依次为订单数、客人数、促成交易额、佣金（结算金额）。公式请引用 E2，勿写死 TODAY()</p>
+                <div class="stats-grid" id="sectionTodayGrid"></div>
+                <div id="dailyTrendCard" class="chart-card" style="margin-top: 1.5rem; display: none;">
+                    <h3 class="chart-title" data-lang="chart-daily-trend">最近7天佣金趋势</h3>
+                    <div class="chart-container" style="height: 320px;">
+                        <canvas id="dailyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当月数据 -->
+        <div id="sectionA" class="hidden">
+            <div class="data-source-section">
+                <h2 class="section-title" data-lang="section-monthly-data">📊 当月数据</h2>
+                <div class="stats-grid" id="sectionAGrid"></div>
+            </div>
+        </div>
+
+        <!-- 累计数据 -->
+        <div id="sectionC" class="hidden">
+            <div class="data-source-section">
+                <h2 class="section-title" data-lang="section-cumulative">📈 累计数据</h2>
+                <div class="stats-grid" id="sectionCGrid"></div>
+            </div>
+        </div>
+
+        <!-- 各门店数据 -->
+        <div id="sectionB" class="hidden">
+            <div class="data-source-section">
+                <h2 class="section-title" data-lang="section-stores-data">🏪 各门店数据</h2>
+                <!-- 桌面端：两个图表 -->
+                <div class="charts-grid sectionB-desktop-charts">
+                    <div class="chart-card">
+                        <h3 class="chart-title" data-lang="chart-orders">订单数</h3>
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="sectionBChartOrders"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title" data-lang="chart-amount">结算金额</h3>
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="sectionBChartSettlement"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- 移动端：两张独立表格 -->
+                <div class="sectionB-mobile-tables" style="display:none;">
+                    <div class="chart-card" style="margin-bottom: 1rem;">
+                        <h3 class="chart-title" data-lang="chart-orders">订单数</h3>
+                        <div id="sectionBMobileOrders"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title" data-lang="chart-amount">结算金额</h3>
+                        <div id="sectionBMobileSettlement"></div>
+                    </div>
+                </div>
+                <!-- 汇总全列表格 -->
+                <div style="margin-top: 1.5rem;">
+                    <button class="landscape-btn" id="landscapeBtn">⤢ 横屏查看</button>
+                    <div class="data-table-container">
+                        <div id="sectionBTable"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 趋势数据 -->
+        <div id="sectionTrend" class="hidden">
+            <div class="data-source-section">
+                <h2 class="section-title" data-lang="section-trend-data">📊 趋势数据</h2>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3 class="chart-title" data-lang="chart-trend-orders">最近六个月订单数量趋势</h3>
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="trendChartOrders"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title" data-lang="chart-trend-amount">最近六个月结算金额趋势</h3>
+                        <div class="chart-container" style="height: 350px;">
+                            <canvas id="trendChartSettlement"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近6个月门店佣金排行榜 -->
+        <div id="sectionCommissionRank" class="hidden">
+            <div class="data-source-section">
+                <h2 class="section-title" data-lang="section-commission-rank">🏆 最近6个月门店佣金排行榜</h2>
+                <p class="input-hint" style="margin-bottom: 1rem;" data-lang="hint-commission-rank">💡 请在 Google Sheets 中从第20行起添加「门店」和「6个月佣金/结算金额」列，系统将自动读取并排序显示</p>
+                <div class="data-table-container">
+                    <div id="sectionCommissionRankTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentData = null;
+        let charts = [];
+        let currentSheetId = null;
+        let currentGid = 0;
+        let currentSheetUrl = null;
+        let appsScriptUrl = null;
+
+        // 标签页切换
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // 更新内容显示
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // 文件上传处理
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            showMessage(t('msg-processing-file'), 'info');
+            
+            const reader = new FileReader();
+            const fileName = file.name.toLowerCase();
+            
+            if (fileName.endsWith('.csv')) {
+                reader.onload = (e) => {
+                    try {
+                        const csv = e.target.result;
+                        const data = parseCSV(csv);
+                        processData(data);
+                        showMessage(t('msg-file-loaded'), 'success');
+                    } catch (error) {
+                        showMessage(t('msg-csv-parse-error') + ' ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                reader.onload = (e) => {
+                    try {
+                        const arrayData = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(arrayData, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        // 直接获取二维数组格式
+                        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                        processData(data);
+                        showMessage(t('msg-excel-loaded'), 'success');
+                    } catch (error) {
+                        showMessage(t('msg-excel-parse-error') + ' ' + error.message, 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                showMessage(t('msg-unsupported-format'), 'error');
+            }
+        }
+
+        // Google Sheets 加载
+        async function loadGoogleSheets() {
+            const url = document.getElementById('sheetsUrl').value.trim();
+            const sheetName = document.getElementById('sheetName').value.trim();
+            
+            if (!url) {
+                showMessage(t('msg-enter-sheets-url'), 'error');
+                return;
+            }
+
+            showMessage(t('msg-loading'), 'info');
+            
+            try {
+                // 提取表格 ID 和可能的 gid
+                const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+                if (!match) {
+                    throw new Error(t('msg-invalid-url'));
+                }
+                
+                const sheetId = match[1];
+                let targetGid = 0; // 默认使用第一个 sheet
+                
+                // 首先尝试从 URL 中提取 gid（如果用户已经打开了特定的 sheet）
+                const gidMatch = url.match(/[#&]gid=(\d+)/);
+                if (gidMatch) {
+                    targetGid = parseInt(gidMatch[1]);
+                    showMessage(t('msg-detected-gid', { gid: targetGid }), 'info');
+                }
+                
+                // 如果指定了工作表名称，尝试查找对应的 gid
+                if (sheetName && !gidMatch) {
+                    showMessage(t('msg-finding-sheet', { sheetName: sheetName }), 'info');
+                    const foundGid = await findSheetGid(sheetId, sheetName);
+                    if (foundGid !== null) {
+                        targetGid = foundGid;
+                        showMessage(t('msg-sheet-found', { sheetName: sheetName, gid: targetGid }), 'success');
+                    } else {
+                        // 如果自动查找失败，提供操作提示
+                        showMessage(t('msg-sheet-not-found', { sheetName: sheetName }), 'info');
+                        return; // 不继续加载，等待用户提供正确的 URL
+                    }
+                }
+                
+                // 保存当前sheet信息，以便后续更新
+                currentSheetId = sheetId;
+                currentGid = targetGid;
+                currentSheetUrl = url;
+                
+                // 保存 Apps Script URL（如果已输入）
+                const scriptUrlInput = document.getElementById('scriptUrl');
+                if (scriptUrlInput) {
+                    appsScriptUrl = scriptUrlInput.value.trim() || null;
+                    // 自动保存配置
+                    saveConfig();
+                }
+                
+                // 加载数据
+                const data = await loadSheetData(sheetId, targetGid);
+                
+                const sheetInfo = sheetName ? `工作表 "${sheetName}"` : `gid=${targetGid} 的工作表`;
+                showMessage(t('msg-load-success', { sheetInfo: sheetInfo, rows: data.length }), 'success');
+            } catch (error) {
+                showMessage('加载失败：' + error.message, 'error');
+                console.error('Error loading Google Sheets:', error);
+            }
+        }
+
+        // 查找指定名称的 sheet 的 gid
+        async function findSheetGid(sheetId, targetSheetName) {
+            try {
+                // 方法1：尝试通过 HTML view 获取 sheet 列表
+                // 注意：由于 CORS 限制，这个方法可能在某些浏览器中失败
+                const htmlViewUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/htmlview`;
+                
+                try {
+                    const htmlResponse = await fetch(htmlViewUrl);
+                    
+                    if (htmlResponse.ok) {
+                        const html = await htmlResponse.text();
+                        
+                        // 尝试多种模式来匹配 sheet 标签
+                        // Google Sheets HTML 中 sheet 标签通常包含 gid 和名称
+                        const patterns = [
+                            // 模式1: <a href="...gid=123">SheetName</a>
+                            new RegExp(`href="[^"]*gid=(\\d+)[^"]*"[^>]*>([^<]*${targetSheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^<]*)</a>`, 'gi'),
+                            // 模式2: gid=123 附近包含 sheet 名称
+                            new RegExp(`gid=(\\d+)[^>]*>([^<]*${targetSheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^<]*)<`, 'gi'),
+                            // 模式3: 查找包含 sheet 名称的链接中的 gid
+                            new RegExp(`gid=(\\d+).*?${targetSheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi')
+                        ];
+                        
+                        for (let pattern of patterns) {
+                            const matches = html.match(pattern);
+                            if (matches) {
+                                for (let match of matches) {
+                                    const gidMatch = match.match(/gid=(\d+)/);
+                                    if (gidMatch) {
+                                        const gid = parseInt(gidMatch[1]);
+                                        // 验证这个 gid 是否可访问
+                                        try {
+                                            const testUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+                                            const testResponse = await fetch(testUrl);
+                                            if (testResponse.ok) {
+                                                return gid;
+                                            }
+                                        } catch (e) {
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (corsError) {
+                    // CORS 限制，使用备用方法
+                    console.log('CORS 限制，尝试备用方法');
+                }
+                
+                // 方法2：尝试常见的 gid 范围（0-30）
+                // 虽然无法直接验证名称，但可以尝试加载并让用户确认
+                // 这个方法不够可靠，所以不在这里实现
+                
+                return null; // 未找到匹配的 sheet
+            } catch (error) {
+                console.error('Error finding sheet gid:', error);
+                return null;
+            }
+        }
+
+        // CSV 解析 - 返回二维数组格式
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            if (lines.length === 0) return [];
+            
+            const data = [];
+            for (let i = 0; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                data.push(values);
+            }
+            
+            return data;
+        }
+        
+        // CSV 解析 - 返回对象格式（保留用于兼容）
+        function parseCSVToObject(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            if (lines.length === 0) return { headers: [], rows: [] };
+            
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+            const rows = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length > 0) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] || '';
+                    });
+                    rows.push(row);
+                }
+            }
+            
+            return { headers, rows };
+        }
+
+        // CSV 行解析（处理引号内的逗号）
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            
+            return result;
+        }
+
+        // Excel 数据转换
+        function convertToTableData(jsonData) {
+            if (jsonData.length === 0) return { headers: [], rows: [] };
+            
+            const headers = jsonData[0].map(h => String(h || '').trim());
+            const rows = [];
+            
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = jsonData[i][index] || '';
+                });
+                rows.push(row);
+            }
+            
+            return { headers, rows };
+        }
+
+        // 从二维数组中提取指定区域的数据（行列从1开始计数，转换为0开始）
+        function extractRange(data, startRow, endRow, startCol, endCol) {
+            const result = [];
+            // 转换为0基索引
+            const startR = startRow - 1;
+            const endR = endRow - 1;
+            const startC = startCol - 1;
+            const endC = endCol - 1;
+            
+            for (let i = startR; i <= endR && i < data.length; i++) {
+                const row = [];
+                if (data[i]) {
+                    for (let j = startC; j <= endC && j < data[i].length; j++) {
+                        row.push(data[i][j] || '');
+                    }
+                }
+                result.push(row);
+            }
+            
+            return result;
+        }
+        
+        // 获取单个单元格的值（行列从1开始计数）
+        function getCellValue(data, row, col) {
+            const r = row - 1;
+            const c = col - 1;
+            if (data[r] && data[r][c] !== undefined) {
+                return data[r][c];
+            }
+            return '';
+        }
+        
+        // 动态检测数据范围：从指定起始行开始向下查找，直到遇到空行为止
+        // startRow: 起始行（包含表头，从1开始计数）
+        // startCol: 起始列（从1开始计数）
+        // endCol: 结束列（从1开始计数）
+        function extractDynamicRange(data, startRow, startCol, endCol) {
+            const result = [];
+            const startR = startRow - 1;
+            const startC = startCol - 1;
+            const endC = endCol - 1;
+            
+            // 从起始行开始向下查找
+            for (let i = startR; i < data.length; i++) {
+                // 如果整行都不存在，停止
+                if (!data[i] || data[i].length === 0) {
+                    break;
+                }
+                
+                // 检查第一列是否为空（如果第一列为空，认为这是空行）
+                const firstCell = data[i][startC];
+                if (firstCell === undefined || firstCell === null || String(firstCell).trim() === '') {
+                    // 如果第一列为空，检查是否是表头行（起始行）
+                    // 如果是表头行，仍然包含它；否则停止
+                    if (i === startR) {
+                        // 表头行，即使第一列为空也包含（可能是格式问题）
+                    } else {
+                        // 数据行，第一列为空则停止
+                        break;
+                    }
+                }
+                
+                // 提取这一行的数据
+                const row = [];
+                for (let j = startC; j <= endC; j++) {
+                    if (j < data[i].length) {
+                        row.push(data[i][j] || '');
+                    } else {
+                        row.push(''); // 如果列不存在，填充空字符串
+                    }
+                }
+                result.push(row);
+            }
+            
+            return result;
+        }
+        
+        // 加载Sheet数据（独立函数，便于重新加载）
+        async function loadSheetData(sheetId, gid) {
+            try {
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}&t=${Date.now()}`;
+                const response = await fetch(csvUrl, { cache: 'no-store' });
+                
+                if (!response.ok) {
+                    throw new Error(t('msg-cannot-access-sheets'));
+                }
+                
+                const csv = await response.text();
+                
+                // 检查 CSV 是否为空或无效
+                if (!csv || csv.trim().length === 0) {
+                    throw new Error('获取的数据为空，请检查 sheet 是否存在数据');
+                }
+                
+                const data = parseCSV(csv);
+                
+                if (!data || data.length === 0) {
+                    throw new Error(t('msg-data-format-error'));
+                }
+                
+                processData(data);
+                return data;
+            } catch (error) {
+                showMessage(t('msg-load-failed') + ' ' + error.message, 'error');
+                throw error;
+            }
+        }
+        
+        // 处理数据
+        function processData(csvData) {
+            // csvData 现在是二维数组格式
+            currentData = csvData;
+            
+            // 提取月份选择器（B2单元格，第2行第2列）
+            const monthValue = getCellValue(csvData, 2, 2);
+            
+            // 格式化月份值（如果是日期格式，转换为YYYY-MM格式）
+            let formattedMonth = formatMonthValue(monthValue);
+            const monthSelector = document.getElementById('monthSelector');
+            if (monthSelector) {
+                monthSelector.value = formattedMonth;
+                monthSelector.setAttribute('data-current-value', formattedMonth);
+            }
+            
+            // 显示当前月份
+            const currentMonthText = formattedMonth || monthValue || t('not-set');
+            document.getElementById('currentMonthText').textContent = currentMonthText;
+            document.getElementById('currentMonthDisplay').style.display = 'block';
+            
+            // 提取A区域数据（A2:B6，第2-6行，第1-2列）
+            const sectionAData = extractRange(csvData, 2, 6, 1, 2);
+            
+            // 提取B区域数据（A10开始，动态向下查找直到空行，第1-5列）
+            // 使用动态范围，自动检测所有门店数据
+            const sectionBData = extractDynamicRange(csvData, 10, 1, 5);
+            
+            // 提取趋势数据（G1:I7，第1-7行，第7-9列）
+            const sectionTrendData = extractRange(csvData, 1, 7, 7, 9);
+            
+            // 提取当日数据（E2 为日期，E3:E6 纵向：订单、客人数、促成交易额、佣金）
+            const todayDateLabel = getCellValue(csvData, 2, 5); // E2：统计日期
+            const sectionTodayData = [[
+                getCellValue(csvData, 3, 5), // E3：当日订单
+                getCellValue(csvData, 4, 5), // E4：当日客人数
+                getCellValue(csvData, 5, 5), // E5：当日促成交易额
+                getCellValue(csvData, 6, 5), // E6：当日佣金
+            ]];
+            
+            // 提取最近7天每日趋势数据（P1:R8：日期、每日促成交易额、每日佣金）
+            const dailyTrendData = extractRange(csvData, 1, 8, 16, 18);
+            
+            // 提取C区域数据（K2:N2，第2行，第11-14列）
+            const sectionCData = extractRange(csvData, 2, 2, 11, 14);
+            
+            // 提取6个月门店佣金排行榜数据（从第20行起，第1-5列，与B区域结构类似）
+            const sectionCommissionRankData = extractDynamicRange(csvData, 20, 1, 5);
+            
+            // 显示各个部分（累计数据在当月数据上方）
+            document.getElementById('monthSelectorSection').classList.remove('hidden');
+            document.getElementById('sectionToday').classList.remove('hidden');
+            document.getElementById('sectionC').classList.remove('hidden');
+            document.getElementById('sectionA').classList.remove('hidden');
+            document.getElementById('sectionB').classList.remove('hidden');
+            document.getElementById('sectionTrend').classList.remove('hidden');
+            // 暂时隐藏：最近6个月门店佣金排行榜（恢复显示时取消下行注释）
+            // document.getElementById('sectionCommissionRank').classList.remove('hidden');
+            
+            // 初始化日期选择器（E2）并生成当日数据
+            initDaySelector(todayDateLabel);
+            generateSectionToday(sectionTodayData);
+            generateDailyTrendChart(dailyTrendData);
+            generateSectionC(sectionCData);
+            generateSectionA(sectionAData);
+            generateSectionB(sectionBData);
+            generateSectionTrend(sectionTrendData);
+            generateSectionCommissionRank(sectionCommissionRankData);
+            
+            // 生成月份下拉菜单
+            generateMonthSelector();
+        }
+        
+        // 格式化月份值
+        function formatMonthValue(value) {
+            if (!value) return '';
+            
+            // 如果是YYYY-MM格式，直接返回
+            if (/^\d{4}-\d{2}$/.test(value)) {
+                return value;
+            }
+            
+            // 如果是日期格式，转换为YYYY-MM
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                return `${year}-${month}`;
+            }
+            
+            // 如果是其他格式（如"2024年1月"），尝试解析
+            const yearMatch = value.match(/(\d{4})/);
+            const monthMatch = value.match(/(\d{1,2})/);
+            if (yearMatch && monthMatch) {
+                const year = yearMatch[1];
+                const month = String(parseInt(monthMatch[1])).padStart(2, '0');
+                return `${year}-${month}`;
+            }
+            
+            return value;
+        }
+
+        // 格式化日期值为 YYYY-MM-DD（供 date 输入框使用）
+        function formatDateValue(value) {
+            if (!value) return '';
+
+            if (/^\d{4}-\d{2}-\d{2}$/.test(String(value).trim())) {
+                return String(value).trim();
+            }
+
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            const slashMatch = String(value).match(/(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})/);
+            if (slashMatch) {
+                const year = slashMatch[1];
+                const month = String(parseInt(slashMatch[2], 10)).padStart(2, '0');
+                const day = String(parseInt(slashMatch[3], 10)).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            return '';
+        }
+
+        function getLocalTodayIso() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatDateLabel(isoDate) {
+            const formatted = formatDateValue(isoDate);
+            if (!formatted) return t('not-set');
+            const [y, m, d] = formatted.split('-');
+            if (currentLang === 'en') {
+                return formatted;
+            }
+            return `${y}年${m}月${d}日`;
+        }
+
+        function updateCurrentDayDisplay(isoDate) {
+            const currentDayText = document.getElementById('currentDayText');
+            if (currentDayText) {
+                currentDayText.textContent = formatDateLabel(isoDate);
+            }
+        }
+
+        function initDaySelector(dateFromSheet) {
+            const daySelector = document.getElementById('daySelector');
+            if (!daySelector) return;
+
+            let formatted = formatDateValue(dateFromSheet);
+            if (!formatted) {
+                formatted = getLocalTodayIso();
+            }
+
+            daySelector.value = formatted;
+            daySelector.setAttribute('data-current-value', formatted);
+            updateCurrentDayDisplay(formatted);
+        }
+        
+        // 更新月份数据
+        async function updateMonthData() {
+            if (!currentSheetId) {
+                showMessage(t('msg-load-first'), 'error');
+                return;
+            }
+            
+            const selectedMonth = document.getElementById('monthSelector').value;
+            if (!selectedMonth) {
+                showMessage(t('msg-select-month'), 'error');
+                return;
+            }
+            
+            // 显示更新中提示和进度条
+            const updateBtn = document.getElementById('updateMonthBtn');
+            const progressContainer = document.getElementById('updateProgressContainer');
+            const originalBtnText = updateBtn.innerHTML;
+            
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = `<span class="loading"></span> ${t('msg-updating')}`;
+            
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+            }
+            
+            updateProgress(10, t('progress-connecting'));
+            
+            try {
+                // 如果提供了 Apps Script URL，使用它来更新 B2 单元格
+                const scriptUrlInput = document.getElementById('scriptUrl');
+                const scriptUrl = scriptUrlInput ? scriptUrlInput.value.trim() : null;
+                
+                if (scriptUrl) {
+                    updateProgress(30, t('progress-updating-sheets'));
+                    // 使用 Apps Script 更新 B2 单元格
+                    await updateMonthViaAppsScript(scriptUrl, selectedMonth);
+                    updateProgress(60, t('progress-waiting-refresh'));
+                    // 等待一小段时间让 Google Sheets 更新公式
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                } else {
+                    updateProgress(50, t('progress-manual-update'));
+                    // 如果没有 Apps Script，提示用户手动更新
+                    showMessage(t('msg-set-month', { month: selectedMonth }), 'info');
+                }
+                
+                updateProgress(70, t('progress-loading-data'));
+                // 重新加载数据
+                await loadSheetData(currentSheetId, currentGid);
+                
+                updateProgress(90, t('progress-validating'));
+                
+                // 检查加载后的月份是否匹配
+                const loadedMonth = document.getElementById('monthSelector').value;
+                const formattedSelectedMonth = formatMonthValue(selectedMonth);
+                
+                updateProgress(100, t('progress-complete'));
+                
+                // 短暂延迟后隐藏进度条
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                if (loadedMonth !== formattedSelectedMonth && loadedMonth !== selectedMonth) {
+                    if (scriptUrl) {
+                        showMessage(t('msg-data-updated-check', { loadedMonth: loadedMonth }), 'info');
+                    } else {
+                        showMessage(t('msg-data-updated', { loadedMonth: loadedMonth, selectedMonth: selectedMonth }), 'info');
+                    }
+                } else {
+                    showMessage(t('msg-data-updated-success', { month: selectedMonth }), 'success');
+                }
+            } catch (error) {
+                updateProgress(0, t('progress-failed'));
+                showMessage(t('msg-update-failed') + ' ' + error.message, 'error');
+            } finally {
+                // 恢复按钮状态
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = originalBtnText;
+                
+                // 隐藏进度条
+                if (progressContainer) {
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        updateProgress(0, t('progress-updating'));
+                    }, 1000);
+                }
+            }
+        }
+        
+        // 更新进度条
+        function updateProgress(percent, text) {
+            const progressBar = document.getElementById('updateProgressBar');
+            const progressText = document.getElementById('updateProgressText');
+            if (progressBar) {
+                progressBar.style.width = percent + '%';
+            }
+            if (progressText) {
+                progressText.textContent = text;
+            }
+        }
+
+        // 通过 Apps Script 更新月份
+        async function updateMonthViaAppsScript(scriptUrl, month) {
+            try {
+                // 格式化月份为 YYYY-MM-DD 格式（Google Sheets 日期格式）
+                const [year, monthNum] = month.split('-');
+                const dateStr = `${year}-${monthNum}-01`; // 使用该月第一天作为日期
+                
+                // 调用 Apps Script
+                const url = `${scriptUrl}?action=updateMonth&sheetId=${encodeURIComponent(currentSheetId)}&month=${encodeURIComponent(dateStr)}`;
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(t('msg-apps-script-failed'));
+                }
+                
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(t('msg-month-updated-via-script'), 'success');
+                } else {
+                    throw new Error(result.error || t('msg-update-failed'));
+                }
+            } catch (error) {
+                console.error('Apps Script error:', error);
+                throw new Error(t('msg-apps-script-update-failed') + ': ' + error.message);
+            }
+        }
+
+        // 通过 Apps Script 更新统计日期（E2）
+        async function updateDayViaAppsScript(scriptUrl, dateStr) {
+            try {
+                const url = `${scriptUrl}?action=updateDay&sheetId=${encodeURIComponent(currentSheetId)}&date=${encodeURIComponent(dateStr)}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (!response.ok) {
+                    throw new Error(t('msg-apps-script-failed'));
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(t('msg-day-updated-via-script'), 'success');
+                } else {
+                    throw new Error(result.error || t('msg-update-failed'));
+                }
+            } catch (error) {
+                console.error('Apps Script error:', error);
+                throw new Error(t('msg-apps-script-update-day-failed') + ': ' + error.message);
+            }
+        }
+
+        // 更新当日数据（写入 E2 并重新加载）
+        async function updateDayData() {
+            if (!currentSheetId) {
+                showMessage(t('msg-load-first'), 'error');
+                return;
+            }
+
+            const daySelector = document.getElementById('daySelector');
+            const selectedDate = daySelector ? daySelector.value : '';
+            if (!selectedDate) {
+                showMessage(t('msg-select-day'), 'error');
+                return;
+            }
+
+            const updateBtn = document.getElementById('updateDayBtn');
+            const originalBtnText = updateBtn ? updateBtn.innerHTML : '';
+
+            if (updateBtn) {
+                updateBtn.disabled = true;
+                updateBtn.innerHTML = `<span class="loading"></span> ${t('msg-updating')}`;
+            }
+
+            try {
+                const scriptUrlInput = document.getElementById('scriptUrl');
+                const scriptUrl = scriptUrlInput ? scriptUrlInput.value.trim() : null;
+
+                if (scriptUrl) {
+                    await updateDayViaAppsScript(scriptUrl, selectedDate);
+                    await new Promise(resolve => setTimeout(resolve, 2500));
+                } else {
+                    showMessage(t('msg-set-day', { date: selectedDate }), 'info');
+                }
+
+                await loadSheetData(currentSheetId, currentGid);
+
+                const loadedDate = formatDateValue(daySelector ? daySelector.value : '');
+                const formattedSelectedDate = formatDateValue(selectedDate);
+
+                if (loadedDate && loadedDate !== formattedSelectedDate) {
+                    if (scriptUrl) {
+                        showMessage(t('msg-day-updated-check', { loadedDate: formatDateLabel(loadedDate) }), 'info');
+                    } else {
+                        showMessage(t('msg-day-updated-manual', { selectedDate: formatDateLabel(selectedDate), loadedDate: formatDateLabel(loadedDate) || t('not-set') }), 'info');
+                    }
+                } else {
+                    showMessage(t('msg-day-updated-success', { date: formatDateLabel(selectedDate) }), 'success');
+                }
+            } catch (error) {
+                showMessage(t('msg-update-failed') + ' ' + error.message, 'error');
+            } finally {
+                if (updateBtn) {
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = originalBtnText;
+                }
+            }
+        }
+        
+        // 生成A区域：当月数据（A2:B6）
+        function generateSectionA(data) {
+            const grid = document.getElementById('sectionAGrid');
+            grid.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                grid.innerHTML = `<p data-lang="no-data">${t('no-data')}</p>`;
+                return;
+            }
+            
+            // data 是二维数组，每行包含两列：[标签, 值]
+            // 跳过第一行（选择月份），从第二行开始显示
+            data.forEach((row, index) => {
+                // 跳过第一行（索引0），因为第一行是"选择月份"
+                if (index === 0) return;
+                
+                if (row.length >= 2 && row[0] && row[1]) {
+                    const label = row[0].trim();
+                    const value = row[1].trim();
+                    
+                    // 翻译标签
+                    const translatedLabel = translateHeader(label);
+                    
+                    // 判断是否是订单数或人数，如果是则不需要小数点
+                    const isOrderOrPeople = label.includes('订单') || label.includes('人数') || translatedLabel.includes('Orders') || translatedLabel.includes('People') || translatedLabel.includes('注文') || translatedLabel.includes('人数');
+                    
+                    const statCard = document.createElement('div');
+                    statCard.className = 'stat-card';
+                    statCard.innerHTML = `
+                        <div class="stat-label">${translatedLabel}</div>
+                        <div class="stat-value">${formatValue(value, isOrderOrPeople)}</div>
+                    `;
+                    grid.appendChild(statCard);
+                }
+            });
+        }
+        
+        // 生成B区域：各门店数据（A10:E16）
+        function generateSectionB(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('sectionBTable').innerHTML = `<p data-lang="no-data">${t('no-data')}</p>`;
+                return;
+            }
+            
+            // 第一行是表头
+            const headers = data[0] || [];
+            const rows = data.slice(1);
+            
+            // 查找占比列的索引
+            const ratioColumnIndex = headers.findIndex(header => {
+                const headerStr = String(header || '').toLowerCase();
+                return headerStr.includes('占比') || headerStr.includes('比例') || headerStr.includes('ratio');
+            });
+            
+            // 查找订单数列的索引
+            const orderColumnIndex = headers.findIndex(header => {
+                const headerStr = String(header || '').toLowerCase();
+                return headerStr.includes('订单') && (headerStr.includes('数') || headerStr.includes('量'));
+            });
+            
+            // 如果找到占比列，按照占比从高到低排序
+            let sortedRows = [...rows];
+            if (ratioColumnIndex >= 0) {
+                sortedRows.sort((a, b) => {
+                    const ratioA = cleanNumberValue(a[ratioColumnIndex]) || 0;
+                    const ratioB = cleanNumberValue(b[ratioColumnIndex]) || 0;
+                    return ratioB - ratioA; // 从高到低排序
+                });
+            }
+            
+            // 生成表格
+            let html = '<table class="data-table"><thead><tr>';
+            headers.forEach(header => {
+                const translatedHeader = translateHeader(header);
+                html += `<th>${translatedHeader}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            sortedRows.forEach(row => {
+                html += '<tr>';
+                headers.forEach((_, index) => {
+                    // 如果是订单数列，显示为整数（不保留小数）
+                    const isOrderColumn = index === orderColumnIndex;
+                    // 如果是占比列，添加百分号
+                    const isRatioColumn = index === ratioColumnIndex;
+                    let cellValue = formatValue(row[index] || '', isOrderColumn);
+                    if (isRatioColumn && cellValue !== '-') {
+                        // 如果已经是数字格式，添加百分号
+                        const num = parseFloat(cleanNumberValue(row[index]));
+                        if (!isNaN(num)) {
+                            cellValue = num.toFixed(2) + '%';
+                        }
+                    }
+                    html += `<td>${cellValue}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('sectionBTable').innerHTML = html;
+
+            // 生成移动端双表格
+            generateSectionBMobileTables(headers, rows);
+
+            // 生成图表（使用原始数据，不排序）
+            generateSectionBChart(data);
+        }
+
+        function generateSectionBMobileTables(headers, rows) {
+            // 检测订单数列
+            let orderIdx = headers.findIndex(h => {
+                const s = String(h || '').toLowerCase();
+                return s.includes('订单') && (s.includes('数') || s.includes('量'));
+            });
+            if (orderIdx < 0) orderIdx = 1; // 兜底
+
+            // 检测结算金额列（优先匹配「结算」，与图表保持一致）
+            let settlementIdx = headers.findIndex(h => {
+                const s = String(h || '').toLowerCase();
+                return s.includes('结算') || s.includes('settlement');
+            });
+            if (settlementIdx < 0) settlementIdx = 3; // 兜底，与图表硬编码保持一致
+
+            const storeLabel = translateHeader(headers[0]) || t('store');
+            const orderLabel = translateHeader(headers[orderIdx]) || t('chart-orders');
+            const settlementLabel = translateHeader(headers[settlementIdx]) || t('chart-amount');
+
+            // 订单数表格（按订单降序）
+            const byOrders = [...rows].sort((a, b) => cleanNumberValue(b[orderIdx]) - cleanNumberValue(a[orderIdx]));
+            let ordersHtml = `<table class="data-table"><thead><tr><th>${storeLabel}</th><th style="text-align:right">${orderLabel}</th></tr></thead><tbody>`;
+            byOrders.forEach(row => {
+                const val = Math.round(cleanNumberValue(row[orderIdx]));
+                ordersHtml += `<tr><td>${row[0] || '-'}</td><td style="text-align:right">${val.toLocaleString()}</td></tr>`;
+            });
+            ordersHtml += '</tbody></table>';
+
+            // 结算金额表格（按金额降序）
+            const bySettlement = [...rows].sort((a, b) => cleanNumberValue(b[settlementIdx]) - cleanNumberValue(a[settlementIdx]));
+            let settlementHtml = `<table class="data-table"><thead><tr><th>${storeLabel}</th><th style="text-align:right">${settlementLabel}</th></tr></thead><tbody>`;
+            bySettlement.forEach(row => {
+                const val = Math.round(cleanNumberValue(row[settlementIdx]));
+                settlementHtml += `<tr><td>${row[0] || '-'}</td><td style="text-align:right">¥${val.toLocaleString()}</td></tr>`;
+            });
+            settlementHtml += '</tbody></table>';
+
+            const ordersEl = document.getElementById('sectionBMobileOrders');
+            const settlementEl = document.getElementById('sectionBMobileSettlement');
+            if (ordersEl) ordersEl.innerHTML = ordersHtml;
+            if (settlementEl) settlementEl.innerHTML = settlementHtml;
+        }
+        
+        // 清理数值字符串（移除货币符号、逗号等）
+        function cleanNumberValue(value) {
+            if (!value) return 0;
+            // 转换为字符串，移除所有非数字字符（保留小数点和负号）
+            const cleaned = String(value).replace(/[^\d.-]/g, '');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        }
+
+        // 检测是否为移动端
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        // 保存当前B区域数据，用于窗口大小变化时重新生成图表
+        let currentSectionBData = null;
+
+        // 生成B区域图表（拆分为两个独立图表）
+        function generateSectionBChart(data) {
+            if (!data || data.length < 2) return;
+            
+            // 保存数据以便窗口大小变化时重新生成
+            currentSectionBData = data;
+            
+            const headers = data[0] || [];
+            const rows = data.slice(1);
+            
+            // 查找store_id列（可能在表头中，或者检查列名）
+            // 如果表头包含"store_id"或"门店ID"，使用该列；否则尝试查找包含"id"的列
+            let storeIdColumnIndex = 0; // 默认第1列
+            const headerLower = headers.map(h => String(h || '').toLowerCase());
+            const storeIdIndex = headerLower.findIndex(h => h.includes('store_id') || h.includes('门店id') || h.includes('id'));
+            if (storeIdIndex >= 0) {
+                storeIdColumnIndex = storeIdIndex;
+            } else {
+                // 如果没有找到store_id列，假设第1列是store_id（缩写）
+                // 但如果第1列看起来像全称（长度较长），可能需要其他处理
+                storeIdColumnIndex = 0;
+            }
+            
+            // 检测是否为移动端
+            const isMobileDevice = isMobile();
+            
+            // 提取门店store_id（用于图表横轴）、订单数、结算金额
+            // 如果第1列是全称，尝试查找store_id列；如果找不到，移动端截取前3个字符
+            let storeIds;
+            if (storeIdColumnIndex === 0 && rows.length > 0) {
+                // 检查第1列的第一个值，如果长度>10，可能是全称
+                const firstValue = rows[0] && rows[0][0] ? String(rows[0][0]) : '';
+                if (firstValue.length > 10) {
+                    // 第1列是全称，移动端截取前3个字符
+                    storeIds = rows.map(row => {
+                        const name = row[0] || '';
+                        return isMobileDevice ? name.substring(0, 3) : name;
+                    }).filter(id => id);
+                } else {
+                    // 第1列可能就是store_id（缩写）
+                    storeIds = rows.map(row => row[0] || '').filter(id => id);
+                }
+            } else {
+                // 使用找到的store_id列
+                storeIds = rows.map(row => row[storeIdColumnIndex] || '').filter(id => id);
+            }
+            
+            const orderCounts = rows.map(row => cleanNumberValue(row[1]));
+            const settlementAmounts = rows.map(row => cleanNumberValue(row[3]));
+            
+            // 创建索引数组，用于排序
+            const indices = storeIds.map((_, index) => index);
+            
+            // 为订单数图表排序：按订单数降序
+            const sortedIndicesForOrders = [...indices].sort((a, b) => orderCounts[b] - orderCounts[a]);
+            const sortedStoreIdsForOrders = sortedIndicesForOrders.map(i => storeIds[i]);
+            const sortedOrderCounts = sortedIndicesForOrders.map(i => orderCounts[i]);
+            
+            // 为结算金额图表排序：按结算金额降序
+            const sortedIndicesForSettlement = [...indices].sort((a, b) => settlementAmounts[b] - settlementAmounts[a]);
+            const sortedStoreIdsForSettlement = sortedIndicesForSettlement.map(i => storeIds[i]);
+            const sortedSettlementAmounts = sortedIndicesForSettlement.map(i => settlementAmounts[i]);
+            
+            // 清除现有图表
+            if (window.sectionBChartOrdersInstance) {
+                window.sectionBChartOrdersInstance.destroy();
+            }
+            if (window.sectionBChartSettlementInstance) {
+                window.sectionBChartSettlementInstance.destroy();
+            }
+            
+            // 数据标签配置
+            const datalabelsConfig = {
+                anchor: 'end',
+                align: 'top',
+                offset: 4,
+                color: '#2C2C2C',
+                font: {
+                    size: isMobileDevice ? 10 : 11,
+                    weight: 'bold'
+                },
+                formatter: function(value, context) {
+                    if (value == null || isNaN(value)) return null;
+                    // 根据图表类型返回不同格式
+                    if (context.chart.config.type === 'bar') {
+                        // 柱状图：显示金额
+                        const currencySymbol = currentLang === 'ja' ? '¥' : currentLang === 'en' ? '$' : '￥';
+                        return currencySymbol + Math.round(value).toLocaleString();
+                    } else {
+                        // 折线图：显示订单数
+                        const unit = currentLang === 'ja' ? '件' : currentLang === 'en' ? ' orders' : ' 单';
+                        return Math.round(value) + unit;
+                    }
+                }
+            };
+            
+            // 插件配置（需要在两个图表之前定义）
+            const pluginsConfig = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
+            
+            // 计算Y轴最大值（留出约20%空间，避免数据标签被截断）
+            const maxOrderCount = Math.max(...sortedOrderCounts);
+            const ordersYMax = maxOrderCount > 0 ? Math.ceil(maxOrderCount * 1.2) : 10;
+            const maxSettlementAmount = Math.max(...sortedSettlementAmounts);
+            const settlementYMax = maxSettlementAmount > 0 ? maxSettlementAmount * 1.2 : 100;
+
+            // 订单数图表 X 轴留白：第一个/最后一个数据点与纵轴的距离（单位：类目宽度的比例，0=紧贴，0.5=半个类目，1=一个类目）
+            const ordersChartXPadding = 0.3;
+
+            // 订单数图表专用 datalabels 配置（支持 {x,y} 格式并正确显示）
+            const ordersDatalabelsConfig = {
+                ...datalabelsConfig,
+                formatter: function(value, context) {
+                    const yVal = (value && typeof value === 'object' && 'y' in value) ? value.y : value;
+                    if (yVal == null || isNaN(yVal)) return null;
+                    const unit = currentLang === 'ja' ? '件' : currentLang === 'en' ? ' orders' : ' 单';
+                    return Math.round(yVal) + unit;
+                }
+            };
+
+            // 图表1：订单数（折线图）- 按订单数降序排列（使用线性X轴支持 0.5 等小数留白）
+            const ctxOrders = document.getElementById('sectionBChartOrders').getContext('2d');
+            const orderDataPoints = sortedOrderCounts.map((y, i) => ({ x: i, y: y }));
+            const storeLabels = sortedStoreIdsForOrders;
+            window.sectionBChartOrdersInstance = new Chart(ctxOrders, {
+                type: 'line',
+                plugins: pluginsConfig,
+                data: {
+                    datasets: [{
+                        label: translateHeader(headers[1]) || t('chart-orders'),
+                        data: orderDataPoints,
+                        parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+                        borderColor: 'rgba(212, 175, 55, 1)',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(212, 175, 55, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7,
+                        datalabels: ordersDatalabelsConfig
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const unit = currentLang === 'ja' ? '件' : currentLang === 'en' ? ' orders' : ' 单';
+                                    return context.dataset.label + ': ' + context.parsed.y + unit;
+                                }
+                            }
+                        },
+                        datalabels: ordersDatalabelsConfig
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            min: -ordersChartXPadding,
+                            max: storeLabels.length - 1 + ordersChartXPadding,
+                            display: true,
+                            title: {
+                                display: true,
+                                text: translateHeader('门店')
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                padding: 8,
+                                includeBounds: false,
+                                callback: function(val) {
+                                    const i = Math.round(val);
+                                    return (i >= 0 && i < storeLabels.length) ? storeLabels[i] : '';
+                                }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: !isMobileDevice, // 移动端隐藏Y轴
+                            beginAtZero: true,
+                            suggestedMax: ordersYMax,
+                            title: {
+                                display: !isMobileDevice,
+                                text: translateHeader(headers[1]) || t('chart-orders')
+                            },
+                            ticks: {
+                                display: !isMobileDevice, // 移动端隐藏Y轴刻度
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 图表2：结算金额（柱状图）- 按结算金额降序排列
+            const ctxSettlement = document.getElementById('sectionBChartSettlement').getContext('2d');
+            window.sectionBChartSettlementInstance = new Chart(ctxSettlement, {
+                type: 'bar',
+                plugins: pluginsConfig,
+                data: {
+                    labels: sortedStoreIdsForSettlement,
+                    datasets: [{
+                        label: translateHeader(headers[3]) || t('chart-amount'),
+                        data: sortedSettlementAmounts,
+                        backgroundColor: 'rgba(201, 169, 97, 0.8)',
+                        borderColor: 'rgba(201, 169, 97, 1)',
+                        borderWidth: 1,
+                        datalabels: datalabelsConfig
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ￥' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        },
+                        datalabels: datalabelsConfig
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: translateHeader('门店')
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: !isMobileDevice, // 移动端隐藏Y轴
+                            beginAtZero: true,
+                            suggestedMax: settlementYMax,
+                            title: {
+                                display: !isMobileDevice,
+                                text: translateHeader(headers[3]) || t('chart-amount')
+                            },
+                            ticks: {
+                                display: !isMobileDevice, // 移动端隐藏Y轴刻度
+                                callback: function(value) {
+                                    return '￥' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 生成趋势区域：最近六个月趋势（G1:I7）
+        function generateSectionTrend(data) {
+            if (!data || data.length < 2) {
+                return;
+            }
+            
+            // 第一行是表头，第2-7行是6个月的数据
+            const headers = data[0] || [];
+            const rows = data.slice(1);
+            
+            // 提取月份标签（第1列）、订单数（第2列）、结算金额（第3列）
+            // 反转顺序，让最近的月份在右边
+            const months = rows.map(row => row[0] || '').filter(m => m).reverse();
+            const orderCounts = rows.map(row => cleanNumberValue(row[1])).reverse();
+            const settlementAmounts = rows.map(row => cleanNumberValue(row[2])).reverse();
+            
+            // 清除现有图表
+            if (window.trendChartOrdersInstance) {
+                window.trendChartOrdersInstance.destroy();
+            }
+            if (window.trendChartSettlementInstance) {
+                window.trendChartSettlementInstance.destroy();
+            }
+            
+            // 检测是否为移动端
+            const isMobileDevice = isMobile();
+            
+            // 数据标签配置 - 订单数图表
+            const datalabelsConfigOrders = {
+                anchor: 'end',
+                align: 'top',
+                offset: 4,
+                color: '#2C2C2C',
+                font: {
+                    size: isMobileDevice ? 10 : 11,
+                    weight: 'bold'
+                },
+                formatter: function(value) {
+                    const unit = currentLang === 'ja' ? '件' : currentLang === 'en' ? ' orders' : ' 单';
+                    return Math.round(value) + unit;
+                }
+            };
+            
+            // 数据标签配置 - 结算金额图表
+            const datalabelsConfigSettlement = {
+                anchor: 'end',
+                align: 'top',
+                offset: 4,
+                color: '#2C2C2C',
+                font: {
+                    size: isMobileDevice ? 10 : 11,
+                    weight: 'bold'
+                },
+                formatter: function(value) {
+                    return '￥' + Math.round(value).toLocaleString();
+                }
+            };
+            
+            // 插件配置
+            const pluginsConfig = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
+            
+            // 图表1：订单数量趋势（折线图）
+            const ctxOrders = document.getElementById('trendChartOrders').getContext('2d');
+            window.trendChartOrdersInstance = new Chart(ctxOrders, {
+                type: 'line',
+                plugins: pluginsConfig,
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: translateHeader(headers[1]) || t('chart-orders'),
+                        data: orderCounts,
+                        borderColor: 'rgba(212, 175, 55, 1)',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(212, 175, 55, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7,
+                        datalabels: datalabelsConfigOrders
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const unit = currentLang === 'ja' ? '件' : currentLang === 'en' ? ' orders' : ' 单';
+                                    return context.dataset.label + ': ' + Math.round(context.parsed.y) + unit;
+                                }
+                            }
+                        },
+                        datalabels: datalabelsConfigOrders
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            offset: true,
+                            title: {
+                                display: true,
+                                text: translateHeader('月份')
+                            },
+                            ticks: {
+                                padding: 8
+                            },
+                            grid: {
+                                offset: true,
+                                drawOnChartArea: true
+                            },
+                            border: {
+                                display: true
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: !isMobileDevice,
+                            beginAtZero: true,
+                            grace: '20%',  // 顶部留白，避免数据标签超出图表
+                            title: {
+                                display: !isMobileDevice,
+                                text: translateHeader(headers[1]) || t('chart-orders')
+                            },
+                            ticks: {
+                                display: !isMobileDevice,
+                                stepSize: 1,
+                                precision: 0
+                            },
+                            grid: {
+                                display: !isMobileDevice // 移动端隐藏Y轴网格线
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 图表2：结算金额趋势（折线图）
+            const ctxSettlement = document.getElementById('trendChartSettlement').getContext('2d');
+            window.trendChartSettlementInstance = new Chart(ctxSettlement, {
+                type: 'line',
+                plugins: pluginsConfig,
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: translateHeader(headers[2]) || t('chart-amount'),
+                        data: settlementAmounts,
+                        borderColor: 'rgba(201, 169, 97, 1)',
+                        backgroundColor: 'rgba(201, 169, 97, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(201, 169, 97, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7,
+                        datalabels: datalabelsConfigSettlement
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ￥' + Math.round(context.parsed.y).toLocaleString();
+                                }
+                            }
+                        },
+                        datalabels: datalabelsConfigSettlement
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            offset: true,
+                            title: {
+                                display: true,
+                                text: translateHeader('月份')
+                            },
+                            ticks: {
+                                padding: 8
+                            },
+                            grid: {
+                                offset: true,
+                                drawOnChartArea: true
+                            },
+                            border: {
+                                display: true
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: !isMobileDevice,
+                            beginAtZero: true,
+                            grace: '20%',  // 顶部留白，避免数据标签超出图表
+                            title: {
+                                display: !isMobileDevice,
+                                text: translateHeader(headers[2]) || t('chart-amount')
+                            },
+                            ticks: {
+                                display: !isMobileDevice,
+                                callback: function(value) {
+                                    return '￥' + value.toLocaleString();
+                                }
+                            },
+                            grid: {
+                                display: !isMobileDevice // 移动端隐藏Y轴网格线
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 生成6个月门店佣金排行榜（从第20行起的数据区域）
+        function generateSectionCommissionRank(data) {
+            const container = document.getElementById('sectionCommissionRankTable');
+            if (!container) return;
+            
+            if (!data || data.length < 2) {
+                container.innerHTML = `<p data-lang="no-data">${t('no-data')}</p>`;
+                return;
+            }
+            
+            const headers = data[0] || [];
+            const rows = data.slice(1);
+            
+            // 查找门店列（第1列或包含"门店"/"store"的列）
+            let storeColumnIndex = headers.findIndex(h => {
+                const s = String(h || '').toLowerCase();
+                return s.includes('门店') || s.includes('store') || s.includes('店舗') || s === 'id';
+            });
+            if (storeColumnIndex < 0) {
+                storeColumnIndex = 0; // 默认第1列
+            }
+            
+            // 查找佣金/结算金额列（用于排序）
+            const commissionColumnIndex = headers.findIndex(h => {
+                const s = String(h || '').toLowerCase();
+                return s.includes('佣金') || s.includes('commission') || 
+                       (s.includes('结算') && s.includes('金额')) || 
+                       (s.includes('6') && (s.includes('月') || s.includes('month'))) ||
+                       s.includes('settlement') || s.includes('決済');
+            });
+            const fallbackCommissionIndex = headers.findIndex(h => {
+                const s = String(h || '').toLowerCase();
+                return s.includes('结算') || s.includes('金額') || s.includes('amount');
+            });
+            const finalCommissionIndex = commissionColumnIndex >= 0 ? commissionColumnIndex : (fallbackCommissionIndex >= 0 ? fallbackCommissionIndex : 2);
+            
+            const storeCol = storeColumnIndex >= 0 ? storeColumnIndex : 0;
+            const commissionCol = finalCommissionIndex;
+            
+            // 按佣金从高到低排序
+            const sortedRows = [...rows].filter(row => row[storeCol] && String(row[storeCol]).trim()).sort((a, b) => {
+                const valA = cleanNumberValue(a[commissionCol]) || 0;
+                const valB = cleanNumberValue(b[commissionCol]) || 0;
+                return valB - valA;
+            });
+            
+            // 生成表格（带排名）
+            let html = '<table class="data-table"><thead><tr>';
+            html += `<th>${translateHeader('排名')}</th>`;
+            headers.forEach(header => {
+                html += `<th>${translateHeader(header)}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            sortedRows.forEach((row, index) => {
+                const rank = index + 1;
+                const rankClass = rank <= 3 ? `rank-top-${rank}` : '';
+                html += `<tr class="${rankClass}">`;
+                html += `<td><strong>${rank}</strong></td>`;
+                headers.forEach((header, colIndex) => {
+                    let cellValue = row[colIndex] ?? '';
+                    const isCommissionCol = colIndex === commissionCol;
+                    const isOrderCol = String(header || '').includes('订单') || String(header || '').includes('注文');
+                    cellValue = formatValue(cellValue, isOrderCol);
+                    if (isCommissionCol && cellValue !== '-' && !String(cellValue).includes('%')) {
+                        const num = cleanNumberValue(row[colIndex]);
+                        if (!isNaN(num)) {
+                            cellValue = '￥' + (num >= 0 ? formatNumber(num) : '-');
+                        }
+                    }
+                    html += `<td>${cellValue}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // 数字增长动画（ease-out 缓动）
+        function animateValue(element, targetValue, isOrderOrPeople, duration = 1200) {
+            const startValue = 0;
+            const startTime = performance.now();
+            
+            function formatDisplay(num) {
+                if (isOrderOrPeople) {
+                    return Math.round(num).toLocaleString();
+                }
+                return '￥' + num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            }
+            
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeOutCubic(progress);
+                const currentValue = startValue + (targetValue - startValue) * easedProgress;
+                element.textContent = formatDisplay(currentValue);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    element.textContent = formatDisplay(targetValue);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+        
+        // 生成当日数据区域（E3:E6，纵向）
+        function generateSectionToday(data) {
+            const grid = document.getElementById('sectionTodayGrid');
+            const daySelector = document.getElementById('daySelector');
+            grid.innerHTML = '';
+
+            const displayDate = daySelector && daySelector.value
+                ? daySelector.value
+                : getLocalTodayIso();
+            updateCurrentDayDisplay(displayDate);
+
+            if (!data || data.length === 0 || !data[0]) {
+                grid.innerHTML = `<p data-lang="no-data">${t('no-data')}</p>`;
+                return;
+            }
+
+            const row = data[0];
+            const displayOrder = [
+                { labelKey: 'label-today-orders', valueIndex: 0, isOrderOrPeople: true },
+                { labelKey: 'label-today-people', valueIndex: 1, isOrderOrPeople: true },
+                { labelKey: 'label-today-gmv', valueIndex: 2, isOrderOrPeople: false },
+                { labelKey: 'label-today-commission', valueIndex: 3, isOrderOrPeople: false }
+            ];
+
+            displayOrder.forEach(({ labelKey, valueIndex, isOrderOrPeople }, index) => {
+                const rawValue = row[valueIndex];
+                const num = cleanNumberValue(rawValue);
+                const str = String(rawValue ?? '').trim();
+                const isValidNum = str !== '' && /[\d]/.test(str);
+
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                const valueEl = document.createElement('div');
+                valueEl.className = 'stat-value';
+
+                if (isValidNum) {
+                    valueEl.textContent = '0';
+                    statCard.innerHTML = `<div class="stat-label">${t(labelKey)}</div>`;
+                    statCard.appendChild(valueEl);
+                    grid.appendChild(statCard);
+
+                    const baseDelay = 150;
+                    const staggerDelay = index * 100;
+                    setTimeout(() => {
+                        animateValue(valueEl, num, isOrderOrPeople);
+                    }, baseDelay + staggerDelay);
+                } else {
+                    valueEl.textContent = rawValue || '-';
+                    statCard.innerHTML = `<div class="stat-label">${t(labelKey)}</div>`;
+                    statCard.appendChild(valueEl);
+                    grid.appendChild(statCard);
+                }
+            });
+        }
+
+        // 生成当日下方：最近7天促成交易额 & 佣金混合图表（折线+柱状）
+        function generateDailyTrendChart(data) {
+            const card = document.getElementById('dailyTrendCard');
+            if (!card) return;
+
+            if (!data || data.length < 2) {
+                card.style.display = 'none';
+                return;
+            }
+
+            // 第一行是表头，后续行是数据
+            const rows = data.slice(1).filter(r => r[0] && String(r[0]).trim() !== '');
+            if (rows.length === 0) {
+                card.style.display = 'none';
+                return;
+            }
+
+            // 格式化日期为 M/D
+            function fmtDate(raw) {
+                const s = String(raw).trim();
+                let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+                if (m) return `${parseInt(m[2])}/${parseInt(m[3])}`;
+                m = s.match(/^(\d{1,2})\/(\d{1,2})\/\d{4}/);
+                if (m) return `${parseInt(m[1])}/${parseInt(m[2])}`;
+                return s;
+            }
+
+            const labels = rows.map(r => fmtDate(r[0]));
+            const commData = rows.map(r => cleanNumberValue(r[2]));
+
+            const commLabel = currentLang === 'ja' ? '手数料' : currentLang === 'en' ? 'Commission' : '佣金';
+            const commAxisLabel = currentLang === 'ja' ? '手数料 (¥)' : currentLang === 'en' ? 'Commission (¥)' : '佣金 (¥)';
+
+            card.style.display = 'block';
+
+            if (window.dailyTrendChartInstance) {
+                window.dailyTrendChartInstance.destroy();
+                window.dailyTrendChartInstance = null;
+            }
+
+            const isMobileDevice = isMobile();
+            const ctx = document.getElementById('dailyTrendChart').getContext('2d');
+            const pluginsConfig = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
+
+            window.dailyTrendChartInstance = new Chart(ctx, {
+                type: 'bar',
+                plugins: pluginsConfig,
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: commLabel,
+                            data: commData,
+                            backgroundColor: 'rgba(78, 152, 121, 0.65)',
+                            borderColor: 'rgba(78, 152, 121, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'yRight',
+                            order: 2,
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'top',
+                                color: '#1e6b4a',
+                                font: { size: isMobileDevice ? 9 : 11, weight: 'bold' },
+                                formatter: v => '¥' + Math.round(v).toLocaleString()
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 24 } },
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.dataset.label + ': ¥' + Math.round(ctx.parsed.y).toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: isMobileDevice ? 10 : 12 } }
+                        },
+                        yRight: {
+                            type: 'linear',
+                            position: 'right',
+                            display: !isMobileDevice,
+                            title: {
+                                display: true,
+                                text: commAxisLabel,
+                                font: { size: 11 }
+                            },
+                            ticks: {
+                                callback: v => '¥' + v.toLocaleString(),
+                                font: { size: 11 }
+                            },
+                            grid: { color: 'rgba(0,0,0,0.06)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 生成C区域：累计数据（K2:N2）
+        function generateSectionC(data) {
+            const grid = document.getElementById('sectionCGrid');
+            grid.innerHTML = '';
+            
+            if (!data || data.length === 0 || !data[0]) {
+                grid.innerHTML = `<p data-lang="no-data">${t('no-data')}</p>`;
+                return;
+            }
+            
+            // data[0] 是第2行的数据，包含4列：累计订单、累计人数、累计结算金额、累计促成交易额
+            // 显示顺序：累计订单、累计人数、累计促成交易额、累计结算金额
+            const row = data[0];
+            const displayOrder = [
+                { labelKey: 'label-cumulative-orders', valueIndex: 0, isOrderOrPeople: true },
+                { labelKey: 'label-cumulative-people', valueIndex: 1, isOrderOrPeople: true },
+                { labelKey: 'label-cumulative-project-amount', valueIndex: 3, isOrderOrPeople: false },
+                { labelKey: 'label-cumulative-amount', valueIndex: 2, isOrderOrPeople: false }
+            ];
+            
+            displayOrder.forEach(({ labelKey, valueIndex, isOrderOrPeople }, index) => {
+                const rawValue = row[valueIndex];
+                const num = cleanNumberValue(rawValue);
+                const str = String(rawValue ?? '').trim();
+                const isValidNum = str !== '' && /[\d]/.test(str);
+                
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                const valueEl = document.createElement('div');
+                valueEl.className = 'stat-value';
+                
+                if (isValidNum) {
+                    valueEl.textContent = '0';
+                    statCard.innerHTML = `
+                        <div class="stat-label">${t(labelKey)}</div>
+                    `;
+                    statCard.appendChild(valueEl);
+                    grid.appendChild(statCard);
+                    
+                    // 等待 DOM 渲染完成后再开始动画
+                    const baseDelay = 150;
+                    const staggerDelay = index * 100;
+                    setTimeout(() => {
+                        animateValue(valueEl, num, isOrderOrPeople);
+                    }, baseDelay + staggerDelay);
+                } else {
+                    valueEl.textContent = rawValue || '-';
+                    statCard.innerHTML = `
+                        <div class="stat-label">${t(labelKey)}</div>
+                    `;
+                    statCard.appendChild(valueEl);
+                    grid.appendChild(statCard);
+                }
+            });
+        }
+        
+        // 格式化值
+        function formatValue(value, noDecimal = false) {
+            if (!value) return '-';
+            const num = parseFloat(value);
+            if (!isNaN(num) && isFinite(num)) {
+                if (noDecimal) {
+                    // 订单数和人数不需要小数点
+                    return Math.round(num).toLocaleString();
+                }
+                return formatNumber(num);
+            }
+            return value;
+        }
+        
+        // 生成月份下拉菜单
+        function generateMonthSelector() {
+            const monthSelector = document.getElementById('monthSelector');
+            if (!monthSelector) return;
+            
+            // 生成月份选项（从当前月份往前推，最早到2025年3月）
+            const options = [];
+            const now = new Date();
+            const minDate = new Date(2025, 2, 1); // 2025年3月（月份从0开始，2表示3月）
+            
+            // 从当前月份往前推，直到2025年3月
+            let currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            let count = 0;
+            const maxMonths = 24; // 最多显示24个月
+            
+            while (currentDate >= minDate && count < maxMonths) {
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const value = `${year}-${month}`;
+                const label = `${year}年${month}月`;
+                options.push({ value, label });
+                
+                // 往前推一个月
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                count++;
+            }
+            
+            // 清空现有选项
+            monthSelector.innerHTML = '';
+            
+            // 添加选项
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.label;
+                monthSelector.appendChild(optionElement);
+            });
+            
+            // 设置当前月份为选中值（如果已从 Google Sheets 加载）
+            const currentValue = monthSelector.getAttribute('data-current-value');
+            if (currentValue) {
+                monthSelector.value = currentValue;
+            }
+        }
+
+        // 生成统计卡片
+        function generateStats(data) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = '';
+            
+            if (!data.headers || data.headers.length === 0) return;
+            
+            // 识别数值列
+            const numericColumns = data.headers.filter(header => {
+                return data.rows.some(row => {
+                    const value = row[header];
+                    return value && !isNaN(parseFloat(value)) && isFinite(value);
+                });
+            });
+            
+            // 为每个数值列创建统计卡片
+            numericColumns.forEach(header => {
+                const values = data.rows
+                    .map(row => parseFloat(row[header]))
+                    .filter(v => !isNaN(v));
+                
+                if (values.length === 0) return;
+                
+                const sum = values.reduce((a, b) => a + b, 0);
+                const avg = sum / values.length;
+                const max = Math.max(...values);
+                const min = Math.min(...values);
+                
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <div class="stat-label">${header}</div>
+                    <div class="stat-value">${formatNumber(avg)}</div>
+                    <div class="stat-change">
+                        <span>总计: ${formatNumber(sum)}</span>
+                        <span>|</span>
+                        <span>最大: ${formatNumber(max)}</span>
+                        <span>|</span>
+                        <span>最小: ${formatNumber(min)}</span>
+                    </div>
+                `;
+                statsGrid.appendChild(statCard);
+            });
+        }
+
+        // 生成图表
+        function generateCharts(data) {
+            // 清除现有图表
+            charts.forEach(chart => chart.destroy());
+            charts = [];
+            
+            const chartsGrid = document.getElementById('chartsGrid');
+            chartsGrid.innerHTML = '';
+            
+            if (!data.headers || data.headers.length === 0) return;
+            
+            // 识别数值列
+            const numericColumns = data.headers.filter(header => {
+                return data.rows.some(row => {
+                    const value = row[header];
+                    return value && !isNaN(parseFloat(value)) && isFinite(value);
+                });
+            });
+            
+            // 识别日期/时间列
+            const dateColumns = data.headers.filter(header => {
+                return data.rows.some(row => {
+                    const value = row[header];
+                    return value && (value.match(/\d{4}[-\/]\d{2}[-\/]\d{2}/) || value.match(/\d{2}[-\/]\d{2}[-\/]\d{4}/));
+                });
+            });
+            
+            // 为每个数值列创建折线图
+            numericColumns.forEach((header, index) => {
+                const values = data.rows
+                    .map(row => parseFloat(row[header]))
+                    .filter(v => !isNaN(v));
+                
+                if (values.length === 0) return;
+                
+                // 尝试找到对应的日期列
+                let labels = Array.from({ length: values.length }, (_, i) => `数据点 ${i + 1}`);
+                if (dateColumns.length > 0 && index < dateColumns.length) {
+                    const dateHeader = dateColumns[0];
+                    labels = data.rows
+                        .map(row => row[dateHeader])
+                        .filter((_, i) => !isNaN(parseFloat(data.rows[i][header])));
+                }
+                
+                const chartCard = document.createElement('div');
+                chartCard.className = 'chart-card';
+                chartCard.innerHTML = `
+                    <h3 class="chart-title">${header}</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-${index}"></canvas>
+                    </div>
+                `;
+                chartsGrid.appendChild(chartCard);
+                
+                const ctx = document.getElementById(`chart-${index}`).getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels.slice(0, values.length),
+                        datasets: [{
+                            label: header,
+                            data: values,
+                            borderColor: 'rgb(201, 169, 97)',
+                            backgroundColor: 'rgba(201, 169, 97, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+                
+                charts.push(chart);
+            });
+            
+            // 如果有多个数值列，创建对比柱状图
+            if (numericColumns.length >= 2) {
+                const chartCard = document.createElement('div');
+                chartCard.className = 'chart-card';
+                chartCard.innerHTML = `
+                    <h3 class="chart-title">数据对比</h3>
+                    <div class="chart-container">
+                        <canvas id="chart-comparison"></canvas>
+                    </div>
+                `;
+                chartsGrid.appendChild(chartCard);
+                
+                const ctx = document.getElementById('chart-comparison').getContext('2d');
+                const datasets = numericColumns.slice(0, 5).map((header, index) => {
+                    const values = data.rows
+                        .map(row => parseFloat(row[header]))
+                        .filter(v => !isNaN(v));
+                    const sum = values.reduce((a, b) => a + b, 0);
+                    
+                    const colors = [
+                        'rgba(201, 169, 97, 0.8)',
+                        'rgba(212, 175, 55, 0.8)',
+                        'rgba(139, 111, 71, 0.8)',
+                        'rgba(196, 164, 132, 0.8)',
+                        'rgba(160, 130, 100, 0.8)'
+                    ];
+                    
+                    return {
+                        label: header,
+                        data: [sum],
+                        backgroundColor: colors[index % colors.length]
+                    };
+                });
+                
+                const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [t('label-total')],
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+                
+                charts.push(chart);
+            }
+        }
+
+        // 生成表格
+        function generateTable(data) {
+            const tableContainer = document.getElementById('tableContainer');
+            
+            if (!data.headers || data.headers.length === 0) {
+                tableContainer.innerHTML = '<p>没有数据可显示</p>';
+                return;
+            }
+            
+            let html = '<table class="data-table"><thead><tr>';
+            data.headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            data.rows.forEach(row => {
+                html += '<tr>';
+                data.headers.forEach(header => {
+                    html += `<td>${row[header] || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            tableContainer.innerHTML = html;
+        }
+
+        // 工具函数
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(2) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(2) + 'K';
+            }
+            return num.toFixed(2);
+        }
+
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            const alertClass = `alert-${type}`;
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            
+            messageArea.innerHTML = `
+                <div class="alert ${alertClass}">
+                    <span>${icon}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            // 3秒后自动清除成功和提示消息
+            if (type !== 'error') {
+                setTimeout(() => {
+                    messageArea.innerHTML = '';
+                }, 3000);
+            }
+        }
+        
+        // 配置保存和加载
+        const CONFIG_KEY = 'dashboard_config';
+        
+        function saveConfig() {
+            const config = {
+                sheetsUrl: document.getElementById('sheetsUrl').value.trim(),
+                sheetName: document.getElementById('sheetName').value.trim(),
+                scriptUrl: document.getElementById('scriptUrl').value.trim()
+            };
+            
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+            
+            // 显示保存提示
+            const hint = document.getElementById('configSavedHint');
+            if (hint) {
+                hint.style.display = 'inline';
+                setTimeout(() => {
+                    hint.style.display = 'none';
+                }, 2000);
+            }
+            
+            // 显示清除按钮
+            const clearBtn = document.getElementById('clearConfigBtn');
+            if (clearBtn) {
+                clearBtn.style.display = 'inline-block';
+            }
+            
+            showMessage(t('msg-config-saved'), 'success');
+        }
+        
+        function loadConfig() {
+            try {
+                const configStr = localStorage.getItem(CONFIG_KEY);
+                if (!configStr) return false;
+                
+                const config = JSON.parse(configStr);
+                
+                if (config.sheetsUrl) {
+                    document.getElementById('sheetsUrl').value = config.sheetsUrl;
+                }
+                if (config.sheetName) {
+                    document.getElementById('sheetName').value = config.sheetName;
+                }
+                if (config.scriptUrl) {
+                    document.getElementById('scriptUrl').value = config.scriptUrl;
+                    appsScriptUrl = config.scriptUrl;
+                }
+                
+                // 显示清除按钮
+                const clearBtn = document.getElementById('clearConfigBtn');
+                if (clearBtn && (config.sheetsUrl || config.scriptUrl)) {
+                    clearBtn.style.display = 'inline-block';
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                return false;
+            }
+        }
+        
+        function clearConfig() {
+            if (confirm(t('confirm-clear-config'))) {
+                localStorage.removeItem(CONFIG_KEY);
+                document.getElementById('sheetsUrl').value = '';
+                document.getElementById('sheetName').value = '';
+                document.getElementById('scriptUrl').value = '';
+                document.getElementById('clearConfigBtn').style.display = 'none';
+                appsScriptUrl = null;
+                showMessage(t('msg-config-cleared'), 'success');
+            }
+        }
+        
+        // 注册 Chart.js 插件
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
+
+        // 页面加载完成后绑定事件监听器
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化语言（最先执行）
+            initLanguage();
+            initLanguageSwitcher();
+            // 设置默认配置（如果输入框为空）
+            const sheetsUrlInput = document.getElementById('sheetsUrl');
+            const sheetNameInput = document.getElementById('sheetName');
+            const scriptUrlInput = document.getElementById('scriptUrl');
+            
+            // 如果输入框已经有值（硬编码的默认值），直接使用
+            if (sheetsUrlInput && sheetsUrlInput.value) {
+                appsScriptUrl = scriptUrlInput ? scriptUrlInput.value.trim() : null;
+                // 自动加载数据
+                setTimeout(() => {
+                    loadGoogleSheets();
+                }, 500);
+            } else {
+                // 否则尝试加载保存的配置
+                const hasConfig = loadConfig();
+                if (hasConfig) {
+                    showMessage(t('msg-config-loaded'), 'info');
+                }
+            }
+            
+            // 如果已有默认值，自动保存配置
+            if (sheetsUrlInput && sheetsUrlInput.value && scriptUrlInput && scriptUrlInput.value) {
+                setTimeout(() => {
+                    const config = {
+                        sheetsUrl: sheetsUrlInput.value.trim(),
+                        sheetName: sheetNameInput ? sheetNameInput.value.trim() : '',
+                        scriptUrl: scriptUrlInput.value.trim()
+                    };
+                    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+                    appsScriptUrl = config.scriptUrl;
+                }, 100);
+            }
+            
+            const loadSheetsBtn = document.getElementById('loadSheetsBtn');
+            if (loadSheetsBtn) {
+                loadSheetsBtn.addEventListener('click', loadGoogleSheets);
+            }
+            
+            // 生成月份下拉菜单
+            generateMonthSelector();
+            
+            const saveConfigBtn = document.getElementById('saveConfigBtn');
+            if (saveConfigBtn) {
+                saveConfigBtn.addEventListener('click', saveConfig);
+            }
+            
+            const clearConfigBtn = document.getElementById('clearConfigBtn');
+            if (clearConfigBtn) {
+                clearConfigBtn.addEventListener('click', clearConfig);
+            }
+            
+            const updateMonthBtn = document.getElementById('updateMonthBtn');
+            if (updateMonthBtn) {
+                updateMonthBtn.addEventListener('click', updateMonthData);
+            }
+
+            const updateDayBtn = document.getElementById('updateDayBtn');
+            if (updateDayBtn) {
+                updateDayBtn.addEventListener('click', updateDayData);
+            }
+
+            const daySelector = document.getElementById('daySelector');
+            if (daySelector) {
+                daySelector.addEventListener('change', () => {
+                    if (daySelector.value) {
+                        updateCurrentDayDisplay(daySelector.value);
+                    }
+                });
+            }
+            
+            // 窗口大小变化时重新生成图表（适配移动端/PC端切换）
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    if (currentSectionBData) {
+                        generateSectionBChart(currentSectionBData);
+                    }
+                }, 300); // 防抖，300ms后执行
+            });
+            
+            // 月份选择器变化时自动更新（下拉菜单）
+            const monthSelector = document.getElementById('monthSelector');
+            if (monthSelector) {
+                // 下拉菜单不需要回车键，改为选择后自动更新
+                monthSelector.addEventListener('change', () => {
+                    // 可以选择自动更新或手动点击按钮更新
+                    // 这里保持手动更新，用户选择月份后点击"更新数据"按钮
+                });
+            }
+            
+            // 保存 Apps Script URL（使用之前已声明的 scriptUrlInput）
+            if (scriptUrlInput) {
+                scriptUrlInput.addEventListener('change', () => {
+                    appsScriptUrl = scriptUrlInput.value.trim() || null;
+                });
+            }
+            
+            // 自动保存配置（当用户输入时）
+            const inputs = ['sheetsUrl', 'sheetName', 'scriptUrl'];
+            inputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('blur', () => {
+                        // 延迟保存，避免频繁保存
+                        setTimeout(() => {
+                            const sheetsUrl = document.getElementById('sheetsUrl').value.trim();
+                            const scriptUrl = document.getElementById('scriptUrl').value.trim();
+                            if (sheetsUrl || scriptUrl) {
+                                // 自动保存（静默）
+                                const config = {
+                                    sheetsUrl: sheetsUrl,
+                                    sheetName: document.getElementById('sheetName').value.trim(),
+                                    scriptUrl: scriptUrl
+                                };
+                                localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+                                const clearBtn = document.getElementById('clearConfigBtn');
+                                if (clearBtn) {
+                                    clearBtn.style.display = 'inline-block';
+                                }
+                            }
+                        }, 500);
+                    });
+                }
+            });
+        });
+        
+        // 同时暴露到全局作用域（备用）
+        window.loadGoogleSheets = loadGoogleSheets;
+        window.updateMonthData = updateMonthData;
+        window.updateDayData = updateDayData;
+
+        // 多语言数据
+        const translations = {
+            ja: {
+                title: "📊 運営データダッシュボード",
+                subtitle: "運営データをリアルタイムで表示・分析",
+                "data-source": "📥 データソース",
+                "tab-googlesheets": "Google Sheets",
+                "tab-upload": "ファイルアップロード",
+                "label-sheets-url": "Google Sheets 公開リンク",
+                "hint-sheets-public": "💡 ヒント：Google Sheets が「リンクを持つすべての人が閲覧可能」に設定されていることを確認してください",
+                "config-saved": "✓ 設定が保存されました",
+                "label-sheet-name": "シート名（オプション）",
+                "placeholder-sheet-name": "Master（空白の場合は最初のシートを使用、名前を入力すると自動検索）",
+                "hint-sheet-name": "💡 テーブルに複数のシートがある場合、シート名（例：「Master」）を入力すると、システムが自動的に検索してそのシートを読み込みます",
+                "label-script-url": "Google Apps Script URL（オプション）",
+                "placeholder-script-url": "https://script.google.com/macros/s/.../exec",
+                "hint-script-url": "💡 ウェブページで直接月を変更する場合は、Google Apps Script を設定してください。",
+                "link-script-info": "設定手順を表示",
+                "btn-load-data": "📥 データを読み込む",
+                "btn-clear-config": "🗑️ 保存された設定をクリア",
+                "upload-text": "クリックまたはファイルをここにドラッグしてアップロード",
+                "upload-hint": "CSV および Excel (.xlsx) 形式をサポート",
+                "upload-note": "💡 注意：ファイルはブラウザでのみ処理され、サーバーにアップロードされません。データは現在のブラウザセッションにのみ保存され、ページを更新すると再度アップロードする必要があります。",
+                "section-today": "📅 本日データ",
+                "label-select-day": "日付を選択",
+                "hint-select-day": "💡 日付を選び「当日データを更新」をクリックすると E2 に書き込み、統計を再読み込みします（Apps Script 設定、または E2 を手動変更）",
+                "btn-update-day-data": "🔄 当日データを更新",
+                "label-current-day": "現在の統計日：",
+                "hint-today-data": "💡 E2 が統計日、E3:E6 縦に注文数・客数・促成取引額・手数料（決済金額）。数式は E2 を参照し、TODAY() は使わないでください",
+                "label-today-date": "統計日：{date}",
+                "msg-select-day": "日付を選択してください",
+                "msg-set-day": "Google Sheets の E2 を {date} に設定してから「当日データを更新」を再度クリックしてください",
+                "msg-day-updated-via-script": "統計日が Apps Script で更新されました",
+                "msg-day-updated-success": "{date} の当日データを読み込みました",
+                "msg-day-updated-check": "データは更新されましたが、検出された統計日は {loadedDate} です。Apps Script が E2 を正しく更新したか確認してください",
+                "msg-day-updated-manual": "E2 を {selectedDate} に設定してから再読み込みしてください（現在: {loadedDate}）",
+                "msg-apps-script-update-day-failed": "Apps Script で統計日を更新できませんでした",
+                "label-today-orders": "本日注文数",
+                "label-today-people": "本日客数",
+                "label-today-gmv": "本日促成取引額",
+                "label-today-commission": "本日手数料",
+                "section-cumulative": "📈 累計データ",
+                "msg-enter-sheets-url": "Google Sheets リンクを入力してください",
+                "msg-loading": "Google Sheets データを読み込んでいます...",
+                "msg-invalid-url": "無効な Google Sheets URL",
+                "msg-load-success": "Google Sheets データの読み込みに成功しました！{sheetInfo} を読み込み、合計 {rows} 行のデータ",
+                "msg-load-first": "まず Google Sheets データを読み込んでください",
+                "msg-updating-sheets": "Google Sheets を更新しています...",
+                "msg-manual-update": "Google Sheets を手動で更新してください...",
+                "msg-set-month": "Google Sheets で B2 セルを {month} に設定してから、「データを更新」をクリックしてください",
+                "msg-loading-data": "データを読み込んでいます...",
+                "msg-data-updated": "データが更新されましたが、検出された月は {loadedMonth} です。データが更新されていない場合は、Google Sheets で B2 セルを {selectedMonth} に設定してから、再度「データを更新」をクリックしてください",
+                "msg-config-saved": "設定が保存されました！次回アクセス時に自動的に読み込まれます",
+                "msg-config-cleared": "設定がクリアされました",
+                "msg-config-loaded": "保存された設定が読み込まれました",
+                "msg-processing-file": "ファイルを処理しています...",
+                "msg-file-loaded": "ファイルの読み込みに成功しました！",
+                "msg-csv-parse-error": "CSV ファイルの解析に失敗しました：",
+                "msg-excel-loaded": "Excel ファイルの読み込みに成功しました！",
+                "msg-excel-parse-error": "Excel ファイルの解析に失敗しました：",
+                "msg-unsupported-format": "サポートされていないファイル形式です。CSV または Excel ファイルをアップロードしてください",
+                "msg-invalid-url": "無効な Google Sheets URL",
+                "msg-detected-gid": "URL から gid={gid} を検出しました",
+                "msg-finding-sheet": "シート「{sheetName}」を検索しています...",
+                "msg-sheet-found": "シート「{sheetName}」(gid={gid}) が見つかりました",
+                "msg-sheet-not-found": "シート「{sheetName}」を自動的に見つけることができませんでした。以下の手順に従ってください：\n1. Google Sheets で「{sheetName}」シートを開く\n2. URL をコピー（URL に gid=数字 が含まれています）\n3. 完全な URL を上記の入力ボックスに貼り付ける\n4. シート名入力ボックスをクリア",
+                "msg-load-failed": "読み込みに失敗しました：",
+                "msg-update-failed": "更新に失敗しました：",
+                "msg-data-updated-success": "データが {month} に正常に更新されました",
+                "msg-month-updated-via-script": "月が Apps Script を通じて更新されました",
+                "msg-data-updated-check": "データが更新されましたが、検出された月は {loadedMonth} です。Apps Script が B2 セルを正しく更新したか確認してください",
+                "progress-connecting": "サーバーに接続しています...",
+                "progress-updating-sheets": "Google Sheets を更新しています...",
+                "progress-waiting-refresh": "データの更新を待っています...",
+                "progress-manual-update": "Google Sheets を手動で更新してください...",
+                "progress-loading-data": "データを読み込んでいます...",
+                "progress-validating": "データを検証しています...",
+                "progress-complete": "更新が完了しました！",
+                "progress-failed": "更新に失敗しました",
+                "progress-updating": "データを更新しています...",
+                "confirm-clear-config": "保存された設定をクリアしてもよろしいですか？",
+                "label-total": "合計",
+                "title-save-config": "設定を保存",
+                "section-month-select": "📅 月選択",
+                "label-select-month": "月を選択",
+                "hint-select-month": "💡 月を選択して「データを更新」ボタンをクリックすると、システムが自動的に更新し、その月のデータを読み込みます",
+                "btn-update-data": "🔄 データを更新",
+                "msg-updating": "データを更新しています...",
+                "label-current-month": "現在表示中の月：",
+                "section-monthly-data": "📊 当月データ",
+                "section-stores-data": "🏪 各店舗データ",
+                "chart-orders": "注文数",
+                "chart-amount": "決済金額",
+                "section-trend-data": "📊 トレンドデータ",
+                "back-to-hub": "← 管理者ハブに戻る",
+                "chart-daily-trend": "直近7日間の手数料推移",
+                "chart-trend-orders": "最近6ヶ月の注文数トレンド",
+                "chart-trend-amount": "最近6ヶ月の決済金額トレンド",
+                "section-commission-rank": "🏆 最近6ヶ月店舗手数料ランキング",
+                "hint-commission-rank": "💡 Google Sheets の20行目から「店舗」と「6ヶ月手数料/決済金額」列を追加してください。システムが自動で読み込み、ランキング表示します",
+                "no-data": "データがありません",
+                "no-data-to-display": "表示するデータがありません",
+                "label-cumulative-orders": "累計注文",
+                "label-cumulative-people": "累計人数",
+                "label-cumulative-amount": "累計決済金額",
+                "label-cumulative-project-amount": "累計促成取引額",
+                "msg-select-month": "月を選択してください",
+                "not-set": "設定されていません"
+            },
+            en: {
+                title: "📊 Operations Dashboard",
+                subtitle: "View and analyze your operations data in real-time",
+                "data-source": "📥 Data Source",
+                "tab-googlesheets": "Google Sheets",
+                "tab-upload": "File Upload",
+                "label-sheets-url": "Google Sheets Public Link",
+                "hint-sheets-public": "💡 Tip: Make sure your Google Sheets is set to \"Anyone with the link can view\"",
+                "config-saved": "✓ Configuration saved",
+                "label-sheet-name": "Sheet Name (Optional)",
+                "placeholder-sheet-name": "Master (leave blank to use first sheet, enter name to auto-find)",
+                "hint-sheet-name": "💡 If your spreadsheet has multiple sheets, enter the sheet name (e.g., \"Master\") and the system will automatically find and load that sheet",
+                "label-script-url": "Google Apps Script URL (Optional)",
+                "placeholder-script-url": "https://script.google.com/macros/s/.../exec",
+                "hint-script-url": "💡 To change the month directly on the webpage, set up Google Apps Script.",
+                "link-script-info": "Click to view setup instructions",
+                "btn-load-data": "📥 Load Data",
+                "btn-clear-config": "🗑️ Clear Saved Configuration",
+                "upload-text": "Click or drag files here to upload",
+                "upload-hint": "Supports CSV and Excel (.xlsx) formats",
+                "upload-note": "💡 Note: Files are processed only in the browser and are not uploaded to the server. Data is saved only in the current browser session and needs to be re-uploaded after refreshing the page.",
+                "section-today": "📅 Daily Data",
+                "label-select-day": "Select date",
+                "hint-select-day": "💡 Pick a date and click \"Update daily data\" to write E2 and refresh stats (requires Apps Script, or edit E2 manually)",
+                "btn-update-day-data": "🔄 Update daily data",
+                "label-current-day": "Stats date:",
+                "hint-today-data": "💡 E2 = stats date; E3:E6 vertical = orders, guests, facilitated sales, commission (settlement). Formulas should reference E2, not hard-code TODAY()",
+                "label-today-date": "As of: {date}",
+                "msg-select-day": "Please select a date",
+                "msg-set-day": "Set cell E2 to {date} in Google Sheets, then click \"Update daily data\" again",
+                "msg-day-updated-via-script": "Stats date updated via Apps Script",
+                "msg-day-updated-success": "Loaded daily data for {date}",
+                "msg-day-updated-check": "Data refreshed, but detected stats date is {loadedDate}. Check if Apps Script updated E2 correctly",
+                "msg-day-updated-manual": "Set E2 to {selectedDate} and reload (current: {loadedDate})",
+                "msg-apps-script-update-day-failed": "Unable to update stats date via Apps Script",
+                "label-today-orders": "Today's Orders",
+                "label-today-people": "Today's Guests",
+                "label-today-gmv": "Today's Facilitated Sales",
+                "label-today-commission": "Today's Commission",
+                "section-cumulative": "📈 Cumulative Data",
+                "msg-enter-sheets-url": "Please enter Google Sheets link",
+                "msg-loading": "Loading Google Sheets data...",
+                "msg-invalid-url": "Invalid Google Sheets URL",
+                "msg-load-success": "Google Sheets data loaded successfully! Loaded {sheetInfo}, total {rows} rows of data",
+                "msg-load-first": "Please load Google Sheets data first",
+                "msg-updating-sheets": "Updating Google Sheets...",
+                "msg-manual-update": "Please manually update Google Sheets...",
+                "msg-set-month": "Set cell B2 to {month} in Google Sheets, then click \"Update Data\"",
+                "msg-loading-data": "Loading data...",
+                "msg-data-updated": "Data updated, but detected month is {loadedMonth}. If data is not updated, set cell B2 to {selectedMonth} in Google Sheets, then click \"Update Data\" again",
+                "msg-config-saved": "Configuration saved! Will be automatically loaded on next visit",
+                "msg-config-cleared": "Configuration cleared",
+                "msg-config-loaded": "Saved configuration loaded",
+                "msg-processing-file": "Processing file...",
+                "msg-file-loaded": "File loaded successfully!",
+                "msg-csv-parse-error": "CSV file parsing failed:",
+                "msg-excel-loaded": "Excel file loaded successfully!",
+                "msg-excel-parse-error": "Excel file parsing failed:",
+                "msg-unsupported-format": "Unsupported file format. Please upload CSV or Excel file",
+                "msg-invalid-url": "Invalid Google Sheets URL",
+                "msg-detected-gid": "Detected gid={gid} from URL",
+                "msg-finding-sheet": "Finding sheet \"{sheetName}\"...",
+                "msg-sheet-found": "Found sheet \"{sheetName}\" (gid={gid})",
+                "msg-sheet-not-found": "Unable to automatically find sheet \"{sheetName}\". Please follow these steps:\n1. Open \"{sheetName}\" sheet in Google Sheets\n2. Copy the URL (URL contains gid=number)\n3. Paste the full URL into the input box above\n4. Clear the sheet name input box",
+                "msg-load-failed": "Load failed:",
+                "msg-update-failed": "Update failed:",
+                "msg-data-updated-success": "Data successfully updated to {month}",
+                "msg-month-updated-via-script": "Month updated via Apps Script",
+                "msg-data-updated-check": "Data updated, but detected month is {loadedMonth}. Please check if Apps Script correctly updated cell B2",
+                "progress-connecting": "Connecting to server...",
+                "progress-updating-sheets": "Updating Google Sheets...",
+                "progress-waiting-refresh": "Waiting for data refresh...",
+                "progress-manual-update": "Please manually update Google Sheets...",
+                "progress-loading-data": "Loading data...",
+                "progress-validating": "Validating data...",
+                "progress-complete": "Update complete!",
+                "progress-failed": "Update failed",
+                "progress-updating": "Updating data...",
+                "confirm-clear-config": "Are you sure you want to clear the saved configuration?",
+                "label-total": "Total",
+                "title-save-config": "Save Configuration",
+                "msg-cannot-access-sheets": "Cannot access Google Sheets. Please ensure the spreadsheet is set to public access",
+                "msg-data-empty": "Retrieved data is empty. Please check if the sheet contains data",
+                "msg-data-format-error": "Data format error. Please ensure the sheet contains data",
+                "msg-apps-script-failed": "Apps Script call failed",
+                "msg-apps-script-update-failed": "Unable to update month via Apps Script",
+                "meta-description": "Operations Dashboard - View and analyze your operations data in real-time",
+                "btn-close-instructions": "Close Instructions",
+                "section-month-select": "📅 Month Selection",
+                "label-select-month": "Select Month",
+                "hint-select-month": "💡 After selecting a month, click the \"Update Data\" button and the system will automatically update and load data for that month",
+                "btn-update-data": "🔄 Update Data",
+                "msg-updating": "Updating data...",
+                "label-current-month": "Current Display Month:",
+                "section-monthly-data": "📊 Monthly Data",
+                "section-stores-data": "🏪 Store Data",
+                "chart-orders": "Orders",
+                "chart-amount": "Settlement Amount",
+                "section-trend-data": "📊 Trend Data",
+                "back-to-hub": "← Back to Hub",
+                "chart-daily-trend": "Last 7 Days Commission Trend",
+                "chart-trend-orders": "Last 6 Months Order Trend",
+                "chart-trend-amount": "Last 6 Months Settlement Amount Trend",
+                "section-commission-rank": "🏆 Last 6 Months Store Commission Leaderboard",
+                "hint-commission-rank": "💡 Add 'Store' and '6-Month Commission/Settlement Amount' columns from row 20 in Google Sheets. The system will automatically read and display the ranking",
+                "no-data": "No data",
+                "no-data-to-display": "No data to display",
+                "label-cumulative-orders": "Cumulative Orders",
+                "label-cumulative-people": "Cumulative People",
+                "label-cumulative-amount": "Cumulative Settlement Amount",
+                "label-cumulative-project-amount": "Cumulative Facilitated Sales",
+                "msg-select-month": "Please select a month",
+                "not-set": "Not set"
+            },
+            zh: {
+                title: "📊 运营数据仪表盘",
+                subtitle: "实时查看和分析您的运营数据",
+                "data-source": "📥 数据源",
+                "tab-googlesheets": "Google Sheets",
+                "tab-upload": "文件上传",
+                "label-sheets-url": "Google Sheets 公开链接",
+                "hint-sheets-public": "💡 提示：请确保您的 Google Sheets 已设置为\"任何拥有链接的人都可以查看\"",
+                "config-saved": "✓ 配置已保存",
+                "label-sheet-name": "工作表名称（可选）",
+                "placeholder-sheet-name": "Master（留空则使用第一个工作表，输入名称会自动查找）",
+                "hint-sheet-name": "💡 如果您的表格中有多个 sheet，输入 sheet 名称（如 \"Master\"）系统会自动查找并加载该 sheet",
+                "label-script-url": "Google Apps Script URL（可选）",
+                "placeholder-script-url": "https://script.google.com/macros/s/.../exec",
+                "hint-script-url": "💡 如需在网页上直接更改月份，请设置 Google Apps Script。",
+                "link-script-info": "点击查看设置说明",
+                "btn-load-data": "📥 加载数据",
+                "btn-clear-config": "🗑️ 清除保存的配置",
+                "upload-text": "点击或拖拽文件到此处上传",
+                "upload-hint": "支持 CSV 和 Excel (.xlsx) 格式",
+                "upload-note": "💡 注意：文件仅在浏览器中处理，不会上传到服务器。数据仅保存在当前浏览器会话中，刷新页面后需要重新上传。",
+                "section-cumulative": "📈 累计数据",
+                "msg-enter-sheets-url": "请输入 Google Sheets 链接",
+                "msg-loading": "正在加载 Google Sheets 数据...",
+                "msg-invalid-url": "无效的 Google Sheets URL",
+                "msg-load-success": "Google Sheets 数据加载成功！已加载 {sheetInfo}，共 {rows} 行数据",
+                "msg-load-first": "请先加载 Google Sheets 数据",
+                "msg-updating-sheets": "正在更新 Google Sheets...",
+                "msg-manual-update": "请手动更新 Google Sheets...",
+                "msg-set-month": "请在 Google Sheets 中将 B2 单元格设置为 {month}，然后点击\"更新数据\"",
+                "msg-loading-data": "正在加载数据...",
+                "msg-data-updated": "数据已更新，但检测到的月份为 {loadedMonth}。如果数据未更新，请在 Google Sheets 中将 B2 单元格设置为 {selectedMonth}，然后再次点击\"更新数据\"",
+                "msg-config-saved": "配置已保存！下次访问时会自动加载",
+                "msg-config-cleared": "配置已清除",
+                "msg-config-loaded": "已加载保存的配置",
+                "msg-processing-file": "正在处理文件...",
+                "msg-file-loaded": "文件加载成功！",
+                "msg-csv-parse-error": "CSV 文件解析失败：",
+                "msg-excel-loaded": "Excel 文件加载成功！",
+                "msg-excel-parse-error": "Excel 文件解析失败：",
+                "msg-unsupported-format": "不支持的文件格式，请上传 CSV 或 Excel 文件",
+                "msg-invalid-url": "无效的 Google Sheets URL",
+                "msg-detected-gid": "从 URL 中检测到 gid={gid}",
+                "msg-finding-sheet": "正在查找工作表 \"{sheetName}\"...",
+                "msg-sheet-found": "已找到工作表 \"{sheetName}\" (gid={gid})",
+                "msg-sheet-not-found": "无法自动找到工作表 \"{sheetName}\"。请按以下步骤操作：\n1. 在 Google Sheets 中打开 \"{sheetName}\" sheet\n2. 复制 URL（URL 中包含 gid=数字）\n3. 将完整 URL 粘贴到上方输入框\n4. 清空工作表名称输入框",
+                "msg-load-failed": "加载失败：",
+                "msg-update-failed": "更新失败：",
+                "msg-data-updated-success": "数据已成功更新为 {month}",
+                "msg-month-updated-via-script": "月份已通过 Apps Script 更新",
+                "msg-data-updated-check": "数据已更新，但检测到的月份为 {loadedMonth}。请检查 Apps Script 是否正确更新了 B2 单元格",
+                "progress-connecting": "正在连接服务器...",
+                "progress-updating-sheets": "正在更新 Google Sheets...",
+                "progress-waiting-refresh": "等待数据刷新...",
+                "progress-manual-update": "请手动更新 Google Sheets...",
+                "progress-loading-data": "正在加载数据...",
+                "progress-validating": "正在验证数据...",
+                "progress-complete": "更新完成！",
+                "progress-failed": "更新失败",
+                "progress-updating": "正在更新数据...",
+                "confirm-clear-config": "确定要清除保存的配置吗？",
+                "label-total": "总计",
+                "title-save-config": "保存配置",
+                "msg-cannot-access-sheets": "无法访问 Google Sheets，请确保表格已设置为公开访问",
+                "msg-data-empty": "获取的数据为空，请检查 sheet 是否存在数据",
+                "msg-data-format-error": "数据格式错误，请确保 sheet 包含数据",
+                "msg-apps-script-failed": "Apps Script 调用失败",
+                "msg-apps-script-update-failed": "无法通过 Apps Script 更新月份",
+                "meta-description": "运营数据仪表盘 - 实时查看和分析运营数据",
+                "btn-close-instructions": "关闭说明",
+                "section-month-select": "📅 月份选择",
+                "label-select-month": "选择月份",
+                "hint-select-month": "💡 选择月份后点击\"更新数据\"按钮，系统会自动更新并加载该月份的数据",
+                "btn-update-data": "🔄 更新数据",
+                "msg-updating": "正在更新数据...",
+                "label-current-month": "当前显示月份：",
+                "section-today": "📅 当日数据",
+                "label-select-day": "选择日期",
+                "hint-select-day": "💡 选择日期后点击「更新当日数据」，系统会写入 E2 并刷新统计（需配置 Apps Script，或手动改 E2）",
+                "btn-update-day-data": "🔄 更新当日数据",
+                "label-current-day": "当前统计日期：",
+                "hint-today-data": "💡 E2 为统计日期；E3:E6 纵向依次为订单数、客人数、促成交易额、佣金（结算金额）。公式请引用 E2，勿写死 TODAY()",
+                "label-today-date": "统计日期：{date}",
+                "msg-select-day": "请选择日期",
+                "msg-set-day": "请在 Google Sheets 中将 E2 设置为 {date}，然后再次点击「更新当日数据」",
+                "msg-day-updated-via-script": "统计日期已通过 Apps Script 更新",
+                "msg-day-updated-success": "已加载 {date} 的当日数据",
+                "msg-day-updated-check": "数据已更新，但检测到的统计日期为 {loadedDate}。请检查 Apps Script 是否正确更新了 E2",
+                "msg-day-updated-manual": "请将 E2 设为 {selectedDate} 后重新加载（当前：{loadedDate}）",
+                "msg-apps-script-update-day-failed": "无法通过 Apps Script 更新统计日期",
+                "label-today-orders": "当日订单数",
+                "label-today-people": "当日客人数",
+                "label-today-gmv": "当日促成交易额",
+                "label-today-commission": "当日佣金",
+                "section-monthly-data": "📊 当月数据",
+                "section-stores-data": "🏪 各门店数据",
+                "chart-orders": "订单数",
+                "chart-amount": "结算金额",
+                "section-trend-data": "📊 趋势数据",
+                "back-to-hub": "← 返回管理中台",
+                "chart-daily-trend": "最近7天佣金趋势",
+                "chart-trend-orders": "最近六个月订单数量趋势",
+                "chart-trend-amount": "最近六个月结算金额趋势",
+                "section-commission-rank": "🏆 最近6个月门店佣金排行榜",
+                "hint-commission-rank": "💡 请在 Google Sheets 中从第20行起添加「门店」和「6个月佣金/结算金额」列，系统将自动读取并排序显示",
+                "no-data": "暂无数据",
+                "no-data-to-display": "没有数据可显示",
+                "label-cumulative-orders": "累计订单",
+                "label-cumulative-people": "累计人数",
+                "label-cumulative-amount": "累计结算金额",
+                "label-cumulative-project-amount": "累计促成交易额",
+                "msg-select-month": "请选择月份",
+                "not-set": "未设置"
+            }
+        };
+
+        // 当前语言
+        let currentLang = 'ja';
+
+        // 初始化语言
+        function initLanguage() {
+            const savedLang = localStorage.getItem('dashboard-lang');
+            if (savedLang && translations[savedLang]) {
+                currentLang = savedLang;
+            }
+            updateLanguageButtons();
+            updateContent();
+        }
+
+        // 更新语言按钮状态
+        function updateLanguageButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if (btn.dataset.lang === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 更新页面内容
+        function updateContent() {
+            const t = translations[currentLang];
+            
+            // 获取所有需要更新的元素
+            const allElements = Array.from(document.querySelectorAll('[data-lang]'))
+                .filter(el => !el.classList.contains('lang-btn'));
+            
+            // 分离有子元素的元素和没有子元素的元素
+            const elementsWithoutChildren = allElements.filter(el => {
+                const children = Array.from(el.children);
+                return children.length === 0 || !children.some(child => child.hasAttribute('data-lang'));
+            });
+            
+            const elementsWithChildren = allElements.filter(el => {
+                const children = Array.from(el.children);
+                return children.length > 0 && children.some(child => child.hasAttribute('data-lang'));
+            });
+            
+            // 先更新没有子元素的元素
+            elementsWithoutChildren.forEach(element => {
+                const key = element.dataset.lang;
+                if (!t[key]) return;
+                
+                if (element.tagName === 'INPUT' && element.type === 'text') {
+                    const placeholderKey = element.dataset.langPlaceholder;
+                    if (placeholderKey && t[placeholderKey]) {
+                        element.placeholder = t[placeholderKey];
+                    }
+                } else if (element.tagName === 'LABEL' || element.tagName === 'SPAN' || element.tagName === 'A') {
+                    element.textContent = t[key];
+                } else if (element.tagName === 'META') {
+                    // 更新meta标签的content
+                    element.content = t[key];
+                } else if (element.tagName === 'TITLE') {
+                    element.textContent = t[key];
+                } else if (element.tagName === 'BUTTON') {
+                    // 更新title属性
+                    const titleKey = element.dataset.langTitle;
+                    if (titleKey && t[titleKey]) {
+                        element.title = t[titleKey];
+                    }
+                    const span = element.querySelector('span[data-lang]');
+                    if (span) {
+                        // span会在后续循环中更新
+                        const textNodes = Array.from(element.childNodes).filter(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+                        if (textNodes.length > 0) {
+                            textNodes[0].textContent = t[key];
+                        }
+                    } else {
+                        element.textContent = t[key];
+                    }
+                } else if (element.tagName === 'P' || element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || element.tagName === 'H4' || element.tagName === 'DIV') {
+                    if (t[key].includes('<')) {
+                        element.innerHTML = t[key];
+                    } else {
+                        element.textContent = t[key];
+                    }
+                } else {
+                    element.innerHTML = t[key];
+                }
+            });
+            
+            // 再更新有子元素的元素（此时子元素已经更新完成）
+            elementsWithChildren.forEach(element => {
+                const key = element.dataset.lang;
+                if (!t[key]) return;
+                
+                if (element.tagName === 'P' || element.tagName === 'DIV') {
+                    if (t[key].includes('<')) {
+                        element.innerHTML = t[key];
+                    } else {
+                        // 保留子元素，只更新文本部分
+                        const children = Array.from(element.children);
+                        const childrenHTML = children.map(child => child.outerHTML).join('');
+                        element.innerHTML = t[key] + childrenHTML;
+                    }
+                } else if (element.tagName === 'BUTTON') {
+                    const span = element.querySelector('span[data-lang]');
+                    if (span) {
+                        // span已经更新，只更新按钮的其他文本
+                        const textNodes = Array.from(element.childNodes).filter(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
+                        if (textNodes.length > 0) {
+                            textNodes[0].textContent = t[key];
+                        }
+                    } else {
+                        element.textContent = t[key];
+                    }
+                }
+            });
+        }
+
+        // 获取翻译文本（支持参数替换）
+        function t(key, params = {}) {
+            let text = translations[currentLang][key] || translations.zh[key] || key;
+            // 替换参数
+            Object.keys(params).forEach(param => {
+                text = text.replace(`{${param}}`, params[param]);
+            });
+            return text;
+        }
+
+        // 翻译表头/标签（将中文表头翻译成对应语言）
+        function translateHeader(header) {
+            if (!header) return '';
+            const headerStr = String(header).trim();
+            
+            // 表头翻译映射
+            const headerTranslations = {
+                ja: {
+                    '排名': '順位',
+                    '订单数': '注文数',
+                    '订单数量': '注文数',
+                    '项目金额': '促成取引額',
+                    '结算金额': '決済金額',
+                    '占比': '割合',
+                    '比例': '割合',
+                    '门店': '店舗',
+                    '月份': '月',
+                    '累计订单': '累計注文',
+                    '累计人数': '累計人数',
+                    '累计结算金额': '累計決済金額',
+                    '选择月份': '月を選択',
+                    '订单': '注文',
+                    '人数': '人数',
+                    '金额': '金額',
+                    '本月': '今月',
+                    '当月': '今月',
+                    '本月订单': '今月注文',
+                    '本月订单数': '今月注文数',
+                    '本月人数': '今月人数',
+                    '本月金额': '今月金額',
+                    '本月结算金额': '今月決済金額',
+                    '本月项目金额': '今月促成取引額',
+                    '促成交易额': '促成取引額',
+                    '趋势': 'トレンド',
+                    '结算金额趋势': '決済金額トレンド',
+                    '订单数量趋势': '注文数トレンド',
+                    '订单趋势': '注文トレンド',
+                    '金额趋势': '金額トレンド',
+                    '结算趋势': '決済トレンド'
+                },
+                en: {
+                    '排名': 'Rank',
+                    '订单数': 'Orders',
+                    '订单数量': 'Orders',
+                    '项目金额': 'Facilitated Sales',
+                    '结算金额': 'Settlement Amount',
+                    '占比': 'Ratio',
+                    '比例': 'Ratio',
+                    '门店': 'Store',
+                    '月份': 'Month',
+                    '累计订单': 'Cumulative Orders',
+                    '累计人数': 'Cumulative People',
+                    '累计结算金额': 'Cumulative Settlement Amount',
+                    '选择月份': 'Select Month',
+                    '订单': 'Orders',
+                    '人数': 'People',
+                    '金额': 'Amount',
+                    '本月': 'This Month',
+                    '当月': 'This Month',
+                    '本月订单': 'This Month Orders',
+                    '本月订单数': 'This Month Orders',
+                    '本月人数': 'This Month People',
+                    '本月金额': 'This Month Amount',
+                    '本月结算金额': 'This Month Settlement Amount',
+                    '本月项目金额': 'This Month Facilitated Sales',
+                    '促成交易额': 'Facilitated Sales',
+                    '趋势': 'Trend',
+                    '结算金额趋势': 'Settlement Amount Trend',
+                    '订单数量趋势': 'Order Trend',
+                    '订单趋势': 'Order Trend',
+                    '金额趋势': 'Amount Trend',
+                    '结算趋势': 'Settlement Trend'
+                },
+                zh: {
+                    '排名': '排名',
+                    '订单数': '订单数',
+                    '订单数量': '订单数量',
+                    '项目金额': '促成交易额',
+                    '结算金额': '结算金额',
+                    '占比': '占比',
+                    '比例': '比例',
+                    '门店': '门店',
+                    '月份': '月份',
+                    '累计订单': '累计订单',
+                    '累计人数': '累计人数',
+                    '累计结算金额': '累计结算金额',
+                    '选择月份': '选择月份',
+                    '订单': '订单',
+                    '人数': '人数',
+                    '金额': '金额',
+                    '本月': '本月',
+                    '当月': '当月',
+                    '本月订单': '本月订单',
+                    '本月订单数': '本月订单数',
+                    '本月人数': '本月人数',
+                    '本月金额': '本月金额',
+                    '本月结算金额': '本月结算金额',
+                    '本月项目金额': '本月促成交易额',
+                    '趋势': '趋势',
+                    '结算金额趋势': '结算金额趋势',
+                    '订单数量趋势': '订单数量趋势',
+                    '订单趋势': '订单趋势'
+                }
+            };
+            
+            const langMap = headerTranslations[currentLang] || headerTranslations.zh;
+            
+            // 精确匹配
+            if (langMap[headerStr]) {
+                return langMap[headerStr];
+            }
+            
+            // 部分匹配（包含关键词）- 按长度从长到短排序，优先匹配更长的关键词
+            const sortedKeys = Object.keys(langMap).sort((a, b) => b.length - a.length);
+            let result = headerStr;
+            let hasReplacement = false;
+            
+            // 遍历所有关键词，替换所有匹配的部分
+            for (const key of sortedKeys) {
+                if (result.includes(key)) {
+                    // 替换所有匹配的关键词
+                    result = result.replace(new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), langMap[key]);
+                    hasReplacement = true;
+                }
+            }
+            
+            return hasReplacement ? result : headerStr;
+        }
+
+        // 语言切换事件（在DOMContentLoaded中绑定）
+        function initLanguageSwitcher() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentLang = btn.dataset.lang;
+                    localStorage.setItem('dashboard-lang', currentLang);
+                    updateLanguageButtons();
+                    updateContent();
+                    // 如果数据已加载，重新渲染动态内容
+                    if (currentData) {
+                        processData(currentData);
+                    }
+                });
+            });
+        }
+    </script>
+
+    <!-- 横屏全屏蒙层 -->
+    <div id="landscapeOverlay">
+        <div class="lo-header">
+            <span class="lo-title" data-lang="section-stores-data">🏪 各门店数据</span>
+            <button class="lo-close" id="landscapeClose">✕ 关闭</button>
+        </div>
+        <div class="lo-body">
+            <div id="landscapeTable"></div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('landscapeBtn');
+            const overlay = document.getElementById('landscapeOverlay');
+            const closeBtn = document.getElementById('landscapeClose');
+            const landscapeTable = document.getElementById('landscapeTable');
+
+            if (!btn || !overlay) return;
+
+            btn.addEventListener('click', function () {
+                // 复制表格内容到蒙层
+                const src = document.getElementById('sectionBTable');
+                landscapeTable.innerHTML = src ? src.innerHTML : '';
+
+                overlay.classList.add('open');
+                document.body.style.overflow = 'hidden';
+
+                // 请求横屏锁定（部分浏览器支持）
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(() => {});
+                }
+            });
+
+            function closeLandscape() {
+                overlay.classList.remove('open');
+                document.body.style.overflow = '';
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            }
+
+            closeBtn.addEventListener('click', closeLandscape);
+            // 点击蒙层背景也可关闭
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closeLandscape();
+            });
+        })();
+    </script>
+</body>
+</html>

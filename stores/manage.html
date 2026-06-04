@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>店舗管理</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #C9A961;
+            --gold2: #D4AF37;
+            --cream: #FAF8F3;
+            --card: #FFFFFF;
+            --border: #E8E5DF;
+            --dark: #2C2C2C;
+            --medium: #4A4A4A;
+            --light: #7A7A7A;
+            --shadow: rgba(0,0,0,0.05);
+            --shadow-md: rgba(0,0,0,0.09);
+            --danger: #DC3545;
+            --success: #1E8E4F;
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--cream);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+        .container { max-width: 760px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--light);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1.25rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--gold); }
+
+        /* ── Header ── */
+        .page-header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .page-header-left h1 { font-size: 1.2rem; font-weight: 700; }
+        .page-header-left p { font-size: 0.82rem; color: var(--light); margin-top: 0.2rem; }
+        .lang-row { display: flex; gap: 0.4rem; }
+        .lang-btn {
+            padding: 0.28rem 0.65rem;
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--medium);
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .lang-btn:hover, .lang-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+        /* ── Notice banner ── */
+        .notice {
+            background: rgba(201,169,97,0.1);
+            border: 1px solid rgba(201,169,97,0.35);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.82rem;
+            color: var(--medium);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .notice-icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+        /* ── Card sections ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem 1.25rem 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 6px var(--shadow);
+        }
+        .card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--light);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ── Store list ── */
+        .store-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            margin-bottom: 0.5rem;
+            background: var(--cream);
+            transition: border-color 0.2s;
+        }
+        .store-item:last-child { margin-bottom: 0; }
+        .store-item:hover { border-color: #ccc; }
+        .store-drag { cursor: grab; color: var(--light); font-size: 1rem; user-select: none; flex-shrink: 0; }
+        .store-item-name { flex: 1; font-size: 0.9rem; font-weight: 600; }
+        .store-item-idx {
+            font-size: 0.72rem;
+            color: var(--light);
+            background: var(--border);
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .btn-del {
+            background: none;
+            border: 1px solid transparent;
+            border-radius: 7px;
+            color: var(--light);
+            font-size: 0.82rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            transition: all 0.18s;
+            flex-shrink: 0;
+        }
+        .btn-del:hover { border-color: var(--danger); color: var(--danger); background: rgba(220,53,69,0.06); }
+
+        .empty-hint {
+            text-align: center;
+            color: var(--light);
+            font-size: 0.85rem;
+            padding: 1.5rem 0;
+        }
+
+        /* ── Add form ── */
+        .add-row {
+            display: flex;
+            gap: 0.6rem;
+            align-items: stretch;
+        }
+        .add-input {
+            flex: 1;
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 9px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: var(--cream);
+            transition: border-color 0.2s;
+        }
+        .add-input:focus { outline: none; border-color: var(--gold); background: var(--card); }
+        .btn-add {
+            padding: 0.7rem 1.2rem;
+            background: var(--gold);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .btn-add:hover { background: var(--gold2); }
+        .add-error {
+            font-size: 0.78rem;
+            color: var(--danger);
+            margin-top: 0.4rem;
+            display: none;
+        }
+
+        /* ── Reset button ── */
+        .btn-reset {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.55rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: var(--medium);
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
+        .local-badge {
+            display: inline-block;
+            background: rgba(201,169,97,0.15);
+            color: var(--gold2);
+            border: 1px solid rgba(201,169,97,0.4);
+            border-radius: 5px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.1rem 0.45rem;
+            margin-left: 0.4rem;
+            vertical-align: middle;
+        }
+        .hidden { display: none !important; }
+
+        /* ── Export ── */
+        .export-block {
+            background: #1e1e2e;
+            border-radius: 10px;
+            padding: 1rem 1.1rem;
+            margin-top: 0.75rem;
+            position: relative;
+        }
+        .export-code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            color: #cdd6f4;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+        .export-code .kw  { color: #cba6f7; }
+        .export-code .str { color: #a6e3a1; }
+        .export-code .cm  { color: #6c7086; }
+        .btn-copy {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.75rem;
+            padding: 0.3rem 0.7rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: #cdd6f4;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .btn-copy:hover { background: rgba(255,255,255,0.2); }
+        .btn-copy.copied { background: rgba(30,142,79,0.35); border-color: #1E8E4F; color: #a6e3a1; }
+        .export-path {
+            font-size: 0.78rem;
+            color: var(--light);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .export-path code {
+            background: var(--border);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.76rem;
+            color: var(--medium);
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(4rem);
+            background: #2C2C2C;
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 99;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 0.85rem 0.75rem 3rem; }
+            .page-header { flex-direction: column; align-items: stretch; gap: 0.75rem; border-radius: 12px; }
+            .lang-row { justify-content: flex-start; }
+            .add-row { flex-direction: column; }
+            .btn-add { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <a href="../hub.html" class="back-link" id="backLink">← 管理者ハブに戻る</a>
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1 id="pageTitle">⚙️ 店舗管理</h1>
+            <p id="pageSubtitle">店舗の追加・削除。変更はブラウザに保存されます。</p>
+        </div>
+        <div class="lang-row">
+            <button class="lang-btn active" data-lang="ja">日本語</button>
+            <button class="lang-btn" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+    </div>
+
+    <div class="notice">
+        <span class="notice-icon">💡</span>
+        <span id="noticeText">変更はこのブラウザにのみ保存されます。永続的に反映させるには、下の「エクスポート」から <code>stores.config.js</code> を更新してください。</span>
+    </div>
+
+    <!-- 当前门店列表 -->
+    <div class="card">
+        <div class="card-title" id="listTitle">現在の店舗一覧</div>
+        <div id="storesList"></div>
+    </div>
+
+    <!-- 新增门店 -->
+    <div class="card">
+        <div class="card-title" id="addTitle">店舗を追加</div>
+        <div class="add-row">
+            <input type="text" id="newStoreName" class="add-input" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn-add" id="addBtn" onclick="addStore()">追加</button>
+        </div>
+        <div class="add-error" id="addError"></div>
+    </div>
+
+    <!-- 重置 -->
+    <div class="card" id="resetCard" style="display:none;">
+        <div class="card-title" id="resetTitle">リセット</div>
+        <p style="font-size:0.82rem;color:var(--light);margin-bottom:0.75rem;" id="resetDesc">ローカルの変更を破棄して、stores.config.js の初期リストに戻します。</p>
+        <button class="btn-reset" onclick="resetToConfig()">
+            <span>↩</span> <span id="resetBtn">config.js にリセット</span>
+        </button>
+    </div>
+
+    <!-- 导出配置 -->
+    <div class="card">
+        <div class="card-title" id="exportTitle">設定をエクスポート</div>
+        <p class="export-path" id="exportPathLabel">
+            📄 以下のコードで <code>admin/stores/stores.config.js</code> を上書きしてください
+        </p>
+        <div class="export-block">
+            <button class="btn-copy" id="copyBtn" onclick="copyConfig()">コピー</button>
+            <div class="export-code" id="exportCode"></div>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="stores.config.js"></script>
+<script>
+    // ─── 权限校验 ─────────────────────────────────────────────────────────
+    if (sessionStorage.getItem('stores_admin') !== '1') {
+        location.replace('../hub.html');
+    }
+
+    // ─── i18n ─────────────────────────────────────────────────────────────
+    const i18n = {
+        ja: {
+            back: '← 管理者ハブに戻る',
+            pageTitle: '⚙️ 店舗管理',
+            pageSubtitle: '店舗の追加・削除。変更はブラウザに保存されます。',
+            notice: '変更はこのブラウザにのみ保存されます。永続的に反映させるには、下の「エクスポート」から stores.config.js を更新してください。',
+            listTitle: '現在の店舗一覧',
+            addTitle: '店舗を追加',
+            addPlaceholder: '店舗名を入力… 例：Sakura',
+            addBtn: '追加',
+            deleteBtn: '削除',
+            emptyHint: '店舗がありません。下のフォームから追加してください。',
+            errEmpty: '店舗名を入力してください',
+            errDuplicate: 'この店舗はすでに存在します',
+            localBadge: 'ローカル保存',
+            resetTitle: 'リセット',
+            resetDesc: 'ローカルの変更を破棄して、stores.config.js の初期リストに戻します。',
+            resetBtn: 'config.js にリセット',
+            exportTitle: '設定をエクスポート',
+            exportPathLabel: '以下のコードで admin/stores/stores.config.js を上書きしてください',
+            copyBtn: 'コピー',
+            copiedBtn: 'コピー済み ✓',
+            toastAdded: '店舗を追加しました',
+            toastDeleted: '店舗を削除しました',
+            toastReset: 'config.js にリセットしました',
+            toastCopied: 'クリップボードにコピーしました',
+            numberLabel: '#',
+        },
+        zh: {
+            back: '← 返回管理员中台',
+            pageTitle: '⚙️ 门店管理',
+            pageSubtitle: '新增或删除门店。修改将保存在当前浏览器中。',
+            notice: '修改仅保存在当前浏览器。如需永久生效，请通过下方「导出」更新 stores.config.js 文件。',
+            listTitle: '当前门店列表',
+            addTitle: '新增门店',
+            addPlaceholder: '输入门店名称… 例：Sakura',
+            addBtn: '添加',
+            deleteBtn: '删除',
+            emptyHint: '暂无门店，请在下方添加。',
+            errEmpty: '请输入门店名称',
+            errDuplicate: '该门店已存在',
+            localBadge: '本地修改',
+            resetTitle: '重置',
+            resetDesc: '丢弃本地修改，恢复为 stores.config.js 中的初始列表。',
+            resetBtn: '恢复为 config.js 默认',
+            exportTitle: '导出配置',
+            exportPathLabel: '将以下代码覆盖写入 admin/stores/stores.config.js',
+            copyBtn: '复制',
+            copiedBtn: '已复制 ✓',
+            toastAdded: '门店已添加',
+            toastDeleted: '门店已删除',
+            toastReset: '已恢复为 config.js 默认',
+            toastCopied: '已复制到剪贴板',
+            numberLabel: '#',
+        },
+        en: {
+            back: '← Back to Admin Hub',
+            pageTitle: '⚙️ Store Management',
+            pageSubtitle: 'Add or remove stores. Changes are saved in this browser.',
+            notice: 'Changes are stored in this browser only. To make them permanent, export the config and update stores.config.js.',
+            listTitle: 'Current Stores',
+            addTitle: 'Add Store',
+            addPlaceholder: 'Enter store name… e.g. Sakura',
+            addBtn: 'Add',
+            deleteBtn: 'Delete',
+            emptyHint: 'No stores yet. Use the form below to add one.',
+            errEmpty: 'Please enter a store name',
+            errDuplicate: 'This store already exists',
+            localBadge: 'Local override',
+            resetTitle: 'Reset',
+            resetDesc: 'Discard local changes and revert to the list in stores.config.js.',
+            resetBtn: 'Reset to config.js',
+            exportTitle: 'Export Config',
+            exportPathLabel: 'Overwrite admin/stores/stores.config.js with the code below',
+            copyBtn: 'Copy',
+            copiedBtn: 'Copied ✓',
+            toastAdded: 'Store added',
+            toastDeleted: 'Store deleted',
+            toastReset: 'Reset to config.js',
+            toastCopied: 'Copied to clipboard',
+            numberLabel: '#',
+        }
+    };
+
+    let lang = localStorage.getItem('stores-lang') || 'ja';
+    const tx = k => i18n[lang]?.[k] ?? i18n.zh[k] ?? k;
+
+    // ─── 门店列表数据 ──────────────────────────────────────────────────────
+    const OVERRIDE_KEY = 'stores_list_override';
+
+    function isOverriding() {
+        return !!localStorage.getItem(OVERRIDE_KEY);
+    }
+
+    function getStores() {
+        try {
+            const o = localStorage.getItem(OVERRIDE_KEY);
+            if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length >= 0) return arr; }
+        } catch(e) {}
+        return [...STORES_LIST];
+    }
+
+    function saveStores(arr) {
+        localStorage.setItem(OVERRIDE_KEY, JSON.stringify(arr));
+    }
+
+    // ─── 渲染 ──────────────────────────────────────────────────────────────
+    function render() {
+        const stores = getStores();
+        const override = isOverriding();
+        const list = document.getElementById('storesList');
+
+        // 门店列表
+        if (stores.length === 0) {
+            list.innerHTML = `<div class="empty-hint">${tx('emptyHint')}</div>`;
+        } else {
+            list.innerHTML = stores.map((name, i) => `
+                <div class="store-item">
+                    <span class="store-item-idx">${tx('numberLabel')}${i + 1}</span>
+                    <span class="store-item-name">${name}</span>
+                    <button class="btn-del" onclick="deleteStore(${i})" title="${tx('deleteBtn')}">✕</button>
+                </div>
+            `).join('');
+        }
+
+        // 重置按钮（仅在有 localStorage 覆盖时显示）
+        document.getElementById('resetCard').style.display = override ? '' : 'none';
+
+        // 导出代码
+        renderExport(stores);
+    }
+
+    function renderExport(stores) {
+        const lines = stores.map(s => `    '${s}',`).join('\n');
+        const code = [
+            `<span class="cm">/**</span>`,
+            `<span class="cm"> * 门店配置 — 单一数据源</span>`,
+            `<span class="cm"> * ★ 新增门店：在 STORES_LIST 末尾添加一行门店名即可</span>`,
+            `<span class="cm"> */</span>`,
+            `<span class="kw">const</span> STORES_LIST = [`,
+            stores.map(s => `    <span class="str">'${s}'</span>,`).join('\n'),
+            `];`,
+        ].join('\n');
+        document.getElementById('exportCode').innerHTML = code;
+    }
+
+    // ─── 操作 ──────────────────────────────────────────────────────────────
+    function addStore() {
+        const input = document.getElementById('newStoreName');
+        const name = input.value.trim();
+        const errEl = document.getElementById('addError');
+        errEl.style.display = 'none';
+
+        if (!name) {
+            errEl.textContent = tx('errEmpty');
+            errEl.style.display = 'block';
+            input.focus();
+            return;
+        }
+
+        const stores = getStores();
+        if (stores.some(s => s.toLowerCase() === name.toLowerCase())) {
+            errEl.textContent = tx('errDuplicate');
+            errEl.style.display = 'block';
+            input.focus();
+            return;
+        }
+
+        stores.push(name);
+        saveStores(stores);
+        input.value = '';
+        input.focus();
+        render();
+        showToast(tx('toastAdded'));
+    }
+
+    function deleteStore(idx) {
+        const stores = getStores();
+        stores.splice(idx, 1);
+        saveStores(stores);
+        render();
+        showToast(tx('toastDeleted'));
+    }
+
+    function resetToConfig() {
+        localStorage.removeItem(OVERRIDE_KEY);
+        render();
+        showToast(tx('toastReset'));
+    }
+
+    function copyConfig() {
+        const stores = getStores();
+        const text = [
+            '/**',
+            ' * 门店配置 — 单一数据源',
+            ' * ★ 新增门店：在 STORES_LIST 末尾添加一行门店名即可',
+            ' */',
+            'const STORES_LIST = [',
+            stores.map(s => `    '${s}',`).join('\n'),
+            '];',
+        ].join('\n');
+
+        const copyBtn = document.getElementById('copyBtn');
+        navigator.clipboard.writeText(text).then(() => {
+            copyBtn.textContent = tx('copiedBtn');
+            copyBtn.classList.add('copied');
+            showToast(tx('toastCopied'));
+            setTimeout(() => {
+                copyBtn.textContent = tx('copyBtn');
+                copyBtn.classList.remove('copied');
+            }, 2500);
+        }).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            copyBtn.textContent = tx('copiedBtn');
+            copyBtn.classList.add('copied');
+            showToast(tx('toastCopied'));
+            setTimeout(() => {
+                copyBtn.textContent = tx('copyBtn');
+                copyBtn.classList.remove('copied');
+            }, 2500);
+        });
+    }
+
+    // ─── Toast ────────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ─── 语言 ─────────────────────────────────────────────────────────────
+    function applyLang() {
+        document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        document.getElementById('backLink').textContent       = tx('back');
+        document.getElementById('pageTitle').textContent      = tx('pageTitle');
+        document.getElementById('pageSubtitle').textContent   = tx('pageSubtitle');
+        document.getElementById('noticeText').textContent     = tx('notice');
+        document.getElementById('listTitle').textContent      = tx('listTitle');
+        document.getElementById('addTitle').textContent       = tx('addTitle');
+        document.getElementById('newStoreName').placeholder   = tx('addPlaceholder');
+        document.getElementById('addBtn').textContent         = tx('addBtn');
+        document.getElementById('resetTitle').textContent     = tx('resetTitle');
+        document.getElementById('resetDesc').textContent      = tx('resetDesc');
+        document.getElementById('resetBtn').textContent       = tx('resetBtn');
+        document.getElementById('exportTitle').textContent    = tx('exportTitle');
+        document.getElementById('exportPathLabel').innerHTML  =
+            `📄 ${tx('exportPathLabel').replace('stores.config.js', '<code>stores.config.js</code>')}`;
+        document.getElementById('copyBtn').textContent        = tx('copyBtn');
+        document.title = tx('pageTitle');
+        render();
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            lang = b.dataset.lang;
+            localStorage.setItem('stores-lang', lang);
+            applyLang();
+        });
+    });
+
+    document.getElementById('newStoreName').addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); addStore(); }
+    });
+
+    // ─── 初始化 ───────────────────────────────────────────────────────────
+    applyLang();
+</script>
+</body>
+</html>

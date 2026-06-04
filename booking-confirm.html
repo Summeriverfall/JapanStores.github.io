@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预约确认生成器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #C9A961;
+            --gold2: #D4AF37;
+            --cream: #FAF8F3;
+            --card: #FFFFFF;
+            --border: #E8E5DF;
+            --dark: #2C2C2C;
+            --medium: #4A4A4A;
+            --light: #7A7A7A;
+            --shadow: rgba(0,0,0,0.05);
+            --shadow-md: rgba(0,0,0,0.09);
+            --green: #28A745;
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--cream);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+        /* ── Header ── */
+        .page-header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.1rem 1.5rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .header-left { display: flex; align-items: center; gap: 0.75rem; }
+        .header-icon { font-size: 1.6rem; flex-shrink: 0; }
+        .header-title { font-size: 1.15rem; font-weight: 700; }
+        .header-sub { font-size: 0.8rem; color: var(--light); }
+        .back-btn {
+            padding: 0.35rem 0.9rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--light);
+            text-decoration: none;
+            transition: all 0.18s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .back-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+        /* ── Main grid ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--light);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ── Form ── */
+        .form-row { margin-bottom: 1rem; }
+        .form-row:last-of-type { margin-bottom: 0; }
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--medium);
+            margin-bottom: 0.35rem;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: var(--dark);
+            background: var(--cream);
+            transition: border-color 0.2s, background 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: #fff;
+        }
+        .form-textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+        .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        /* Auto-detect */
+        .auto-box {
+            background: #fff;
+            border: 1.5px dashed var(--border);
+            border-radius: 14px;
+            padding: 0.9rem;
+            margin-bottom: 1.2rem;
+        }
+        .auto-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+        .auto-btn {
+            padding: 0.48rem 0.75rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            border: 1.5px solid var(--border);
+            background: var(--cream);
+            color: var(--medium);
+            transition: all 0.15s;
+        }
+        .auto-btn.primary { background: var(--gold); border-color: var(--gold); color: #fff; }
+        .auto-btn.primary:hover { background: var(--gold2); border-color: var(--gold2); }
+        .auto-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .auto-hint { font-size: 0.76rem; color: var(--light); margin-top: 0.55rem; line-height: 1.6; }
+        .missing-field { border-color: #DC3545 !important; background: #fff5f5 !important; }
+        .auto-result {
+            margin-top: 0.7rem;
+            font-size: 0.78rem;
+            color: var(--medium);
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.65rem 0.75rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            display: none;
+        }
+
+        /* Quick date buttons */
+        .quick-btns { display: flex; gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap; }
+        .quick-btn {
+            padding: 0.18rem 0.6rem;
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: var(--medium);
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.6;
+        }
+        .quick-btn:hover { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+        /* Per-person toggle */
+        .per-person-row {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-top: 0.4rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: var(--medium);
+            font-weight: 600;
+            user-select: none;
+            margin-bottom: 0;
+        }
+        .per-person-row input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--gold);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .total-display {
+            margin-top: 0.3rem;
+            font-size: 0.76rem;
+            color: var(--gold);
+            font-weight: 700;
+            display: none;
+        }
+
+        /* Reset */
+        .reset-btn {
+            width: 100%;
+            padding: 0.72rem;
+            background: transparent;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--light);
+            cursor: pointer;
+            margin-top: 1.1rem;
+            transition: all 0.18s;
+            font-family: inherit;
+        }
+        .reset-btn:hover { border-color: #DC3545; color: #DC3545; }
+
+        /* ── Preview panel ── */
+        .preview-card { position: sticky; top: 1.25rem; }
+
+        .lang-tabs { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .lang-tab {
+            padding: 0.25rem 0.65rem;
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--medium);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .lang-tab:hover, .lang-tab.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+        /* Completeness bar */
+        .completeness {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+            font-size: 0.75rem;
+            color: var(--light);
+        }
+        .progress-bar { flex: 1; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+        .progress-fill {
+            height: 100%;
+            background: var(--gold);
+            border-radius: 99px;
+            transition: width 0.3s ease, background 0.3s;
+            width: 0%;
+        }
+        .progress-fill.complete { background: var(--green); }
+
+        /* Preview section */
+        .preview-section { margin-bottom: 1.1rem; }
+        .preview-section:last-child { margin-bottom: 0; }
+
+        .preview-section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--light);
+            margin-bottom: 0.55rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .preview-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* Preview box */
+        .preview-box {
+            background: var(--cream);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 1.1rem 1.2rem;
+            font-size: 0.865rem;
+            line-height: 1.85;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--dark);
+            min-height: 110px;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+        .preview-empty { color: var(--light); font-style: italic; font-size: 0.82rem; }
+
+        /* Copy button */
+        .copy-btn {
+            width: 100%;
+            padding: 0.78rem;
+            background: var(--gold);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.6rem;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            font-family: inherit;
+            letter-spacing: 0.01em;
+        }
+        .copy-btn:hover { background: var(--gold2); }
+        .copy-btn:active { transform: scale(0.98); }
+        .copy-btn.success { background: var(--green); }
+
+        /* Outline variant for pre-confirmation copy */
+        .copy-btn.outline {
+            background: transparent;
+            border: 1.5px solid var(--gold);
+            color: var(--gold);
+        }
+        .copy-btn.outline:hover { background: var(--gold); color: #fff; }
+        .copy-btn.outline.success { background: var(--green); border-color: var(--green); color: #fff; }
+
+        /* Divider between the two preview sections */
+        .section-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.1rem 0;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 700px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .preview-card { position: static; }
+            .page-header { padding: 0.9rem 1rem; border-radius: 12px; }
+            .header-title { font-size: 1rem; }
+        }
+        @media (max-width: 420px) {
+            .row-2col { grid-template-columns: 1fr; }
+        }
+    </style>
+    <script src="stores/stores.config.js"></script>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <div class="header-icon">✉️</div>
+            <div>
+                <div class="header-title">预约确认生成器</div>
+                <div class="header-sub">Booking Confirmation Generator</div>
+            </div>
+        </div>
+        <a href="hub.html" class="back-btn">← 返回 Hub</a>
+    </div>
+
+    <div class="main-grid">
+
+        <!-- Left: Form -->
+        <div class="card">
+            <div class="card-title">📋 填写预约信息</div>
+
+            <div class="auto-box">
+                <label for="f-raw">⚡ 自动识别（把客人发来的内容粘贴到这里）</label>
+                <textarea class="form-textarea" id="f-raw" placeholder="例如：\nHi, I want to book fatigue recovery 120min, 2 people, 5/8 16:00, name Jack, whatsapp +81..., price 9800.\n或：\n5月8日 16:00 2人 Hanayiro 疲劳恢复120分钟 姓名：张三 WhatsApp：+86... 价格：9800"
+                    oninput="onRawInputChanged()"></textarea>
+                <div class="auto-actions">
+                    <button class="auto-btn primary" onclick="autoDetectFromRaw()">一键识别并回填</button>
+                    <button class="auto-btn" onclick="clearAutoDetect()">清空识别区</button>
+                </div>
+                <div class="auto-hint">支持识别：门店、姓名、日期、时间、人数、价格（可带 per person）、服务项目、WhatsApp/电话。识别后会自动回填，仍缺的字段会用红框标出。</div>
+                <div class="auto-result" id="autoResult"></div>
+            </div>
+
+            <div class="form-row">
+                <label>SHOP 门店</label>
+                <select class="form-select" id="f-shop" oninput="updatePreview()">
+                    <option value="">— 选择门店 —</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label>Name 客户姓名</label>
+                <input type="text" class="form-input" id="f-name"
+                    placeholder="e.g. Ariela Marostica" oninput="updatePreview()">
+            </div>
+
+            <div class="form-row">
+                <label>Time 预约时间</label>
+                <div class="row-2col" style="align-items: start;">
+                    <div>
+                        <input type="date" class="form-input" id="f-date" oninput="updatePreview()">
+                        <div class="quick-btns">
+                            <button class="quick-btn" onclick="setDate(0)">今天</button>
+                            <button class="quick-btn" onclick="setDate(1)">明天</button>
+                        </div>
+                    </div>
+                    <input type="time" class="form-input" id="f-time" oninput="updatePreview()">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="row-2col">
+                    <div>
+                        <label>Guests 人数</label>
+                        <input type="number" class="form-input" id="f-guests"
+                            min="1" max="99" placeholder="2" oninput="updatePreview()">
+                    </div>
+                    <div>
+                        <label>Price 价格</label>
+                        <input type="text" class="form-input" id="f-price"
+                            placeholder="e.g. 9800" oninput="updatePreview()">
+                        <label class="per-person-row">
+                            <input type="checkbox" id="f-per-person" onchange="updatePreview()">
+                            <span>按人计费 / per person</span>
+                        </label>
+                        <div class="total-display" id="totalDisplay"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>Service 服务项目</label>
+                <textarea class="form-textarea" id="f-service"
+                    placeholder="e.g. fatigue recovery course 120 minutes"
+                    oninput="updatePreview()"></textarea>
+            </div>
+
+            <div class="form-row">
+                <label>Contact (WhatsApp)</label>
+                <input type="tel" class="form-input" id="f-whatsapp"
+                    placeholder="e.g. +55 11 99898-4881" oninput="updatePreview()">
+            </div>
+
+            <button class="reset-btn" onclick="resetForm()">↺ 重置表单</button>
+        </div>
+
+        <!-- Right: Preview -->
+        <div class="card preview-card">
+            <div class="card-title">👁 预览 / Preview</div>
+
+            <!-- Output language toggle -->
+            <div class="lang-tabs">
+                <button class="lang-tab active" data-lang="en" onclick="setLang('en')">English</button>
+                <button class="lang-tab" data-lang="ja" onclick="setLang('ja')">日本語</button>
+                <button class="lang-tab" data-lang="zh" onclick="setLang('zh')">中文</button>
+                <button class="lang-tab" data-lang="pt" onclick="setLang('pt')">Português</button>
+            </div>
+
+            <!-- Completeness -->
+            <div class="completeness">
+                <span id="completeText">0 / 7 已填写</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Section 1: Pre-confirmation -->
+            <div class="preview-section">
+                <div class="preview-section-label">📨 客人确认 · Pre-confirmation</div>
+                <div class="preview-box" id="previewBoxPre">
+                    <span class="preview-empty">填写左侧表单后，客人确认消息将显示在这里…</span>
+                </div>
+                <button class="copy-btn outline" id="copyBtnPre" onclick="copyMsgPre()">
+                    <span>📋</span><span id="copyBtnPreText">复制 · 客人确认</span>
+                </button>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Section 2: Final booking confirmation -->
+            <div class="preview-section">
+                <div class="preview-section-label">✅ 预约确认 · Booking Confirmation</div>
+                <div class="preview-box" id="previewBox">
+                    <span class="preview-empty">填写左侧表单后，预约确认消息将显示在这里…</span>
+                </div>
+                <button class="copy-btn" id="copyBtn" onclick="copyMsg()">
+                    <span>📋</span><span id="copyBtnText">复制 · 预约确认</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ── Final confirmation templates ─────────────────────────────────────────────
+const templates = {
+    en: d => [
+        'Your appointment has been confirmed.',
+        '',
+        `SHOP: ${d.shop}`,
+        `Name: ${d.name}`,
+        `Time: ${d.time}`,
+        `Number of Guests: ${d.guests}`,
+        `Service: ${d.service}`,
+        `Contact (WhatsApp): ${d.whatsapp}`,
+        `Price: ${d.confirmPrice}`,
+        '',
+        'We look forward to welcoming you.',
+    ].join('\n'),
+
+    ja: d => [
+        'ご予約が確定しました。',
+        '',
+        `SHOP: ${d.shop}`,
+        `お名前: ${d.name}`,
+        `ご予約日時: ${d.time}`,
+        `ご人数: ${d.guests} 名`,
+        `コース: ${d.service}`,
+        `ご連絡先 (WhatsApp): ${d.whatsapp}`,
+        `料金: ${d.confirmPrice}`,
+        '',
+        'ご来店を心よりお待ちしております。',
+    ].join('\n'),
+
+    zh: d => [
+        '您的预约已确认。',
+        '',
+        `门店: ${d.shop}`,
+        `姓名: ${d.name}`,
+        `时间: ${d.time}`,
+        `人数: ${d.guests} 人`,
+        `服务: ${d.service}`,
+        `联系方式 (WhatsApp): ${d.whatsapp}`,
+        `价格: ${d.confirmPrice}`,
+        '',
+        '期待您的光临！',
+    ].join('\n'),
+
+    pt: d => [
+        'Sua reserva foi confirmada.',
+        '',
+        `LOJA: ${d.shop}`,
+        `Nome: ${d.name}`,
+        `Horário: ${d.time}`,
+        `Número de Convidados: ${d.guests}`,
+        `Serviço: ${d.service}`,
+        `Contato (WhatsApp): ${d.whatsapp}`,
+        `Preço: ${d.confirmPrice}`,
+        '',
+        'Aguardamos sua visita com prazer!',
+    ].join('\n'),
+};
+
+// ── Pre-confirmation templates ────────────────────────────────────────────────
+const preTemplates = {
+    en: d => {
+        const priceClause = d.perPerson && d.total
+            ? `The price is 【${d.priceRaw}】 per person, so the total will be 【${d.total}】.`
+            : `The price is 【${d.priceRaw}】.`;
+        return `Just to make sure I've got this right — you'd like to book a 【${d.service}】 at 【${d.shop}】 for 【${d.guests}】 people on 【${d.dateOnly}】, at/around 【${d.timeOnly}】.\nThe name is 【${d.name}】. ${priceClause}\nPlease let me know if that sounds right.`;
+    },
+    ja: d => {
+        const priceClause = d.perPerson && d.total
+            ? `料金はお一人様【${d.priceRaw}】、合計【${d.total}】となります。`
+            : `料金は【${d.priceRaw}】となります。`;
+        return `ご確認させてください — 【${d.dateOnly}】【${d.timeOnly}】頃、【${d.shop}】にて【${d.service}】を【${d.guests}】名様でご予約いただく形でよろしいでしょうか。\nお名前は【${d.name}】様、${priceClause}\nご確認のほど、よろしくお願いいたします。`;
+    },
+    zh: d => {
+        const priceClause = d.perPerson && d.total
+            ? `价格为每人【${d.priceRaw}】，合计【${d.total}】。`
+            : `价格为【${d.priceRaw}】。`;
+        return `请帮我确认一下——您希望在【${d.shop}】预约【${d.service}】，日期是【${d.dateOnly}】【${d.timeOnly}】左右，共【${d.guests}】人。\n姓名是【${d.name}】，${priceClause}\n以上信息正确吗？`;
+    },
+    pt: d => {
+        const priceClause = d.perPerson && d.total
+            ? `O preço é 【${d.priceRaw}】 por pessoa, totalizando 【${d.total}】.`
+            : `O preço é 【${d.priceRaw}】.`;
+        return `Só para confirmar — você gostaria de reservar 【${d.service}】 na 【${d.shop}】 para 【${d.guests}】 pessoa(s) em 【${d.dateOnly}】, às/por volta das 【${d.timeOnly}】.\nO nome é 【${d.name}】. ${priceClause}\nPor favor, me avise se estiver correto.`;
+    },
+};
+
+let currentLang = 'en';
+
+// ── Auto-detect (paste & parse) ───────────────────────────────────────────────
+const REQUIRED_FIELD_IDS = ['f-shop','f-name','f-date','f-time','f-guests','f-service','f-whatsapp','f-price'];
+
+function onRawInputChanged() {
+    // light touch: clear previous missing highlight while typing
+    clearMissingHighlight();
+}
+
+function clearMissingHighlight() {
+    REQUIRED_FIELD_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('missing-field');
+    });
+}
+
+function showAutoResult(text) {
+    const box = document.getElementById('autoResult');
+    if (!text) {
+        box.style.display = 'none';
+        box.textContent = '';
+        return;
+    }
+    box.style.display = 'block';
+    box.textContent = text;
+}
+
+function clearAutoDetect() {
+    document.getElementById('f-raw').value = '';
+    showAutoResult('');
+    clearMissingHighlight();
+}
+
+function autoDetectFromRaw() {
+    const raw = (document.getElementById('f-raw').value || '').trim();
+    if (!raw) {
+        showAutoResult('请先粘贴客人发来的内容。');
+        return;
+    }
+
+    const parsed = parseBookingText(raw);
+    applyParsedToForm(parsed);
+    updatePreview();
+
+    const missing = highlightMissingFields();
+    const lines = [];
+    lines.push('识别结果（已尽量回填）：');
+    lines.push(`- 门店: ${parsed.shop || '（未识别）'}`);
+    lines.push(`- 姓名: ${parsed.name || '（未识别）'}`);
+    lines.push(`- 日期: ${parsed.date || '（未识别）'}`);
+    lines.push(`- 时间: ${parsed.time || '（未识别）'}`);
+    lines.push(`- 人数: ${parsed.guests || '（未识别）'}`);
+    lines.push(`- 价格: ${parsed.priceRaw || '（未识别）'}${parsed.perPerson ? '（per person）' : ''}`);
+    lines.push(`- 服务: ${parsed.service || '（未识别）'}`);
+    lines.push(`- WhatsApp: ${parsed.whatsapp || '（未识别）'}`);
+    lines.push('');
+    lines.push(missing.length ? `仍需补全：${missing.join('、')}` : '已全部填齐，可以直接复制右侧文案。');
+    showAutoResult(lines.join('\n'));
+}
+
+function highlightMissingFields() {
+    clearMissingHighlight();
+    const missing = [];
+
+    const map = {
+        'f-shop': '门店',
+        'f-name': '姓名',
+        'f-date': '日期',
+        'f-time': '时间',
+        'f-guests': '人数',
+        'f-service': '服务项目',
+        'f-whatsapp': 'WhatsApp',
+        'f-price': '价格',
+    };
+
+    Object.keys(map).forEach(id => {
+        const el = document.getElementById(id);
+        const v = (el && 'value' in el) ? String(el.value || '').trim() : '';
+        if (!v) {
+            el.classList.add('missing-field');
+            missing.push(map[id]);
+        }
+    });
+
+    return missing;
+}
+
+function applyParsedToForm(p) {
+    const setIfEmptyOrBetter = (id, value, { overwrite = false } = {}) => {
+        if (!value) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        const cur = String(el.value || '').trim();
+        if (overwrite || !cur) el.value = value;
+    };
+
+    // Shop: only set if matched an existing option (otherwise keep empty)
+    if (p.shop) {
+        const sel = document.getElementById('f-shop');
+        const exists = Array.from(sel.options).some(o => o.value === p.shop);
+        if (exists) sel.value = p.shop;
+    }
+
+    setIfEmptyOrBetter('f-name', p.name);
+    setIfEmptyOrBetter('f-date', p.date);
+    setIfEmptyOrBetter('f-time', p.time);
+    setIfEmptyOrBetter('f-guests', p.guests);
+    setIfEmptyOrBetter('f-service', p.service);
+    setIfEmptyOrBetter('f-whatsapp', p.whatsapp);
+    setIfEmptyOrBetter('f-price', p.priceRaw);
+
+    if (typeof p.perPerson === 'boolean') {
+        const cb = document.getElementById('f-per-person');
+        if (cb) cb.checked = p.perPerson;
+    }
+}
+
+function parseBookingText(raw) {
+    const text = normalizeText(raw);
+    const result = {
+        shop: '',
+        name: '',
+        date: '',
+        time: '',
+        guests: '',
+        service: '',
+        whatsapp: '',
+        priceRaw: '',
+        perPerson: false,
+    };
+
+    // 1) Shop: try exact match from store list
+    const list = (typeof STORES_LIST !== 'undefined') ? STORES_LIST : [];
+    const hit = findShopInText(text, list);
+    if (hit) result.shop = hit;
+
+    // 2) WhatsApp / phone (keep original-ish formatting)
+    const wa = extractWhatsapp(raw);
+    if (wa) result.whatsapp = wa;
+
+    // 3) Guests
+    const guests = extractGuests(text);
+    if (guests) result.guests = guests;
+
+    // 4) Date + time
+    const dt = extractDateTime(text);
+    if (dt.date) result.date = dt.date;
+    if (dt.time) result.time = dt.time;
+
+    // 5) Name
+    const nm = extractName(raw);
+    if (nm) result.name = nm;
+
+    // 6) Price + per person
+    const pr = extractPrice(text);
+    if (pr.priceRaw) result.priceRaw = pr.priceRaw;
+    if (typeof pr.perPerson === 'boolean') result.perPerson = pr.perPerson;
+
+    // 7) Service (best-effort)
+    const svc = extractService(raw, list);
+    if (svc) result.service = svc;
+
+    return result;
+}
+
+function normalizeText(s) {
+    return (s || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/[，、]/g, ',')
+        .replace(/[：]/g, ':')
+        .replace(/[（]/g, '(')
+        .replace(/[）]/g, ')')
+        .replace(/\u00A0/g, ' ')
+        .trim();
+}
+
+function findShopInText(text, storeList) {
+    if (!storeList || !storeList.length) return '';
+    const hay = text.toLowerCase();
+    // prefer longest match
+    const sorted = [...storeList].sort((a,b) => b.length - a.length);
+    for (const name of sorted) {
+        const n = String(name || '').trim();
+        if (!n) continue;
+        if (hay.includes(n.toLowerCase())) return n;
+    }
+    return '';
+}
+
+function extractWhatsapp(raw) {
+    const s = String(raw || '').replace(/\r\n/g, '\n');
+    // Try labeled capture first
+    const labeled = s.match(/(?:whatsapp|wa|contact|电话|手機|手机|联系方式)\s*[:：]?\s*([+\d][\d\s().-]{6,})/i);
+    if (labeled && labeled[1]) return labeled[1].trim().replace(/\s+/g, ' ');
+
+    // Fallback: any phone-like token with + or 10+ digits
+    const candidates = s.match(/(\+\d[\d\s().-]{7,}\d)/g) || [];
+    if (candidates.length) return candidates[0].trim().replace(/\s+/g, ' ');
+
+    const digits = s.match(/(?:\d[\s().-]?){10,}/g) || [];
+    if (digits.length) return digits[0].trim().replace(/\s+/g, ' ');
+
+    return '';
+}
+
+function extractGuests(text) {
+    // patterns: 2 people / 2ppl / 2 persons / 2名 / 2人 / guests: 2
+    const m1 = text.match(/(?:guests?|people|persons?|ppl)\s*[:：]?\s*(\d{1,2})/i);
+    if (m1 && m1[1]) return m1[1];
+
+    const m2 = text.match(/(\d{1,2})\s*(?:people|persons?|ppl)\b/i);
+    if (m2 && m2[1]) return m2[1];
+
+    const m3 = text.match(/(\d{1,2})\s*(?:名|人)\b/);
+    if (m3 && m3[1]) return m3[1];
+
+    return '';
+}
+
+function extractDateTime(text) {
+    const out = { date: '', time: '' };
+
+    // time: "6.30pm" / "6:30 pm" / "18:30"
+    const tm12 = text.match(/\b(\d{1,2})\s*[:.]\s*([0-5]\d)\s*(am|pm)\b/i);
+    if (tm12) {
+        let h = parseInt(tm12[1], 10);
+        const m = tm12[2];
+        const ap = tm12[3].toLowerCase();
+        if (ap === 'pm' && h < 12) h += 12;
+        if (ap === 'am' && h === 12) h = 0;
+        out.time = `${String(h).padStart(2,'0')}:${m}`;
+    } else {
+        const tm24 = text.match(/\b([01]?\d|2[0-3])\s*:\s*([0-5]\d)\b/);
+        if (tm24) out.time = `${String(tm24[1]).padStart(2,'0')}:${tm24[2]}`;
+    }
+
+    // ISO date: YYYY-MM-DD / YYYY/MM/DD
+    const iso = text.match(/\b(20\d{2})\s*[-\/.]\s*(\d{1,2})\s*[-\/.]\s*(\d{1,2})\b/);
+    if (iso) {
+        out.date = `${iso[1]}-${String(iso[2]).padStart(2,'0')}-${String(iso[3]).padStart(2,'0')}`;
+        return out;
+    }
+
+    // today / tomorrow
+    if (/\b(today)\b/i.test(text)) {
+        const d = new Date();
+        out.date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        return out;
+    }
+    if (/\b(tomorrow)\b/i.test(text)) {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        out.date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        return out;
+    }
+
+    // M/D (assume current year)
+    const md = text.match(/\b(\d{1,2})\s*\/\s*(\d{1,2})\b/);
+    if (md) {
+        const y = new Date().getFullYear();
+        out.date = `${y}-${String(md[1]).padStart(2,'0')}-${String(md[2]).padStart(2,'0')}`;
+        return out;
+    }
+
+    // "08 May" / "8 May" / "08 May 2026"
+    const monMap = {
+        jan: 1, january: 1,
+        feb: 2, february: 2,
+        mar: 3, march: 3,
+        apr: 4, april: 4,
+        may: 5,
+        jun: 6, june: 6,
+        jul: 7, july: 7,
+        aug: 8, august: 8,
+        sep: 9, sept: 9, september: 9,
+        oct: 10, october: 10,
+        nov: 11, november: 11,
+        dec: 12, december: 12,
+    };
+    const dm = text.match(/\b(\d{1,2})\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b(?:\s*,?\s*(20\d{2}))?/i);
+    if (dm) {
+        const day = parseInt(dm[1], 10);
+        const monKey = dm[2].toLowerCase();
+        const mon = monMap[monKey] || monMap[monKey.slice(0,3)];
+        const y = dm[3] ? parseInt(dm[3], 10) : new Date().getFullYear();
+        if (mon && day >= 1 && day <= 31) {
+            out.date = `${y}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            return out;
+        }
+    }
+
+    // Chinese date: 5月8日 or 5月8号
+    const cn = text.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*(?:日|号)/);
+    if (cn) {
+        const y = new Date().getFullYear();
+        out.date = `${y}-${String(cn[1]).padStart(2,'0')}-${String(cn[2]).padStart(2,'0')}`;
+        return out;
+    }
+
+    return out;
+}
+
+function extractName(raw) {
+    const s = normalizeText(raw);
+    // Labeled name
+    const labeled = s.match(/(?:name|姓名|名字)\s*[:：]?\s*([^\n,]{2,40})/i);
+    if (labeled && labeled[1]) {
+        return labeled[1].trim().replace(/^(is|是)\s+/i, '').trim();
+    }
+
+    // "I'm XXX" / "I am XXX"
+    const im = s.match(/\b(?:i'?m|i am)\s+([A-Za-z][A-Za-z\s.'-]{1,40})\b/i);
+    if (im && im[1]) return im[1].trim();
+
+    return '';
+}
+
+function extractPrice(text) {
+    const out = { priceRaw: '', perPerson: undefined };
+    const lower = text.toLowerCase();
+
+    // per person clues
+    const per = /(per\s*person|pp\b|each|\/\s*person|每人)/i.test(text);
+    if (per) out.perPerson = true;
+
+    // labeled price
+    const labeled = text.match(/(?:price|料金|金额|金額|价格|費用|cost)\s*[:：]?\s*([^\n,]{1,30})/i);
+    if (labeled && labeled[1]) {
+        const pr = labeled[1].trim();
+        // keep as typed but strip trailing words
+        out.priceRaw = pr.replace(/\s*(?:per\s*person|pp\b|each|每人).*$/i, '').trim();
+        if (out.perPerson === undefined) out.perPerson = /(per\s*person|pp\b|each|每人)/i.test(labeled[1]);
+        return out;
+    }
+
+    // currency-ish number (9800, 9,800, ¥9800, 9800yen)
+    const num = lower.match(/(?:¥|￥|jpy|yen|円|rmb|cny|usd|\$)?\s*(\d{3,6}(?:[,\s]\d{3})*)\s*(?:jpy|yen|円)?/i);
+    if (num && num[1]) {
+        out.priceRaw = num[1].replace(/[,\s]/g, '');
+        if (out.perPerson === undefined) out.perPerson = per;
+    }
+
+    return out;
+}
+
+function extractService(raw, storeList) {
+    const s = normalizeText(raw);
+
+    // "book <service> at <shop>"
+    const bookAt = s.match(/\bbook\s+(.+?)\s+(?:at|@)\s+([^\n,]{2,60})/i);
+    if (bookAt && bookAt[1]) return bookAt[1].trim();
+
+    // labeled service line
+    const labeled = s.match(/(?:service|course|menu|项目|服務|コース)\s*[:：]?\s*([^\n]{3,120})/i);
+    if (labeled && labeled[1]) return labeled[1].trim();
+
+    // heuristic: remove obvious fields then keep a meaningful fragment
+    let t = s;
+    const shop = findShopInText(s, storeList);
+    if (shop) t = t.replace(new RegExp(escapeRegExp(shop), 'ig'), ' ');
+    t = t
+        .replace(/(?:whatsapp|wa|contact|电话|手機|手机|联系方式)\s*[:：]?\s*[+\d][\d\s().-]{6,}/ig, ' ')
+        .replace(/(?:name|姓名|名字)\s*[:：]?\s*[^\n,]{2,40}/ig, ' ')
+        .replace(/\b(20\d{2})\s*[-\/.]\s*\d{1,2}\s*[-\/.]\s*\d{1,2}\b/g, ' ')
+        .replace(/\b\d{1,2}\s*\/\s*\d{1,2}\b/g, ' ')
+        .replace(/(\d{1,2})\s*月\s*(\d{1,2})\s*(?:日|号)/g, ' ')
+        .replace(/\b([01]?\d|2[0-3])\s*:\s*([0-5]\d)\b/g, ' ')
+        .replace(/(?:guests?|people|persons?|ppl)\s*[:：]?\s*\d{1,2}/ig, ' ')
+        .replace(/(\d{1,2})\s*(?:名|人|people|persons?|ppl)\b/ig, ' ')
+        .replace(/(?:price|料金|金额|金額|价格|費用|cost)\s*[:：]?\s*[^\n,]{1,30}/ig, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // pick the first decent chunk
+    if (t.length >= 6) return t.slice(0, 120).trim();
+    return '';
+}
+
+function escapeRegExp(s) {
+    return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ── Populate store dropdown ──────────────────────────────────────────────────
+function initStores() {
+    const sel  = document.getElementById('f-shop');
+    const list = (typeof STORES_LIST !== 'undefined') ? STORES_LIST : [];
+    list.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+    });
+}
+
+// ── Date helpers ─────────────────────────────────────────────────────────────
+function setDate(offsetDays) {
+    const d  = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const yyyy = d.getFullYear();
+    const mm   = String(d.getMonth() + 1).padStart(2, '0');
+    const dd   = String(d.getDate()).padStart(2, '0');
+    document.getElementById('f-date').value = `${yyyy}-${mm}-${dd}`;
+    updatePreview();
+}
+
+function fmtDate(iso) {
+    if (!iso) return '';
+    const [, m, d] = iso.split('-');
+    return `${parseInt(m)}/${parseInt(d)}`;
+}
+
+// ── Read form data ────────────────────────────────────────────────────────────
+function getData() {
+    const dateStr  = fmtDate(document.getElementById('f-date').value);
+    const timeStr  = document.getElementById('f-time').value;
+    const priceRaw = document.getElementById('f-price').value.trim();
+    const guestsV  = document.getElementById('f-guests').value;
+    const perPerson = document.getElementById('f-per-person').checked;
+
+    let total = '';
+    if (perPerson && priceRaw && guestsV) {
+        const pp = parseFloat(priceRaw.replace(/[^0-9.]/g, ''));
+        const g  = parseInt(guestsV);
+        if (!isNaN(pp) && !isNaN(g) && g > 0) total = String(Math.round(pp * g));
+    }
+
+    return {
+        shop:         document.getElementById('f-shop').value,
+        name:         document.getElementById('f-name').value,
+        time:         [dateStr, timeStr].filter(Boolean).join(', '),
+        dateOnly:     dateStr,
+        timeOnly:     timeStr,
+        guests:       guestsV,
+        service:      document.getElementById('f-service').value.trim(),
+        whatsapp:     document.getElementById('f-whatsapp').value,
+        priceRaw:     priceRaw,
+        confirmPrice: perPerson && total ? total : priceRaw,   // final confirmation shows total
+        total:        total,
+        perPerson:    perPerson,
+    };
+}
+
+// ── Update both previews ──────────────────────────────────────────────────────
+function updatePreview() {
+    const d = getData();
+    const fieldVals = [d.shop, d.name, d.time, d.guests, d.service, d.whatsapp, d.priceRaw];
+    const filled = fieldVals.filter(v => v && v.trim()).length;
+    const total  = fieldVals.length;
+
+    document.getElementById('completeText').textContent = `${filled} / ${total} 已填写`;
+    const fill = document.getElementById('progressFill');
+    fill.style.width = Math.round((filled / total) * 100) + '%';
+    fill.className = 'progress-fill' + (filled === total ? ' complete' : '');
+
+    // Total display under price
+    const totalDisp = document.getElementById('totalDisplay');
+    if (d.perPerson && d.total && d.guests) {
+        totalDisp.style.display = 'block';
+        totalDisp.textContent   = `合计 ${d.total}（${d.priceRaw} × ${d.guests}人）`;
+    } else {
+        totalDisp.style.display = 'none';
+    }
+
+    const emptyHtml = '<span class="preview-empty">填写左侧表单后，消息将实时显示在这里…</span>';
+
+    // Pre-confirmation box
+    const boxPre = document.getElementById('previewBoxPre');
+    boxPre[filled === 0 ? 'innerHTML' : 'textContent'] =
+        filled === 0 ? emptyHtml : preTemplates[currentLang](d);
+
+    // Final confirmation box
+    const box = document.getElementById('previewBox');
+    box[filled === 0 ? 'innerHTML' : 'textContent'] =
+        filled === 0 ? emptyHtml : templates[currentLang](d);
+}
+
+// ── Language switch ───────────────────────────────────────────────────────────
+function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-tab').forEach(t =>
+        t.classList.toggle('active', t.dataset.lang === lang)
+    );
+    updatePreview();
+}
+
+// ── Copy helpers ──────────────────────────────────────────────────────────────
+function doCopy(msg, btnId, txtId, label) {
+    if (!msg.trim()) return;
+    const btn = document.getElementById(btnId);
+    const txt = document.getElementById(txtId);
+    const onSuccess = () => {
+        btn.classList.add('success');
+        txt.textContent = '✓ 已复制！';
+        setTimeout(() => { btn.classList.remove('success'); txt.textContent = label; }, 2200);
+    };
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(msg).then(onSuccess).catch(() => fallbackCopy(msg, onSuccess));
+    } else {
+        fallbackCopy(msg, onSuccess);
+    }
+}
+
+function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    Object.assign(ta.style, { position: 'fixed', opacity: '0', top: '0', left: '0' });
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); cb(); } catch(e) {}
+    document.body.removeChild(ta);
+}
+
+function copyMsgPre() {
+    doCopy(preTemplates[currentLang](getData()), 'copyBtnPre', 'copyBtnPreText', '复制 · 客人确认');
+}
+function copyMsg() {
+    doCopy(templates[currentLang](getData()), 'copyBtn', 'copyBtnText', '复制 · 预约确认');
+}
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+function resetForm() {
+    ['f-shop','f-name','f-date','f-time','f-guests','f-service','f-whatsapp','f-price']
+        .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('f-per-person').checked = false;
+    updatePreview();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+initStores();
+setDate(0);
+</script>
+</body>
+</html>

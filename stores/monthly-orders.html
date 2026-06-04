@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<!-- v20260601 -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月次注文統計</title>
+    <meta property="og:type"        content="website">
+    <meta property="og:title"       id="ogTitle"       content="月次注文統計">
+    <meta property="og:description" id="ogDescription" content="">
+    <meta property="og:url"         id="ogUrl"         content="">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-gold: #C9A961;
+            --primary-gold-light: rgba(201,169,97,0.12);
+            --bg-cream: #FAF8F3;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #7A7A7A;
+            --error: #DC3545;
+            --shadow: rgba(0,0,0,0.05);
+            --shadow-md: rgba(0,0,0,0.08);
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            overscroll-behavior-y: contain;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+        /* ── Page Header ───────────────────────────────── */
+        .page-header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.1rem 1.25rem 1rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .header-row1 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .page-title-wrap { flex: 1; }
+        .page-title { font-size: 1.15rem; font-weight: 700; line-height: 1.3; }
+        .page-sub { font-size: 0.8rem; color: var(--text-light); margin-top: 0.1rem; }
+        .header-btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .btn-action {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.35rem 0.8rem; border: none; border-radius: 7px;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            min-height: 40px; white-space: nowrap; transition: opacity 0.18s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .btn-print { background: var(--text-dark); color: #fff; }
+        .btn-action:active { opacity: 0.7; }
+        .btn-action:hover  { opacity: 0.82; }
+
+        /* ── Action dropdown ────────────────────────────── */
+        .action-wrap { position: relative; }
+        .action-dropdown {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            background: #fff; border: 1px solid var(--card-border);
+            border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            min-width: 130px; z-index: 200; overflow: hidden;
+        }
+        .action-dropdown.open { display: block; }
+        .action-item {
+            display: flex; align-items: center; gap: 0.5rem;
+            width: 100%; padding: 0.65rem 1rem; font-size: 0.84rem;
+            font-weight: 500; color: var(--text-dark); background: transparent;
+            border: none; cursor: pointer; text-align: left;
+            transition: background 0.12s; font-family: inherit;
+        }
+        .action-item:hover { background: var(--bg-cream); }
+        .action-item + .action-item { border-top: 1px solid #F2EFE9; }
+
+        /* ── Toast ──────────────────────────────────────── */
+        .share-toast {
+            position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(12px);
+            background: #333; color: #fff; padding: 0.55rem 1.2rem;
+            border-radius: 20px; font-size: 0.84rem; font-weight: 500;
+            opacity: 0; transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none; z-index: 9999; white-space: nowrap;
+        }
+        .share-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Month Picker ──────────────────────────────── */
+        .month-picker-row { margin-bottom: 0.75rem; }
+        .month-picker {
+            display: flex; align-items: center; gap: 0;
+            background: var(--bg-cream); border: 1.5px solid var(--card-border);
+            border-radius: 10px; overflow: hidden; min-height: 44px;
+        }
+        .mp-nav {
+            display: flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; background: transparent; border: none;
+            cursor: pointer; color: var(--text-medium); flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .mp-nav:hover  { background: var(--primary-gold-light); color: var(--primary-gold); }
+        .mp-nav:active { background: var(--primary-gold); color: #fff; }
+        .mp-label {
+            flex: 1; text-align: center; font-size: 1rem; font-weight: 700;
+            color: var(--text-dark); padding: 0 0.5rem; cursor: pointer;
+            min-height: 44px; display: flex; align-items: center; justify-content: center;
+            gap: 0.35rem; transition: color 0.15s;
+        }
+        .mp-label:hover { color: var(--primary-gold); }
+        .mp-label-icon { color: var(--primary-gold); font-style: normal; font-size: 0.85rem; }
+        .mp-divider { width: 1px; height: 24px; background: var(--card-border); flex-shrink: 0; }
+
+        /* ── Year-Month panel (full overlay) ───────────── */
+        .ymp-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0);
+            display: flex; align-items: flex-end; justify-content: center;
+            pointer-events: none; transition: background 0.25s;
+        }
+        .ymp-overlay.open { background: rgba(0,0,0,0.42); pointer-events: all; }
+        .ymp-panel {
+            background: var(--card-bg); border-radius: 24px 24px 0 0;
+            padding: 0 1.35rem 2.5rem; width: 100%; max-width: 500px;
+            transform: translateY(110%);
+            transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            will-change: transform;
+        }
+        .ymp-overlay.open .ymp-panel { transform: translateY(0); }
+        .ymp-handle { width: 40px; height: 4px; background: var(--card-border); border-radius: 2px; margin: 0.9rem auto 1.2rem; }
+        .ymp-header {
+            display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.1rem;
+        }
+        .ymp-year-label {
+            flex: 1; text-align: center; font-size: 1rem; font-weight: 700; color: var(--text-dark);
+        }
+        .ymp-nav {
+            display: flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; border: 1.5px solid var(--card-border);
+            border-radius: 10px; background: var(--bg-cream); cursor: pointer;
+            color: var(--text-medium); transition: all 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+        }
+        .ymp-nav:hover  { border-color: var(--primary-gold); color: var(--primary-gold); background: #fff; }
+        .ymp-nav:active { background: var(--primary-gold); color: #fff; border-color: var(--primary-gold); }
+        .ymp-months {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;
+        }
+        .ymp-month {
+            display: flex; align-items: center; justify-content: center;
+            height: 44px; border-radius: 10px; font-size: 0.9rem; font-weight: 500;
+            cursor: pointer; color: var(--text-dark); transition: background 0.12s, color 0.12s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .ymp-month:hover { background: var(--primary-gold-light); }
+        .ymp-month.ymp-current { background: var(--primary-gold-light); color: var(--primary-gold); font-weight: 700; }
+        .ymp-month.ymp-selected { background: var(--primary-gold) !important; color: #fff !important; font-weight: 700; }
+        .ymp-month.ymp-future { opacity: 0.3; pointer-events: none; }
+
+        @media (min-width: 641px) {
+            .ymp-overlay { align-items: center; }
+            .ymp-panel {
+                border-radius: 20px; max-width: 380px; padding: 0 1.5rem 1.75rem;
+                transform: scale(0.93) translateY(12px); opacity: 0;
+                transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s;
+            }
+            .ymp-overlay.open .ymp-panel { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* ── Language ──────────────────────────────────── */
+        .lang-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .lang-btn {
+            padding: 0.3rem 0.8rem; background: var(--bg-cream);
+            border: 1px solid var(--card-border); border-radius: 7px;
+            font-size: 0.78rem; font-weight: 600; color: var(--text-medium);
+            cursor: pointer; transition: all 0.18s; min-height: 36px;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .lang-btn:active { opacity: 0.75; }
+        .lang-btn:hover, .lang-btn.active { background: var(--primary-gold); color: #fff; border-color: var(--primary-gold); }
+
+        .refresh-btn {
+            padding: 0.3rem 0.75rem; background: var(--bg-cream);
+            border: 1px solid var(--card-border); border-radius: 7px;
+            font-size: 0.78rem; font-weight: 600; color: var(--text-medium);
+            cursor: pointer; transition: all 0.18s; min-height: 36px;
+            display: flex; align-items: center; gap: 0.35rem;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .refresh-btn:hover { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+        .refresh-btn:active { opacity: 0.75; }
+        .refresh-btn.spinning .refresh-icon { animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Overall Stats ─────────────────────────────── */
+        .section-label {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--text-light);
+            margin-bottom: 0.55rem; padding-left: 0.1rem;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem; margin-bottom: 1.35rem;
+        }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 0.9rem 1rem;
+            box-shadow: 0 2px 6px var(--shadow); text-align: center;
+        }
+        .stat-card.gold { border-color: var(--primary-gold); background: linear-gradient(135deg, #fffdf7 0%, #fdf5e0 100%); }
+        .stat-label { font-size: 0.7rem; color: var(--text-light); letter-spacing: 0.03em; margin-bottom: 0.3rem; }
+        .stat-value { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+        .stat-value.gold-text { color: var(--primary-gold); }
+
+        /* ── Single-store header badge ────────────────── */
+        .store-badge-header {
+            display: inline-block;
+            background: var(--primary-gold);
+            color: #fff;
+            padding: 0.2rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            color: var(--text-medium); text-decoration: none;
+            font-size: 0.85rem; margin-bottom: 0.75rem;
+            transition: color 0.18s;
+            touch-action: manipulation;
+        }
+        .back-link:hover { color: var(--primary-gold); }
+
+        /* ── Single-store flat table card ──────────────── */
+        .single-store-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 1.25rem 1.25rem 0.75rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .single-store-toolbar {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 1rem; flex-wrap: wrap;
+        }
+        .single-store-info { font-size: 0.88rem; font-weight: 600; flex: 1; }
+        .sort-btn {
+            padding: 0.28rem 0.65rem; border: 1px solid var(--card-border);
+            border-radius: 6px; font-size: 0.75rem; color: var(--text-medium);
+            background: var(--bg-cream); cursor: pointer; transition: all 0.15s;
+            touch-action: manipulation; font-family: inherit;
+        }
+        .sort-btn.active, .sort-btn:hover {
+            border-color: var(--primary-gold); color: var(--primary-gold);
+            background: rgba(201,169,97,0.1);
+        }
+
+        /* ── Store Summary Table ───────────────────────── */
+        .stores-summary-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 1.25rem 1.25rem 0.75rem;
+            box-shadow: 0 2px 8px var(--shadow); margin-bottom: 1.25rem;
+        }
+        .stores-summary-title {
+            font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .summary-table { width: 100%; border-collapse: collapse; }
+        .summary-table th {
+            background: var(--bg-cream); font-size: 0.72rem; font-weight: 700;
+            color: var(--text-light); text-transform: uppercase; letter-spacing: 0.04em;
+            padding: 0.55rem 0.75rem; text-align: left; border-bottom: 1px solid var(--card-border);
+            white-space: nowrap;
+        }
+        .summary-table th.num { text-align: right; }
+        .summary-table td {
+            padding: 0.7rem 0.75rem; font-size: 0.88rem;
+            border-bottom: 1px solid #F2EFE9; vertical-align: middle;
+        }
+        .summary-table tr:last-child td { border-bottom: none; }
+        .summary-table tr:hover td { background: rgba(201,169,97,0.04); cursor: pointer; }
+        .summary-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .summary-table td.amount { font-weight: 600; color: var(--primary-gold); text-align: right; }
+        .store-rank {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; font-weight: 700;
+            background: var(--bg-cream); color: var(--text-light); border: 1px solid var(--card-border);
+            margin-right: 0.5rem; flex-shrink: 0;
+        }
+        .store-rank.top1 { background: #FFD700; color: #6B4F00; border-color: #FFD700; }
+        .store-rank.top2 { background: #C0C0C0; color: #444; border-color: #C0C0C0; }
+        .store-rank.top3 { background: #CD7F32; color: #fff; border-color: #CD7F32; }
+        .store-name-cell { display: flex; align-items: center; }
+        .jump-btn {
+            margin-left: auto; padding: 0.2rem 0.55rem; border: 1px solid var(--card-border);
+            border-radius: 5px; font-size: 0.72rem; color: var(--text-light);
+            background: var(--bg-cream); cursor: pointer; white-space: nowrap;
+            transition: all 0.15s; touch-action: manipulation;
+        }
+        .jump-btn:hover { border-color: var(--primary-gold); color: var(--primary-gold); }
+
+        /* ── Store Detail Sections ─────────────────────── */
+        .store-section {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; margin-bottom: 1rem;
+            box-shadow: 0 2px 8px var(--shadow); overflow: hidden;
+        }
+        .store-section-head {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 1rem 1.25rem; cursor: pointer;
+            transition: background 0.15s; user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .store-section-head:hover { background: rgba(201,169,97,0.04); }
+        .store-section-head.open { background: rgba(201,169,97,0.06); }
+        .store-badge {
+            background: var(--primary-gold); color: #fff;
+            padding: 0.2rem 0.65rem; border-radius: 6px;
+            font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+            white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+        }
+        .store-head-stats {
+            display: flex; gap: 1rem; flex: 1; flex-wrap: wrap; align-items: center;
+        }
+        .store-head-stat { font-size: 0.82rem; color: var(--text-medium); white-space: nowrap; }
+        .store-head-stat strong { color: var(--text-dark); font-weight: 700; }
+        .store-head-stat.gold strong { color: var(--primary-gold); }
+        .store-toggle {
+            color: var(--text-light); flex-shrink: 0; transition: transform 0.25s; line-height: 1;
+        }
+        .store-section-head.open .store-toggle { transform: rotate(180deg); }
+
+        .store-section-body {
+            display: none; border-top: 1px solid var(--card-border);
+        }
+        .store-section-body.open { display: block; }
+
+        /* Per-store filters */
+        .store-body-toolbar {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.75rem 1.25rem; border-bottom: 1px solid #F2EFE9;
+            flex-wrap: wrap;
+        }
+        .store-body-info { font-size: 0.8rem; color: var(--text-light); flex: 1; }
+        .store-sort-btn {
+            padding: 0.25rem 0.6rem; border: 1px solid var(--card-border);
+            border-radius: 6px; font-size: 0.75rem; color: var(--text-medium);
+            background: var(--bg-cream); cursor: pointer; transition: all 0.15s;
+            touch-action: manipulation;
+        }
+        .store-sort-btn.active, .store-sort-btn:hover {
+            border-color: var(--primary-gold); color: var(--primary-gold); background: var(--primary-gold-light);
+        }
+
+        /* Detail table */
+        .detail-table-wrap { overflow-x: auto; padding: 0 0 0.5rem; }
+        .detail-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+        .detail-table th {
+            background: var(--bg-cream); font-size: 0.72rem; font-weight: 700;
+            color: var(--text-light); text-transform: uppercase; letter-spacing: 0.04em;
+            padding: 0.55rem 0.75rem; text-align: left; border-bottom: 1px solid var(--card-border);
+            white-space: nowrap; position: sticky; top: 0; z-index: 2;
+        }
+        .detail-table td {
+            padding: 0.6rem 0.75rem; font-size: 0.86rem;
+            border-bottom: 1px solid #F2EFE9; vertical-align: middle;
+        }
+        .detail-table tr:last-child td { border-bottom: none; }
+        .detail-table tr:hover td { background: rgba(201,169,97,0.04); }
+        .detail-table td.col-num { color: var(--text-light); font-size: 0.75rem; text-align: center; width: 2rem; }
+        .detail-table td.col-date { color: var(--text-medium); font-weight: 500; white-space: nowrap; }
+        .detail-table td.col-money { font-weight: 600; color: var(--primary-gold); white-space: nowrap; text-align: right; }
+        .detail-table th.col-money { text-align: right; }
+
+        /* Mobile cards for store detail */
+        .mobile-order-cards { display: none; padding: 0.75rem; }
+        .m-card {
+            border: 1px solid var(--card-border); border-radius: 10px;
+            overflow: hidden; margin-bottom: 0.65rem;
+        }
+        .m-card-head {
+            background: var(--bg-cream); padding: 0.55rem 0.8rem;
+            display: flex; align-items: center; gap: 0.5rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .m-card-num {
+            background: var(--primary-gold); color: #fff; border-radius: 50%;
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+        }
+        .m-card-title { font-weight: 600; font-size: 0.88rem; flex: 1; line-height: 1.3; }
+        .m-card-date {
+            font-size: 0.76rem; color: var(--text-medium); white-space: nowrap;
+            background: var(--primary-gold-light); padding: 0.12rem 0.4rem;
+            border-radius: 4px; font-weight: 500;
+        }
+        .m-card-body { }
+        .m-field {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 0.75rem; padding: 0.45rem 0.8rem; border-bottom: 1px solid #F2EFE9;
+            font-size: 0.84rem; min-height: 36px;
+        }
+        .m-field:last-child { border-bottom: none; }
+        .m-field-label { color: var(--text-light); font-size: 0.72rem; flex-shrink: 0; }
+        .m-field-value { text-align: right; word-break: break-word; }
+        .m-field.hl .m-field-value { font-weight: 700; color: var(--primary-gold); }
+
+        /* ── State ─────────────────────────────────────── */
+        #stateMsg { margin-bottom: 1.25rem; }
+        .alert { padding: 0.9rem 1.1rem; border-radius: 10px; font-size: 0.88rem; line-height: 1.7; }
+        .alert-warn  { background: #FFF8E7; border: 1px solid #F0C040; color: #7A5A00; }
+        .alert-error { background: rgba(220,53,69,0.08); border: 1px solid var(--error); color: var(--error); }
+        .no-data, .loading { text-align: center; padding: 2.5rem 1rem; color: var(--text-light); font-size: 0.95rem; }
+
+        /* ── Footer ────────────────────────────────────── */
+        .page-footer { text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.75rem; }
+
+        /* ── Responsive ────────────────────────────────── */
+        @media (max-width: 840px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .container { padding: 0.75rem 0.65rem 4rem; }
+            .page-header { padding: 0.85rem 0.9rem 0.8rem; border-radius: 12px; }
+            .page-title { font-size: 1.05rem; }
+            .stats-grid { gap: 0.5rem; margin-bottom: 1rem; }
+            .stat-card { padding: 0.7rem 0.5rem; border-radius: 10px; }
+            .stat-label { font-size: 0.62rem; }
+            .stat-value { font-size: 1.1rem; }
+            .stores-summary-card { padding: 0.9rem 0.75rem 0.5rem; border-radius: 12px; }
+            .store-section { border-radius: 12px; }
+            .store-section-head { padding: 0.85rem 1rem; gap: 0.5rem; }
+            .store-badge { font-size: 0.75rem; max-width: 120px; }
+            .store-head-stats { gap: 0.65rem; }
+            .store-head-stat { font-size: 0.76rem; }
+            .detail-table { display: none; }
+            .mobile-order-cards { display: block; }
+        }
+        @media (max-width: 400px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stat-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+        }
+
+        /* ── Validation ────────────────────────────────────── */
+        .val-banner {
+            display: flex; align-items: flex-start; gap: 0.65rem;
+            background: rgba(220,53,69,0.08); border: 1px solid rgba(220,53,69,0.28);
+            border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem;
+            font-size: 0.88rem; color: #b02a37;
+        }
+        .val-banner-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1.5; }
+        .val-banner-text { flex: 1; line-height: 1.5; }
+        .val-banner strong { font-weight: 700; }
+        .val-banner-list { margin-top: 0.2rem; font-size: 0.8rem; opacity: 0.85; }
+
+        .val-row-error > td { background: rgba(220,53,69,0.055) !important; }
+        .val-row-error > td:first-child {
+            border-left: 3px solid var(--error);
+            padding-left: calc(0.75rem - 3px);
+        }
+        .val-indicator {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--error); color: #fff;
+            font-size: 0.65rem; font-weight: 800; cursor: help; flex-shrink: 0;
+        }
+        .m-card-error { border-color: rgba(220,53,69,0.45) !important; border-left: 3px solid var(--error) !important; }
+        .m-card-error .m-card-head { background: rgba(220,53,69,0.06) !important; }
+        .val-issue-tag {
+            display: inline-block; background: rgba(220,53,69,0.09); color: #b02a37;
+            border: 1px solid rgba(220,53,69,0.22); border-radius: 4px;
+            font-size: 0.72rem; padding: 0.1rem 0.45rem; line-height: 1.5;
+            word-break: break-all;
+        }
+
+        /* ── Print ─────────────────────────────────────── */
+        @media print {
+            body { background: #fff; }
+
+            /* 隐藏所有交互控件 */
+            .btn-action, .action-wrap, .lang-group, .month-picker-row,
+            .store-toggle, .jump-btn, .store-sort-btn,
+            .store-body-toolbar, .single-store-toolbar,
+            .back-link, #stateMsg, .page-footer,
+            .store-badge-header { display: none !important; }
+
+            /* 页面边距 */
+            .container { padding: 0.25rem 0 !important; }
+
+            /* 页头：只保留门店名 + 年月，去掉卡片样式 */
+            .page-header {
+                box-shadow: none !important; border-radius: 0 !important;
+                border: none !important; border-bottom: 1.5px solid #222 !important;
+                padding: 0 0 0.55rem !important; margin-bottom: 0.65rem !important;
+                background: transparent !important;
+            }
+            .header-row1 { margin-bottom: 0 !important; }
+            .page-title { font-size: 1.05rem !important; }
+            .page-sub   { font-size: 0.75rem !important; }
+
+            /* 统计卡片：紧凑 */
+            .stats-grid { gap: 0.4rem !important; margin-bottom: 0.55rem !important; }
+            .stat-card {
+                box-shadow: none !important; border-color: #ccc !important;
+                border-radius: 5px !important; padding: 0.4rem 0.5rem !important;
+            }
+            .stat-label { font-size: 0.6rem !important; }
+            .stat-value { font-size: 0.9rem !important; }
+
+            /* 订单卡片容器 */
+            .single-store-card {
+                box-shadow: none !important; border: none !important;
+                padding: 0 !important; border-radius: 0 !important;
+            }
+            .stores-summary-card, .store-section {
+                box-shadow: none !important; border-color: #ccc !important;
+            }
+            .store-section-body { display: block !important; }
+
+            /* 表格：压缩行高、去掉金色 */
+            .detail-table-wrap { overflow: visible !important; padding: 0 !important; }
+            .detail-table {
+                display: table !important; min-width: unset !important; width: 100% !important;
+            }
+            .detail-table th {
+                padding: 0.25rem 0.4rem !important; font-size: 0.62rem !important;
+                position: static !important; background: #f5f5f5 !important;
+                border-bottom: 1px solid #ccc !important;
+            }
+            .detail-table td {
+                padding: 0.2rem 0.4rem !important; font-size: 0.76rem !important;
+                border-bottom: 1px solid #eee !important;
+            }
+            .detail-table td.col-money { color: #222 !important; }
+            .detail-table tr:hover td { background: transparent !important; }
+
+            .mobile-order-cards { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Back link (shown in single-store mode) -->
+    <a href="monthly-orders-pick.html" class="back-link" id="backLink" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span id="backLinkText">店舗一覧に戻る</span>
+    </a>
+
+    <!-- ── Page Header ────────────────────────────────────── -->
+    <div class="page-header">
+        <div class="header-row1">
+            <div class="page-title-wrap">
+                <div class="store-badge-header" id="storeBadgeHeader" style="display:none;"></div>
+                <div class="page-title" id="pageTitle">月次注文統計</div>
+                <div class="page-sub" id="pageSub"></div>
+            </div>
+            <div class="header-btns">
+                <div class="action-wrap" id="actionWrap">
+                    <button class="btn-action btn-print" id="actionBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        <span id="actionLabel">共有</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="action-dropdown" id="actionDropdown">
+                        <button class="action-item" id="shareItem">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            <span id="shareItemLabel">共有</span>
+                        </button>
+                        <button class="action-item" id="printItem">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                            <span id="printItemLabel">印刷</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Month Picker -->
+        <div class="month-picker-row">
+            <div class="month-picker">
+                <button class="mp-nav" id="mpPrev" aria-label="prev month">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="mp-divider"></div>
+                <button class="mp-label" id="mpLabel" aria-label="select month">
+                    <i class="mp-label-icon">📅</i>
+                    <span id="mpLabelText">—</span>
+                </button>
+                <div class="mp-divider"></div>
+                <button class="mp-nav" id="mpNext" aria-label="next month">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Language + Refresh -->
+        <div class="lang-group">
+            <button class="lang-btn active" data-lang="ja">日本語</button>
+            <button class="lang-btn" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="en">English</button>
+            <button class="refresh-btn" id="refreshBtn" aria-label="refresh">
+                <svg class="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                <span id="refreshLabel">再読込</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- State messages -->
+    <div id="stateMsg"></div>
+
+    <!-- Validation summary banner -->
+    <div id="valSummary" style="display:none;"></div>
+
+    <!-- Loading placeholder -->
+    <div id="loadingBlock" class="loading" style="display:none;">⏳ <span id="loadingText">データを読み込み中...</span></div>
+
+    <!-- Overall stats -->
+    <div id="overallSection" style="display:none;">
+        <div class="section-label" id="overallLabel">全店合計</div>
+        <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <!-- Store summary table -->
+    <div id="summarySection" style="display:none;">
+        <div class="stores-summary-card">
+            <div class="stores-summary-title">
+                <span id="summaryTitle">🏪 店舗別サマリー</span>
+                <span style="font-size:0.8rem;color:var(--text-light);font-weight:400;" id="summarySubtitle"></span>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="summary-table" id="summaryTable">
+                    <thead id="summaryThead"></thead>
+                    <tbody id="summaryTbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Per-store detail sections -->
+    <div id="storeDetails"></div>
+
+    <div class="page-footer" id="pageFooter"></div>
+</div>
+
+<!-- ── Year-Month Picker Overlay ──────────────────────────────── -->
+<div class="ymp-overlay" id="ympOverlay">
+    <div class="ymp-panel">
+        <div class="ymp-handle"></div>
+        <div class="ymp-header">
+            <button class="ymp-nav" id="ympPrevYear" aria-label="prev year">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <span class="ymp-year-label" id="ympYearLabel"></span>
+            <button class="ymp-nav" id="ympNextYear" aria-label="next year">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+        <div class="ymp-months" id="ympMonths"></div>
+    </div>
+</div>
+
+<script>
+// ─── Config ──────────────────────────────────────────────────────────────────
+const ORDERS_SHEET_ID = '1B_GTNGUHYN8xbXYAWjv_FosTAbVghyCbmX5N9fvgrEc';
+const ORDERS_RAW_GID  = '0';
+
+const SKIP_COLS  = new Set(['event_id','calendar_id','store_id','store_name',
+                            'month_key','tax_rate','commission_rate',
+                            'last_updated','event_last_updated','description']);
+const MONEY_COLS = new Set(['project_amount','settle_amount']);
+const COL_LABELS = {
+    'start_time':      { ja: '日付',     zh: '日期',     en: 'Date' },
+    'end_time':        { ja: '時刻',     zh: '时间',     en: 'Time' },
+    'title':           { ja: 'サービス', zh: '项目',     en: 'Service' },
+    'guest_name':      { ja: '氏名',     zh: '客人姓名', en: 'Guest Name' },
+    'guest_contact':   { ja: '連絡先',   zh: '联系方式', en: 'Contact' },
+    'people':          { ja: '人数',     zh: '人数',     en: 'Guests' },
+    'project_amount':  { ja: '施術金額', zh: '项目金额', en: 'Amount' },
+    'settle_amount':   { ja: '決済金額', zh: '结算金额', en: 'Settlement' },
+};
+
+// ─── URL params & State ───────────────────────────────────────────────────────
+const params     = new URLSearchParams(location.search);
+const storeParam = decodeURIComponent((params.get('store') || '').trim());
+const now = new Date();
+let selYear  = parseInt(params.get('year')  || '') || now.getFullYear();
+let selMonth = parseInt(params.get('month') || '') - 1; // 0-indexed
+if (isNaN(selMonth) || selMonth < 0 || selMonth > 11) selMonth = now.getMonth();
+
+let lang = localStorage.getItem('stores-lang') || 'ja';
+let ympYear = selYear; // year shown in overlay
+
+// ─── i18n ────────────────────────────────────────────────────────────────────
+const i18n = {
+    ja: {
+        page_title: '月次注文統計',
+        page_title_store: store => `${store} — 月次注文`,
+        page_sub: (y,m) => `${y}年${m+1}月 の注文データ`,
+        page_sub_store: (y,m) => `${y}年${m+1}月 の注文明細`,
+        month_label: (y,m) => `${y}年${m+1}月`,
+        print: '印刷',
+        loading: 'データを読み込み中...',
+        overall_label: '合計',
+        stat_stores: '店舗数',
+        stat_orders: '総注文件数',
+        stat_orders_single: '注文件数',
+        stat_project: '施術金額合計',
+        stat_settle: '決済金額合計',
+        stat_avg: '客単均価',
+        stat_people: '人数合計',
+        summary_title: '🏪 店舗別サマリー',
+        summary_subtitle: stores => `${stores}店舗`,
+        col_rank: 'No.',
+        col_store: '店舗名',
+        col_orders: '注文',
+        col_project: '施術金額',
+        col_settle: '決済金額',
+        col_avg: '客単価',
+        detail_label: store => `${store} — 注文明細`,
+        sort_date: '日付順',
+        sort_amount: '金額順',
+        refresh: '再読込',
+        action_btn: '共有',
+        share_item: '共有する',
+        print_item: '印刷',
+        copied: 'コピーしました',
+        share_text: (store, ym, proj, orders, people, sett) =>
+            `【${store}】${ym}\n売上：${proj}｜件数：${orders}件｜人数：${people}名｜決済：${sett}`,
+        no_data: 'この月の注文データはありません',
+        access_err: 'データを読み込めません。Google Sheetを「リンクを知っている全員」→「閲覧者」に設定してください',
+        detail_orders: (n) => `全${n}件`,
+        footer: () => `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 生成`,
+        jump: '詳細↓',
+        back: '店舗一覧に戻る',
+        val_found: n => `${n}件の異常を検出 — 明細の赤い行を確認してください`,
+        val_store_count: n => `店舗相違：${n}件`,
+        val_amount_count: n => `金額相違：${n}件`,
+        val_issue_store: (desc, sheet) => `店舗不一致：予約「${desc}」→ 記録「${sheet}」`,
+        val_issue_amount: (desc, sheet) => `金額不一致：予約 ¥${Math.round(desc).toLocaleString()} → 記録 ¥${Math.round(sheet).toLocaleString()}`,
+    },
+    zh: {
+        page_title: '月度订单统计',
+        page_title_store: store => `${store} — 月度订单`,
+        page_sub: (y,m) => `${y}年${m+1}月 订单数据`,
+        page_sub_store: (y,m) => `${y}年${m+1}月 订单明细`,
+        month_label: (y,m) => `${y}年${m+1}月`,
+        print: '打印',
+        loading: '数据加载中...',
+        overall_label: '合计',
+        stat_stores: '门店数',
+        stat_orders: '总订单数',
+        stat_orders_single: '订单数',
+        stat_project: '项目金额合计',
+        stat_settle: '结算金额合计',
+        stat_avg: '客单均价',
+        stat_people: '总人数',
+        summary_title: '🏪 分门店汇总',
+        summary_subtitle: stores => `共 ${stores} 家门店`,
+        col_rank: '排名',
+        col_store: '门店名称',
+        col_orders: '订单数',
+        col_project: '项目金额',
+        col_settle: '结算金额',
+        col_avg: '客均价',
+        detail_label: store => `${store} — 订单明细`,
+        sort_date: '按日期',
+        sort_amount: '按金额',
+        refresh: '刷新',
+        action_btn: '分享',
+        share_item: '分享链接',
+        print_item: '打印',
+        copied: '链接已复制',
+        share_text: (store, ym, proj, orders, people, sett) =>
+            `【${store}】${ym}\n项目金额：${proj}｜订单：${orders}单｜人数：${people}人｜结算：${sett}`,
+        no_data: '本月暂无订单数据',
+        access_err: '无法读取数据，请确认 Google Sheet 已设为「任何人可查看」',
+        detail_orders: (n) => `共 ${n} 条`,
+        footer: () => `生成于 ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`,
+        jump: '查看↓',
+        back: '返回门店列表',
+        val_found: n => `发现 ${n} 条异常记录 — 请核查明细中的红色行`,
+        val_store_count: n => `门店不符：${n} 条`,
+        val_amount_count: n => `金额不符：${n} 条`,
+        val_issue_store: (desc, sheet) => `门店不一致：预约「${desc}」→ 记录「${sheet}」`,
+        val_issue_amount: (desc, sheet) => `金额不一致：预约 ¥${Math.round(desc).toLocaleString()} → 记录 ¥${Math.round(sheet).toLocaleString()}`,
+    },
+    en: {
+        page_title: 'Monthly Order Statistics',
+        page_title_store: store => `${store} — Monthly Orders`,
+        page_sub: (y,m) => `Order data for ${y}/${String(m+1).padStart(2,'0')}`,
+        page_sub_store: (y,m) => `Order detail for ${y}/${String(m+1).padStart(2,'0')}`,
+        month_label: (y,m) => `${y} / ${String(m+1).padStart(2,'0')}`,
+        print: 'Print',
+        loading: 'Loading data...',
+        overall_label: 'Total',
+        stat_stores: 'Stores',
+        stat_orders: 'Total Orders',
+        stat_orders_single: 'Orders',
+        stat_project: 'Project Total',
+        stat_settle: 'Settlement',
+        stat_avg: 'Avg/Booking',
+        stat_people: 'Total Guests',
+        summary_title: '🏪 Store Summary',
+        summary_subtitle: stores => `${stores} stores`,
+        col_rank: '#',
+        col_store: 'Store',
+        col_orders: 'Orders',
+        col_project: 'Project Amt',
+        col_settle: 'Settlement',
+        col_avg: 'Avg/Order',
+        detail_label: store => `${store} — Order Detail`,
+        sort_date: 'By Date',
+        sort_amount: 'By Amount',
+        refresh: 'Refresh',
+        action_btn: 'Share',
+        share_item: 'Share Link',
+        print_item: 'Print',
+        copied: 'Link copied',
+        share_text: (store, ym, proj, orders, people, sett) =>
+            `[${store}] ${ym}\nRevenue: ${proj} | Orders: ${orders} | Guests: ${people} | Settlement: ${sett}`,
+        no_data: 'No order data for this month',
+        access_err: 'Cannot load data. Share the Google Sheet as "Anyone with the link – Viewer"',
+        detail_orders: (n) => `${n} orders`,
+        footer: () => `Generated ${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`,
+        jump: 'Detail↓',
+        back: 'Back to Store List',
+        val_found: n => `${n} issue${n > 1 ? 's' : ''} detected — review red rows in detail`,
+        val_store_count: n => `Store mismatch: ${n}`,
+        val_amount_count: n => `Amount mismatch: ${n}`,
+        val_issue_store: (desc, sheet) => `Store mismatch: booking "${desc}" → recorded "${sheet}"`,
+        val_issue_amount: (desc, sheet) => `Amount mismatch: booking ¥${Math.round(desc).toLocaleString()} → recorded ¥${Math.round(sheet).toLocaleString()}`,
+    }
+};
+const tx = k => (typeof i18n[lang][k] === 'function' ? i18n[lang][k] : i18n[lang]?.[k]) ?? i18n.zh[k] ?? k;
+const txFn = (k, ...args) => {
+    const v = i18n[lang]?.[k] ?? i18n.zh[k];
+    return typeof v === 'function' ? v(...args) : v;
+};
+
+// ─── Apply Language ───────────────────────────────────────────────────────────
+function applyLang() {
+    document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+    if (storeParam) {
+        document.getElementById('pageTitle').textContent = txFn('page_title_store', storeParam);
+        document.getElementById('pageSub').textContent   = txFn('page_sub_store', selYear, selMonth);
+        document.title = txFn('page_title_store', storeParam);
+        // Store badge in header
+        const badge = document.getElementById('storeBadgeHeader');
+        badge.textContent = storeParam;
+        badge.style.display = '';
+        // Back link
+        document.getElementById('backLinkText').textContent = tx('back');
+        // Overall label
+        document.getElementById('overallLabel').textContent = storeParam + ' ' + tx('overall_label');
+    } else {
+        document.getElementById('pageTitle').textContent = tx('page_title');
+        document.getElementById('pageSub').textContent   = txFn('page_sub', selYear, selMonth);
+        document.title = tx('page_title');
+        document.getElementById('storeBadgeHeader').style.display = 'none';
+        document.getElementById('backLink').style.display = 'none';
+        document.getElementById('overallLabel').textContent = tx('overall_label');
+    }
+
+    document.getElementById('mpLabelText').textContent    = txFn('month_label', selYear, selMonth);
+    document.getElementById('loadingText').textContent    = tx('loading');
+    document.getElementById('summaryTitle').textContent   = tx('summary_title');
+    document.getElementById('actionLabel').textContent    = tx('action_btn');
+    document.getElementById('shareItemLabel').textContent = tx('share_item');
+    document.getElementById('printItemLabel').textContent = tx('print_item');
+    document.getElementById('refreshLabel').textContent   = tx('refresh');
+    document.getElementById('pageFooter').textContent     = txFn('footer');
+    updateURL();
+    updateOG();
+}
+
+function updateOG() {
+    const title = document.title;
+    document.getElementById('ogTitle').content = title;
+    document.getElementById('ogUrl').content   = location.href;
+    // description is updated after data renders via updateOGDesc()
+}
+
+function updateURL() {
+    const url = new URL(location.href);
+    url.searchParams.set('year',  selYear);
+    url.searchParams.set('month', selMonth + 1);
+    history.replaceState(null, '', url.toString());
+}
+
+// ─── Language switcher ────────────────────────────────────────────────────────
+document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => {
+        lang = b.dataset.lang;
+        localStorage.setItem('stores-lang', lang);
+        applyLang();
+        if (window._loadedData) renderByMonth(window._loadedData);
+    });
+});
+
+// ─── Action dropdown (Share / Print) ─────────────────────────────────────────
+(function () {
+    const wrap  = document.getElementById('actionWrap');
+    const btn   = document.getElementById('actionBtn');
+    const drop  = document.getElementById('actionDropdown');
+
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        drop.classList.toggle('open');
+    });
+    document.addEventListener('click', () => drop.classList.remove('open'));
+
+    document.getElementById('printItem').addEventListener('click', () => {
+        drop.classList.remove('open');
+        window.print();
+    });
+
+    document.getElementById('shareItem').addEventListener('click', async () => {
+        drop.classList.remove('open');
+        const shareData = buildShareData();
+        if (navigator.share) {
+            try { await navigator.share(shareData); } catch (e) {
+                if (e.name !== 'AbortError') fallbackCopy(shareData.url);
+            }
+        } else {
+            fallbackCopy(shareData.url);
+        }
+    });
+})();
+
+function buildShareData() {
+    return { title: document.title, url: location.href };
+}
+
+let _shareDesc = '';
+function updateOGDesc(store, proj, orders, people, sett) {
+    const ym   = txFn('month_label', selYear, selMonth);
+    const text = txFn('share_text', store, ym, proj, orders, people, sett);
+    _shareDesc = text;
+    document.getElementById('ogDescription').content = text;
+}
+
+function fallbackCopy(url) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => showToast(tx('copied')));
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(tx('copied'));
+    }
+}
+
+let _toastTimer;
+function showToast(msg) {
+    const el = document.getElementById('shareToast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ─── Refresh button ──────────────────────────────────────────────────────────
+document.getElementById('refreshBtn').addEventListener('click', () => {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('spinning');
+    btn.disabled = true;
+    window._loadedData = null;
+    fetchAndRender().finally(() => {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    });
+});
+
+// ─── Month Picker: prev/next ──────────────────────────────────────────────────
+document.getElementById('mpPrev').addEventListener('click', () => {
+    selMonth--;
+    if (selMonth < 0) { selMonth = 11; selYear--; }
+    applyLang();
+    if (window._loadedData) renderByMonth(window._loadedData);
+    else fetchAndRender();
+});
+document.getElementById('mpNext').addEventListener('click', () => {
+    const nextY = selMonth === 11 ? selYear + 1 : selYear;
+    const nextM = selMonth === 11 ? 0 : selMonth + 1;
+    // Don't go into future months
+    if (nextY > now.getFullYear() || (nextY === now.getFullYear() && nextM > now.getMonth())) return;
+    selYear = nextY; selMonth = nextM;
+    applyLang();
+    if (window._loadedData) renderByMonth(window._loadedData);
+    else fetchAndRender();
+});
+
+// ─── Year-Month Picker Overlay ────────────────────────────────────────────────
+function openYMP() {
+    ympYear = selYear;
+    renderYMP();
+    document.getElementById('ympOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeYMP() {
+    document.getElementById('ympOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function renderYMP() {
+    document.getElementById('ympYearLabel').textContent = ympYear + (lang === 'en' ? '' : '年');
+    const monthNames = {
+        ja: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        zh: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    };
+    const names = monthNames[lang] || monthNames.ja;
+    const container = document.getElementById('ympMonths');
+    container.innerHTML = '';
+    names.forEach((name, mi) => {
+        const isSel     = ympYear === selYear && mi === selMonth;
+        const isCurrent = ympYear === now.getFullYear() && mi === now.getMonth();
+        const isFuture  = ympYear > now.getFullYear() || (ympYear === now.getFullYear() && mi > now.getMonth());
+        const el = document.createElement('div');
+        el.className = ['ymp-month', isSel ? 'ymp-selected' : '', isCurrent && !isSel ? 'ymp-current' : '', isFuture ? 'ymp-future' : ''].filter(Boolean).join(' ');
+        el.textContent = name;
+        if (!isFuture) {
+            el.addEventListener('click', () => {
+                selYear = ympYear; selMonth = mi;
+                closeYMP();
+                applyLang();
+                if (window._loadedData) renderByMonth(window._loadedData);
+                else fetchAndRender();
+            });
+        }
+        container.appendChild(el);
+    });
+}
+
+document.getElementById('mpLabel').addEventListener('click', openYMP);
+document.getElementById('ympOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('ympOverlay')) closeYMP();
+});
+document.getElementById('ympPrevYear').addEventListener('click', () => { ympYear--; renderYMP(); });
+document.getElementById('ympNextYear').addEventListener('click', () => {
+    if (ympYear < now.getFullYear()) { ympYear++; renderYMP(); }
+});
+
+// ─── CSV utils ────────────────────────────────────────────────────────────────
+function parseCSV(csv) {
+    const rows = [];
+    let row = [], field = '', inQ = false;
+    const text = csv.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (inQ) {
+            if (ch === '"') { if (text[i+1] === '"') { field += '"'; i++; } else inQ = false; }
+            else { field += ch; }
+        } else {
+            if      (ch === '"')  { inQ = true; }
+            else if (ch === ',')  { row.push(field.trim()); field = ''; }
+            else if (ch === '\n') {
+                row.push(field.trim());
+                if (row.some(c => c)) rows.push(row);
+                row = []; field = '';
+            } else { field += ch; }
+        }
+    }
+    if (field || row.length) { row.push(field.trim()); if (row.some(c => c)) rows.push(row); }
+    return rows;
+}
+
+function parseDesc(text) {
+    const t = String(text || '');
+    const name    = (t.match(/(?:Name|姓名|お名前|名前)\s*[:：]\s*(.+)/im)              || [])[1]?.trim() || '';
+    const contact = (t.match(/(?:Contact|联系方式|連絡先|连络先)[^:：\n]*[:：]\s*(.+)/im) || [])[1]?.trim() || '';
+    const shop    = (t.match(/^SHOP\s*[:：]\s*(.+)/im)                                 || [])[1]?.trim() || '';
+    const priceM  = t.match(/^Price\s*[:：]\s*([\d,]+)/im);
+    const price   = priceM ? parseFloat(priceM[1].replace(/,/g, '')) : null;
+    return { name, contact, shop, price };
+}
+
+function isSameMonth(cell, year, month) {
+    if (!cell || !String(cell).trim()) return false;
+    const s = String(cell).trim();
+    for (const f of [s, s.split('T')[0], s.split(' ')[0]]) {
+        const m = f.match(/^(\d{4})[\/\-](\d{1,2})/);
+        if (m && +m[1] === year && (+m[2] - 1) === month) return true;
+    }
+    return false;
+}
+
+function extractDateStr(cell) {
+    if (!cell) return '';
+    const s = String(cell).trim();
+    const m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (m) return `${m[2].padStart(2,'0')}/${m[3].padStart(2,'0')}`;
+    const mCn = s.match(/([上下]午)/);
+    if (mCn) {
+        const base = s.split(/[上下]午/)[0].trim();
+        const bm = base.match(/(\d{1,2})[\/\-](\d{1,2})\s*$/);
+        if (bm) return `${bm[1].padStart(2,'0')}/${bm[2].padStart(2,'0')}`;
+    }
+    return '';
+}
+
+function parseDateMs(s) {
+    if (!s) return NaN;
+    const m = String(s).trim().match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+    return NaN;
+}
+
+function extractTimeStr(cell) {
+    if (!cell) return '';
+    const s = String(cell).trim();
+    const mIso = s.match(/T(\d{2}:\d{2})/);
+    if (mIso) return mIso[1];
+    const mCn = s.match(/([上下]午)(\d{1,2}):(\d{2})/);
+    if (mCn) {
+        let h = parseInt(mCn[2]);
+        const mi = mCn[3];
+        if (mCn[1] === '下午' && h !== 12) h += 12;
+        if (mCn[1] === '上午' && h === 12) h = 0;
+        return `${String(h).padStart(2,'0')}:${mi}`;
+    }
+    const m12 = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (m12) {
+        let h = parseInt(m12[1]);
+        const mi = m12[2], ap = m12[3].toUpperCase();
+        if (ap === 'PM' && h !== 12) h += 12;
+        if (ap === 'AM' && h === 12) h = 0;
+        return `${String(h).padStart(2,'0')}:${mi}`;
+    }
+    const d = new Date(s);
+    if (!isNaN(d)) return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const mPlain = s.match(/(\d{1,2}:\d{2})/);
+    if (mPlain) return mPlain[1].padStart(5,'0');
+    return '';
+}
+
+function parseMoney(v) {
+    return parseFloat(String(v||'').replace(/[^\d.-]/g,'')) || 0;
+}
+
+function fmtMoney(n) {
+    return n ? '¥' + Math.round(n).toLocaleString() : '—';
+}
+
+function findIdx(headers, key) {
+    return headers.findIndex(h => String(h).trim().toLowerCase() === key);
+}
+
+// ─── Store matching helper ────────────────────────────────────────────────────
+function matchStoreName(val) {
+    if (!val || !storeParam) return false;
+    const a = String(val).toLowerCase().replace(/\s/g,'');
+    const b = storeParam.toLowerCase().replace(/\s/g,'');
+    return a === b || a.includes(b) || b.includes(a);
+}
+
+// ─── Validation helpers ───────────────────────────────────────────────────────
+function fuzzyMatchStore(a, b) {
+    const norm = s => String(s).toLowerCase().replace(/[\s\-_·　。、・]/g, '');
+    const na = norm(a), nb = norm(b);
+    return na === nb || na.includes(nb) || nb.includes(na);
+}
+
+function runDescValidation(rows, headers) {
+    const descIdx  = findIdx(headers, 'description');
+    const storeIdx = findIdx(headers, 'store_name');
+    const projIdx  = findIdx(headers, 'project_amount');
+    for (const r of rows) {
+        r._valIssues = [];
+        if (descIdx < 0) continue;
+        const desc = parseDesc(r[descIdx]);
+
+        // Store cross-check
+        if (desc.shop) {
+            const sheetStore = String(storeIdx >= 0 ? r[storeIdx] : '').trim();
+            if (sheetStore && !fuzzyMatchStore(desc.shop, sheetStore)) {
+                r._valIssues.push({ type: 'store', desc: desc.shop, sheet: sheetStore });
+            }
+        }
+
+        // Amount cross-check (allow ¥10 tolerance for rounding)
+        if (desc.price !== null) {
+            const sheetAmt = parseMoney(projIdx >= 0 ? r[projIdx] : 0);
+            if (sheetAmt > 0 && Math.abs(desc.price - sheetAmt) > 10) {
+                r._valIssues.push({ type: 'amount', desc: desc.price, sheet: sheetAmt });
+            }
+        }
+    }
+}
+
+function renderValSummary(rows) {
+    const el = document.getElementById('valSummary');
+    const allIssues = rows.flatMap(r => r._valIssues || []);
+    const storeCount  = allIssues.filter(v => v.type === 'store').length;
+    const amountCount = allIssues.filter(v => v.type === 'amount').length;
+    const total = allIssues.length;
+    if (total === 0) { el.style.display = 'none'; return; }
+    const parts = [
+        storeCount  ? txFn('val_store_count',  storeCount)  : '',
+        amountCount ? txFn('val_amount_count', amountCount) : '',
+    ].filter(Boolean).join('　·　');
+    el.innerHTML = `<div class="val-banner">
+        <span class="val-banner-icon">🔍</span>
+        <div class="val-banner-text">
+            <strong>${txFn('val_found', total)}</strong>
+            <div class="val-banner-list">${parts}</div>
+        </div>
+    </div>`;
+    el.style.display = 'block';
+}
+
+// ─── Single-store view ────────────────────────────────────────────────────────
+function renderSingleStore(rows, headers, projIdx, settIdx, dateIdx, descIdx, titleIdx, endIdx, peopleIdx) {
+    document.getElementById('summarySection').style.display = 'none';
+
+    const overallSec = document.getElementById('overallSection');
+    const statsGrid  = document.getElementById('statsGrid');
+    const container  = document.getElementById('storeDetails');
+
+    if (rows.length === 0) {
+        overallSec.style.display = 'none';
+        container.innerHTML = `<div class="no-data">📭 ${tx('no_data')}</div>`;
+        return;
+    }
+
+    const proj   = rows.reduce((s,r) => s + parseMoney(projIdx >= 0 ? r[projIdx] : 0), 0);
+    const sett   = rows.reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+    const people = rows.reduce((s,r) => s + (parseInt(peopleIdx >= 0 ? r[peopleIdx] : 0) || 0), 0);
+
+    statsGrid.innerHTML = [
+        { l: tx('stat_project'),       v: fmtMoney(proj) },
+        { l: tx('stat_orders_single'), v: rows.length    },
+        { l: tx('stat_people'),        v: people         },
+        { l: tx('stat_settle'),        v: fmtMoney(sett) },
+    ].map(s => `<div class="stat-card">
+        <div class="stat-label">${s.l}</div>
+        <div class="stat-value">${s.v}</div>
+    </div>`).join('');
+    overallSec.style.display = 'block';
+    updateOGDesc(storeParam || '', fmtMoney(proj), rows.length, people, fmtMoney(sett));
+
+    const detailCols = buildDetailCols(headers, descIdx, titleIdx);
+
+    let currentSort = 'date';
+    const renderTable = sort => {
+        container.innerHTML = `<div class="single-store-card">
+            <div class="single-store-toolbar">
+                <span class="single-store-info">📄 ${txFn('detail_orders', rows.length)}</span>
+                <button class="sort-btn${sort==='date'?' active':''}" data-sort="date">${tx('sort_date')}</button>
+                <button class="sort-btn${sort==='amount'?' active':''}" data-sort="amount">${tx('sort_amount')}</button>
+            </div>
+            ${buildStoreTable(rows, detailCols, dateIdx, projIdx, settIdx, descIdx, titleIdx, endIdx, sort)}
+        </div>`;
+        container.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => { currentSort = btn.dataset.sort; renderTable(currentSort); });
+        });
+    };
+    renderTable(currentSort);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderByMonth(data) {
+    const headers  = data[0] || [];
+    const storeIdx = findIdx(headers, 'store_name');
+    const dateIdx   = findIdx(headers, 'start_time');
+    const projIdx   = findIdx(headers, 'project_amount');
+    const settIdx   = findIdx(headers, 'settle_amount');
+    const endIdx    = findIdx(headers, 'end_time');
+    const titleIdx  = findIdx(headers, 'title');
+    const descIdx   = findIdx(headers, 'description');
+    const peopleIdx = findIdx(headers, 'people');
+
+    const allRows = data.slice(1).filter(r => r.some(c => String(c).trim()));
+    const rows = allRows.filter(r => dateIdx < 0 || isSameMonth(r[dateIdx], selYear, selMonth));
+    runDescValidation(rows, headers);
+
+    // ── Single-store mode ──
+    if (storeParam) {
+        const sRows = rows.filter(r => storeIdx < 0 || matchStoreName(String(r[storeIdx] || '').trim()));
+        renderValSummary(sRows);
+        renderSingleStore(sRows, headers, projIdx, settIdx, dateIdx, descIdx, titleIdx, endIdx, peopleIdx);
+        return;
+    }
+
+    // Group by store
+    const byStore = {};
+    for (const r of rows) {
+        const sn = String(storeIdx >= 0 ? r[storeIdx] : '').trim() || '—';
+        if (!byStore[sn]) byStore[sn] = [];
+        byStore[sn].push(r);
+    }
+    const storeNames = Object.keys(byStore).sort((a,b) => {
+        const sa = byStore[b].reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+        const sb = byStore[a].reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+        return sa - sb;
+    });
+
+    // ── Overall stats ──
+    const totalOrders = rows.length;
+    const totalProj   = rows.reduce((s,r) => s + parseMoney(projIdx >= 0 ? r[projIdx] : 0), 0);
+    const totalSett   = rows.reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+    const totalStores = storeNames.length;
+
+    const overallSec = document.getElementById('overallSection');
+    const statsGrid  = document.getElementById('statsGrid');
+
+    if (rows.length === 0) {
+        overallSec.style.display = 'none';
+        document.getElementById('summarySection').style.display = 'none';
+        document.getElementById('storeDetails').innerHTML = `<div class="no-data">📭 ${tx('no_data')}</div>`;
+        renderValSummary([]);
+        return;
+    }
+
+    renderValSummary(rows);
+
+    statsGrid.innerHTML = [
+        { l: tx('stat_stores'),  v: totalStores, cls: '' },
+        { l: tx('stat_orders'),  v: totalOrders, cls: '' },
+        { l: tx('stat_project'), v: fmtMoney(totalProj), cls: 'gold-text' },
+        { l: tx('stat_settle'),  v: fmtMoney(totalSett), cls: 'gold-text' },
+    ].map((s,i) => `<div class="stat-card${i>=2?' gold':''}">
+        <div class="stat-label">${s.l}</div>
+        <div class="stat-value ${s.cls}">${s.v}</div>
+    </div>`).join('');
+    overallSec.style.display = 'block';
+
+    // ── Store summary table ──
+    const summarySec = document.getElementById('summarySection');
+    document.getElementById('summarySubtitle').textContent = txFn('summary_subtitle', totalStores);
+    const thead = `<tr>
+        <th>${tx('col_rank')}</th>
+        <th>${tx('col_store')}</th>
+        <th class="num">${tx('col_orders')}</th>
+        <th class="num">${tx('col_project')}</th>
+        <th class="num">${tx('col_settle')}</th>
+        <th class="num">${tx('col_avg')}</th>
+    </tr>`;
+    document.getElementById('summaryThead').innerHTML = thead;
+
+    const sortedBySettle = [...storeNames].sort((a,b) => {
+        const sa = byStore[b].reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+        const sb = byStore[a].reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+        return sa - sb;
+    });
+
+    document.getElementById('summaryTbody').innerHTML = sortedBySettle.map((sn, i) => {
+        const sRows = byStore[sn];
+        const cnt   = sRows.length;
+        const proj  = sRows.reduce((s,r) => s + parseMoney(projIdx >= 0 ? r[projIdx] : 0), 0);
+        const sett  = sRows.reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+        const avg   = cnt > 0 ? sett / cnt : 0;
+        const rankCls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+        return `<tr onclick="document.getElementById('store-sec-${CSS.escape(sn)}')?.scrollIntoView({behavior:'smooth',block:'start'})">
+            <td><span class="store-rank ${rankCls}">${i+1}</span></td>
+            <td>
+                <div class="store-name-cell">
+                    <span>${escHtml(sn)}</span>
+                    <span class="jump-btn">${tx('jump')}</span>
+                </div>
+            </td>
+            <td class="num">${cnt}</td>
+            <td class="amount">${fmtMoney(proj)}</td>
+            <td class="amount">${fmtMoney(sett)}</td>
+            <td class="num" style="color:var(--text-medium);">${fmtMoney(avg)}</td>
+        </tr>`;
+    }).join('');
+    summarySec.style.display = 'block';
+
+    // ── Per-store detail sections ──
+    const detailCols = buildDetailCols(headers, descIdx, titleIdx);
+
+    const container = document.getElementById('storeDetails');
+    container.innerHTML = '';
+
+    sortedBySettle.forEach((sn, rank) => {
+        const sRows = byStore[sn];
+        const cnt   = sRows.length;
+        const proj  = sRows.reduce((s,r) => s + parseMoney(projIdx >= 0 ? r[projIdx] : 0), 0);
+        const sett  = sRows.reduce((s,r) => s + parseMoney(settIdx >= 0 ? r[settIdx] : 0), 0);
+
+        const sec = document.createElement('div');
+        sec.className = 'store-section';
+        sec.id = `store-sec-${sn}`;
+
+        sec.innerHTML = `
+        <div class="store-section-head" data-store="${escHtml(sn)}">
+            <div class="store-badge">${escHtml(sn)}</div>
+            <div class="store-head-stats">
+                <span class="store-head-stat">${tx('col_orders')}: <strong>${cnt}</strong></span>
+                <span class="store-head-stat">${tx('col_project')}: <strong>${fmtMoney(proj)}</strong></span>
+                <span class="store-head-stat gold">${tx('col_settle')}: <strong>${fmtMoney(sett)}</strong></span>
+            </div>
+            <svg class="store-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="store-section-body">
+            <div class="store-body-toolbar">
+                <span class="store-body-info">${txFn('detail_orders', cnt)}</span>
+                <button class="store-sort-btn active" data-sort="date">${tx('sort_date')}</button>
+                <button class="store-sort-btn" data-sort="amount">${tx('sort_amount')}</button>
+            </div>
+            ${buildStoreTable(sRows, detailCols, dateIdx, projIdx, settIdx, descIdx, titleIdx, endIdx, 'date')}
+        </div>`;
+
+        // Toggle expand/collapse
+        const head = sec.querySelector('.store-section-head');
+        const body = sec.querySelector('.store-section-body');
+        head.addEventListener('click', () => {
+            const isOpen = body.classList.contains('open');
+            body.classList.toggle('open', !isOpen);
+            head.classList.toggle('open', !isOpen);
+        });
+
+        // Sort buttons
+        sec.querySelectorAll('.store-sort-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const sort = btn.dataset.sort;
+                sec.querySelectorAll('.store-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+                const bodyEl = sec.querySelector('.store-section-body');
+                const oldTable = bodyEl.querySelector('.detail-table-wrap');
+                const oldCards = bodyEl.querySelector('.mobile-order-cards');
+                const newHtml = buildStoreTable(sRows, detailCols, dateIdx, projIdx, settIdx, descIdx, titleIdx, endIdx, sort);
+                const tmp = document.createElement('div');
+                tmp.innerHTML = newHtml;
+                if (oldTable) oldTable.replaceWith(tmp.querySelector('.detail-table-wrap'));
+                if (oldCards) oldCards.replaceWith(tmp.querySelector('.mobile-order-cards'));
+            });
+        });
+
+        container.appendChild(sec);
+    });
+}
+
+function buildDetailCols(headers, descIdx, titleIdx) {
+    const base = headers.map((h, i) => {
+        const key   = String(h).trim().toLowerCase();
+        const label = COL_LABELS[key]?.[lang] || String(h).trim();
+        return { key, label, i };
+    }).filter(({ key, label }) => label && !SKIP_COLS.has(key) && !/^第\s*\d+\s*列$/.test(label));
+
+    const virtualCols = [
+        { key: 'guest_name',    label: COL_LABELS['guest_name']?.[lang]    || 'Guest', i: '__name' },
+        { key: 'guest_contact', label: COL_LABELS['guest_contact']?.[lang] || 'Contact', i: '__contact' },
+    ];
+    const titlePos = base.findIndex(c => c.key === 'title');
+    return titlePos >= 0
+        ? [...base.slice(0, titlePos + 1), ...virtualCols, ...base.slice(titlePos + 1)]
+        : [...base, ...virtualCols];
+}
+
+function getCellVal(col, row, descIdx, dateIdx) {
+    if (col.i === '__name' || col.i === '__contact') {
+        const desc = descIdx >= 0 ? String(row[descIdx] || '') : '';
+        const parsed = parseDesc(desc);
+        return col.i === '__name' ? (parsed.name || '—') : (parsed.contact || '—');
+    }
+    const v = String(row[col.i] ?? '').trim();
+    if (!v) return '—';
+    if (MONEY_COLS.has(col.key)) return fmtMoney(parseMoney(v));
+    if (col.key === 'end_time') {
+        const startV = dateIdx >= 0 ? String(row[dateIdx] ?? '').trim() : '';
+        return extractTimeStr(startV) || extractTimeStr(v) || v;
+    }
+    if (col.key === 'start_time') return extractDateStr(v) || v;
+    return v;
+}
+
+function buildStoreTable(rows, detailCols, dateIdx, projIdx, settIdx, descIdx, titleIdx, endIdx, sortMode) {
+    const sorted = [...rows].sort((a, b) => {
+        if (sortMode === 'amount') {
+            return parseMoney(settIdx >= 0 ? b[settIdx] : 0) - parseMoney(settIdx >= 0 ? a[settIdx] : 0);
+        }
+        // date sort — regex-extract Y/M/D to avoid zero-padding and locale issues
+        const da = dateIdx >= 0 ? String(a[dateIdx] || '') : '';
+        const db = dateIdx >= 0 ? String(b[dateIdx] || '') : '';
+        const ta = parseDateMs(da);
+        const tb = parseDateMs(db);
+        if (!isNaN(ta) && !isNaN(tb)) return ta - tb;
+        return da.localeCompare(db);
+    });
+
+    const cols = detailCols;
+
+    // Desktop table
+    const thead = `<tr><th style="width:2rem;text-align:center;">#</th>${cols.map(c =>
+        `<th class="${MONEY_COLS.has(c.key)?'col-money':''}">${c.label}</th>`
+    ).join('')}</tr>`;
+    const tbody = sorted.map((r, i) => {
+        const issues = r._valIssues || [];
+        const hasErr = issues.length > 0;
+        const tip = hasErr ? escHtml(issues.map(v =>
+            v.type === 'store'
+                ? txFn('val_issue_store', v.desc, v.sheet)
+                : txFn('val_issue_amount', v.desc, v.sheet)
+        ).join('\n')) : '';
+        return `<tr${hasErr ? ' class="val-row-error"' : ''}>
+        <td class="col-num">${hasErr
+            ? `<span class="val-indicator" title="${tip}">!</span>`
+            : i + 1}</td>
+        ${cols.map(c => {
+            const v = getCellVal(c, r, descIdx, dateIdx);
+            const cls = c.key === 'start_time' ? 'col-date' : MONEY_COLS.has(c.key) ? 'col-money' : '';
+            return `<td${cls ? ` class="${cls}"` : ''}>${v}</td>`;
+        }).join('')}
+    </tr>`;
+    }).join('');
+
+    // Mobile cards
+    const titleColIdx = cols.findIndex(c => c.key === 'title');
+    const mobileCards = sorted.map((r, i) => {
+        const titleVal = titleColIdx >= 0 ? getCellVal(cols[titleColIdx], r, descIdx, dateIdx) : '—';
+        const dateVal  = dateIdx >= 0 ? extractDateStr(String(r[dateIdx] || '')) : '';
+        const bodyFields = cols.filter(c => c.key !== 'title' && c.key !== 'start_time').map(c => {
+            const v = getCellVal(c, r, descIdx, dateIdx);
+            return `<div class="m-field${MONEY_COLS.has(c.key)?' hl':''}">
+                <span class="m-field-label">${c.label}</span>
+                <span class="m-field-value">${v}</span>
+            </div>`;
+        }).join('');
+        const issues = r._valIssues || [];
+        const hasErr = issues.length > 0;
+        const issueHtml = hasErr
+            ? `<div style="padding:0.3rem 0.8rem 0.35rem;">${issues.map(v =>
+                `<span class="val-issue-tag">${escHtml(v.type === 'store'
+                    ? txFn('val_issue_store', v.desc, v.sheet)
+                    : txFn('val_issue_amount', v.desc, v.sheet))}</span>`
+            ).join('<br>')}</div>`
+            : '';
+        return `<div class="m-card${hasErr ? ' m-card-error' : ''}">
+            <div class="m-card-head">
+                <div class="m-card-num">${i+1}</div>
+                <div class="m-card-title">${titleVal}</div>
+                ${dateVal ? `<div class="m-card-date">${dateVal}</div>` : ''}
+            </div>
+            ${issueHtml}<div class="m-card-body">${bodyFields}</div>
+        </div>`;
+    }).join('');
+
+    return `<div class="detail-table-wrap"><table class="detail-table">
+        <thead>${thead}</thead>
+        <tbody>${tbody}</tbody>
+    </table></div>
+    <div class="mobile-order-cards">${mobileCards}</div>`;
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Fetch ────────────────────────────────────────────────────────────────────
+function xhrGet(url) {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.withCredentials = true;
+        xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 400) resolve(xhr.responseText); else reject(new Error('status ' + xhr.status)); };
+        xhr.onerror = () => reject(new Error('network error'));
+        xhr.ontimeout = () => reject(new Error('timeout'));
+        xhr.timeout = 15000;
+        xhr.send();
+    });
+}
+
+async function fetchCSV(sheetId, gid) {
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+    const gvizUrl   = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+    const pubUrl    = `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv&gid=${gid}`;
+
+    // 1) Try export URL with credentials (user signed into Google)
+    try { const t = await xhrGet(exportUrl); if (t.trim()) return t; } catch (_) {}
+    try { const r = await fetch(exportUrl, { mode: 'cors', credentials: 'include' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+
+    // 2) Try server proxy (works if server can reach Google)
+    try { const r = await fetch(`/api/sheets?sheetId=${sheetId}&gid=${gid}`); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+
+    // 3) Try gviz (CORS, no redirect)
+    try { const r = await fetch(gvizUrl, { mode: 'cors', credentials: 'omit' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+    try { const t = await xhrGet(gvizUrl); if (t.trim()) return t; } catch (_) {}
+
+    // 4) Try pub URL (for published sheets)
+    try { const r = await fetch(pubUrl); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+
+    throw new Error('ACCESS_DENIED');
+}
+
+async function fetchAndRender() {
+    const stateEl   = document.getElementById('stateMsg');
+    const loadingEl = document.getElementById('loadingBlock');
+    stateEl.innerHTML = '';
+    loadingEl.style.display = 'block';
+    document.getElementById('overallSection').style.display = 'none';
+    document.getElementById('summarySection').style.display = 'none';
+    document.getElementById('storeDetails').innerHTML = '';
+    document.getElementById('valSummary').style.display = 'none';
+
+    // ── Diagnostic: test connectivity ──
+    let diag = [];
+    // Test 1: can we reach any Google endpoint?
+    try {
+        const t0 = await fetch('https://www.google.com/favicon.ico', { mode: 'no-cors' });
+        diag.push('google.com: OK');
+    } catch (e) { diag.push('google.com: ' + e.message); }
+    // Test 2: gviz with explicit CORS
+    try {
+        const t1 = await fetch(`https://docs.google.com/spreadsheets/d/${ORDERS_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${ORDERS_RAW_GID}`, { mode: 'cors', credentials: 'omit' });
+        diag.push('gviz(cors): status=' + t1.status + ' ok=' + t1.ok);
+    } catch (e) { diag.push('gviz(cors): ' + e.message); }
+    console.log('Fetch diagnostics:', diag.join(' | '));
+
+    // ── Fetch (isolated) ──
+    let data;
+    try {
+        const csv = await fetchCSV(ORDERS_SHEET_ID, ORDERS_RAW_GID);
+        data = parseCSV(csv);
+        window._loadedData = data;
+    } catch (_) {
+        loadingEl.style.display = 'none';
+        stateEl.innerHTML = `<div class="alert alert-warn">⚠️ ${tx('access_err')}<br><small style="color:#999;">${diag.join('<br>')}</small></div>`;
+        return;
+    }
+
+    loadingEl.style.display = 'none';
+    if (!data || data.length < 2) {
+        document.getElementById('storeDetails').innerHTML = `<div class="no-data">📭 ${tx('no_data')}</div>`;
+        return;
+    }
+
+    // ── Render (separate from fetch errors) ──
+    renderByMonth(data);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+applyLang();
+fetchAndRender();
+</script>
+<div class="share-toast" id="shareToast"></div>
+</body>
+</html>

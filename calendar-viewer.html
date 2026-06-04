@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Calendar 管理界面</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gold: #C9A961;
+            --secondary-gold: #D4AF37;
+            --bg-cream: #FAF8F3;
+            --bg-white: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #6B6B6B;
+            --success: #1E8E4F;
+            --error: #DC3545;
+            --info: #0D6EFD;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+            --shadow-medium: rgba(0, 0, 0, 0.08);
+            --shadow-heavy: rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .language-switcher {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .lang-btn.active {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-medium);
+            font-size: 1rem;
+        }
+
+        .config-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .config-section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+        }
+
+        .calendar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .calendar-item {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .calendar-item input {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--primary-gold);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-gold);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(201, 169, 97, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--card-border);
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background: #D4D0C8;
+        }
+
+        .btn-add {
+            background: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-add:hover {
+            background: #1a7a45;
+        }
+
+        .btn-remove {
+            background: var(--error);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+        }
+
+        .calendar-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .calendar-tab {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: var(--bg-cream);
+            color: var(--text-medium);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .calendar-tab:hover {
+            background: #F5F2EB;
+            color: var(--text-dark);
+        }
+
+        .calendar-tab.active {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .events-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            min-height: 600px;
+            height: calc(100vh - 400px);
+        }
+
+        .calendar-iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .calendar-iframe-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--card-bg);
+            pointer-events: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .calendar-iframe-wrapper iframe {
+            border: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-medium);
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--card-border);
+            border-top: 3px solid var(--primary-gold);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid var(--error);
+            padding: 1rem;
+            border-radius: 8px;
+            color: var(--error);
+            margin-bottom: 1rem;
+        }
+
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .event-card {
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .event-card:hover {
+            box-shadow: 0 4px 12px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .event-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .event-date {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        .event-time {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .event-description {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-top: 0.5rem;
+        }
+
+        .event-location {
+            color: var(--text-light);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-medium);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .date-range-selector {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .date-range-selector input {
+            padding: 0.5rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--info);
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem 0.5rem;
+            }
+
+            .calendar-tabs {
+                flex-direction: column;
+            }
+
+            .calendar-tab {
+                width: 100%;
+            }
+
+            .date-range-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1 data-lang="title">📅 Calendar 管理界面</h1>
+                <p data-lang="subtitle">点击下方标签切换不同的日历</p>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+            </div>
+        </div>
+
+        <div id="calendarTabsContainer">
+            <div class="calendar-tabs" id="calendarTabs">
+                <!-- Calendar tabs will be added here -->
+            </div>
+
+            <div class="events-container">
+                <div id="eventsContent">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <p data-lang="empty-select">请选择一个 Calendar 查看事件</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 预定义的 Calendar 列表
+        const PREDEFINED_CALENDARS = [
+            {
+                id: '8561a15d5cdf97e3b4db4bcc7fddf3a7510e2ff9fd3ce0019ceb0d3689a34720@group.calendar.google.com',
+                name: 'Celestique Spa'
+            },
+            {
+                id: 'c8e2b875454fb757b20602f2fae308d4fe03c0201906cf5717ffc0f3cc1dab67@group.calendar.google.com',
+                name: 'Luna'
+            },
+            {
+                id: '43991729804171adb981a575a156f100c5fc378eea8f2c256df391d28ed495cb@group.calendar.google.com',
+                name: 'Selene'
+            },
+            {
+                id: '364847adde376f1b20f75a811946043712d502a9840093425bf13945accf2066@group.calendar.google.com',
+                name: 'FI'
+            },
+            {
+                id: '0fe43c4c5b37d64ccfbea3d4f39edb039eb6e55ad13cd7e68140770e71a223b1@group.calendar.google.com',
+                name: 'Futurekart'
+            },
+            {
+                id: 'fb2eb61d044eea0e0a958e3479f8bcaa8adfd3cc1c93899f626c3bad31db1f0a@group.calendar.google.com',
+                name: 'Fairy'
+            },
+            {
+                id: '3068cca264852c7503af72c708bf996b6cb1c3b66a3538715db2d7566b0337ca@group.calendar.google.com',
+                name: 'starryflow'
+            }
+        ];
+
+        // 若 URL 带有 ?store= 参数，只显示该门店的日历
+        const _storeParam = new URLSearchParams(location.search).get('store');
+        let calendars = (() => {
+            if (!_storeParam) return PREDEFINED_CALENDARS;
+            const key = _storeParam.toLowerCase().replace(/\s/g, '');
+            const filtered = PREDEFINED_CALENDARS.filter(cal => {
+                const name = cal.name.toLowerCase().replace(/\s/g, '');
+                return name === key || name.includes(key) || key.includes(name);
+            });
+            return filtered.length > 0 ? filtered : PREDEFINED_CALENDARS;
+        })();
+
+        let currentCalendarId = null;
+        let calendarData = {};
+
+        // 多语言数据
+        const translations = {
+            ja: {
+                title: "📅 Calendar 管理界面",
+                subtitle: "下のタブをクリックして異なるカレンダーを切り替えます",
+                "empty-select": "Calendar を選択してイベントを表示してください",
+                "empty-no-config": "Calendar が設定されていません",
+                "error-not-found": "Calendar が見つかりません",
+                "error-warning": "⚠️ 警告:",
+                "error-api-test": "API テストにより、この Calendar にアクセスできない可能性があります",
+                "error-tip": "💡 ヒント:",
+                "error-tip-desc": "下のカレンダーが表示されない場合は、以下を確認してください：",
+                "error-tip-1": "Calendar が<strong>公開アクセス</strong>に設定されている（Google Calendar 設定で）",
+                "error-tip-2": "「<strong>すべてのイベントの詳細を表示</strong>」権限を選択"
+            },
+            en: {
+                title: "📅 Calendar Management Interface",
+                subtitle: "Click the tabs below to switch between different calendars",
+                "empty-select": "Please select a Calendar to view events",
+                "empty-no-config": "No Calendar configured",
+                "error-not-found": "Calendar not found",
+                "error-warning": "⚠️ Warning:",
+                "error-api-test": "API test found that this Calendar may not be accessible",
+                "error-tip": "💡 Tip:",
+                "error-tip-desc": "If the calendar below cannot be displayed, please ensure:",
+                "error-tip-1": "Calendar is set to <strong>Public Access</strong> (in Google Calendar settings)",
+                "error-tip-2": "Select \"<strong>View all event details</strong>\" permission"
+            },
+            zh: {
+                title: "📅 Calendar 管理界面",
+                subtitle: "点击下方标签切换不同的日历",
+                "empty-select": "请选择一个 Calendar 查看事件",
+                "empty-no-config": "未配置任何 Calendar",
+                "error-not-found": "未找到 Calendar",
+                "error-warning": "⚠️ 警告:",
+                "error-api-test": "通过 API 测试发现此 Calendar 可能无法访问",
+                "error-tip": "💡 提示:",
+                "error-tip-desc": "如果下方日历无法显示，请确保：",
+                "error-tip-1": "Calendar 已设置为<strong>公开访问</strong>（在 Google Calendar 设置中）",
+                "error-tip-2": "选择\"<strong>查看所有活动详情</strong>\"权限"
+            }
+        };
+
+        // 当前语言
+        let currentLang = 'ja';
+
+        // 初始化语言
+        function initLanguage() {
+            const savedLang = localStorage.getItem('calendar-viewer-lang');
+            if (savedLang && translations[savedLang]) {
+                currentLang = savedLang;
+            }
+            updateLanguageButtons();
+            updateContent();
+        }
+
+        // 更新语言按钮状态
+        function updateLanguageButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if (btn.dataset.lang === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 更新页面内容
+        function updateContent() {
+            const t = translations[currentLang];
+            
+            // 更新所有带有 data-lang 属性的元素
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.dataset.lang;
+                if (t[key] && element.tagName !== 'BUTTON') {
+                    element.innerHTML = t[key];
+                }
+            });
+        }
+
+        // 获取翻译文本
+        function t(key) {
+            return translations[currentLang][key] || translations.zh[key] || key;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initLanguage();
+
+            // 门店过滤模式：更新标题，单门店时隐藏标签栏
+            if (_storeParam && calendars.length === 1) {
+                const h1 = document.querySelector('.header h1');
+                const sub = document.querySelector('.header p');
+                if (h1) h1.textContent = `📅 ${calendars[0].name}`;
+                if (sub) sub.textContent = '';
+                document.title = `${calendars[0].name} — カレンダー`;
+            }
+            
+            // 自动加载并显示日历
+            if (calendars.length > 0) {
+                renderCalendarTabs();
+                // 单门店模式隐藏标签栏（只有一个标签没必要显示）
+                if (calendars.length === 1) {
+                    document.getElementById('calendarTabs').style.display = 'none';
+                }
+                switchCalendar(calendars[0].id);
+            } else {
+                document.getElementById('eventsContent').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <p data-lang="empty-no-config">未配置任何 Calendar</p>
+                    </div>
+                `;
+                updateContent();
+            }
+        });
+
+        // 渲染 Calendar 标签页
+        function renderCalendarTabs() {
+            const container = document.getElementById('calendarTabs');
+            container.innerHTML = '';
+
+            calendars.forEach(cal => {
+                const tab = document.createElement('div');
+                tab.className = 'calendar-tab';
+                tab.dataset.calendarId = cal.id;
+                tab.textContent = cal.name || cal.id;
+                tab.addEventListener('click', () => switchCalendar(cal.id));
+                container.appendChild(tab);
+            });
+
+            document.getElementById('calendarTabsContainer').style.display = 'block';
+        }
+
+        // 切换 Calendar
+        function switchCalendar(calendarId) {
+            currentCalendarId = calendarId;
+
+            // 更新标签页状态
+            document.querySelectorAll('.calendar-tab').forEach(tab => {
+                if (tab.dataset.calendarId === calendarId) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // 显示事件
+            displayEvents(calendarId);
+        }
+
+        // 显示 Calendar（使用 iframe）
+        function displayEvents(calendarId) {
+            const container = document.getElementById('eventsContent');
+            const calendar = calendars.find(cal => cal.id === calendarId);
+            
+            if (!calendar) {
+                container.innerHTML = `<div class="empty-state"><p data-lang="error-not-found">未找到 Calendar</p></div>`;
+                updateContent();
+                return;
+            }
+
+            // 检查是否有错误数据（来自API测试）
+            const data = calendarData[calendarId];
+            if (data && data.error) {
+                let errorHtml = `
+                    <div class="error-message">
+                        <strong data-lang="error-warning">⚠️ 警告:</strong> <span data-lang="error-api-test">通过 API 测试发现此 Calendar 可能无法访问</span>
+                        <br><small style="margin-top: 0.5rem; display: block;">${escapeHtml(data.error)}</small>
+                    </div>
+                    <div class="error-message" style="margin-top: 1rem; background: rgba(13, 110, 253, 0.1); border-left-color: var(--info);">
+                        <strong data-lang="error-tip">💡 提示:</strong> <span data-lang="error-tip-desc">如果下方日历无法显示，请确保：</span>
+                        <ol style="margin-top: 0.5rem; padding-left: 1.5rem; line-height: 1.8;">
+                            <li data-lang="error-tip-1">Calendar 已设置为<strong>公开访问</strong>（在 Google Calendar 设置中）</li>
+                            <li data-lang="error-tip-2">选择"<strong>查看所有活动详情</strong>"权限</li>
+                        </ol>
+                    </div>
+                `;
+                
+                // 即使有错误，也尝试显示 iframe（可能只是 API 权限问题，iframe 仍可访问）
+                const encodedCalendarId = encodeURIComponent(calendarId);
+                const calendarUrl = `https://calendar.google.com/calendar/embed?src=${encodedCalendarId}&ctz=Asia%2FTokyo&wkst=1&bgcolor=%23ffffff&color=%23C9A961`;
+                
+                container.innerHTML = errorHtml + `
+                    <div class="calendar-iframe-wrapper" style="margin-top: 1.5rem;">
+                        <iframe 
+                            src="${calendarUrl}"
+                            frameborder="0"
+                            scrolling="no"
+                            title="${escapeHtml(calendar.name || calendarId)}">
+                        </iframe>
+                    </div>
+                `;
+                updateContent();
+                return;
+            }
+
+            // 构建 Google Calendar 嵌入 URL
+            const encodedCalendarId = encodeURIComponent(calendarId);
+            const calendarUrl = `https://calendar.google.com/calendar/embed?src=${encodedCalendarId}&ctz=Asia%2FTokyo&wkst=1&bgcolor=%23ffffff&color=%23C9A961`;
+            
+            container.innerHTML = `
+                <div class="calendar-iframe-wrapper">
+                    <iframe 
+                        src="${calendarUrl}"
+                        frameborder="0"
+                        scrolling="no"
+                        title="${escapeHtml(calendar.name || calendarId)}">
+                    </iframe>
+                </div>
+            `;
+        }
+
+        // HTML 转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 语言切换事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定语言切换按钮事件
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentLang = btn.dataset.lang;
+                    localStorage.setItem('calendar-viewer-lang', currentLang);
+                    updateLanguageButtons();
+                    updateContent();
+                    // 重新渲染日历内容
+                    if (currentCalendarId) {
+                        displayEvents(currentCalendarId);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

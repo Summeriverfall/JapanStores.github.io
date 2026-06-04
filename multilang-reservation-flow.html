@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>業務プロセス図 — 多语言预约与客服业务流程</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Noto Sans JP","Noto Sans SC","Hiragino Sans","Yu Gothic","Meiryo","Microsoft YaHei","Segoe UI",sans-serif;
+  line-height:1.7;color:#1f2937;background:#fff;
+  max-width:880px;margin:0 auto;padding:48px 40px;
+  font-size:14px;
+  -webkit-font-smoothing:antialiased;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+/* 日语：禁则与行首行尾，避免在不当位置单字断行；勿用 break-all */
+html[lang="ja"] body{
+  line-break:strict;
+  word-break:normal;
+}
+html[lang="ja"] .doc-title,
+html[lang="ja"] .section-title,
+html[lang="ja"] .diagram-header .col,
+html[lang="ja"] .compare-card h3{
+  text-wrap:balance;
+}
+html[lang="ja"] .doc-subtitle,
+html[lang="ja"] .compare-card li,
+html[lang="ja"] .val p,
+html[lang="ja"] .footer{
+  text-wrap:pretty;
+}
+
+/* ===== 语言切换 ===== */
+.lang-bar{
+  display:flex;justify-content:flex-end;gap:6px;
+  margin-bottom:18px;
+}
+.lang-btn{
+  padding:5px 14px;font-size:12px;font-weight:600;
+  border:1.5px solid #d1d5db;border-radius:3px;
+  background:#fff;color:#374151;cursor:pointer;
+  transition:all .15s;
+}
+.lang-btn:hover{background:#f3f4f6}
+.lang-btn.active{background:#ea580c;color:#fff;border-color:#ea580c}
+
+/* ===== 标题区 ===== */
+.doc-title{font-size:20px;font-weight:700;color:#111827;margin-bottom:4px;letter-spacing:.3px;text-wrap:balance}
+.doc-subtitle{font-size:13px;color:#6b7280;margin-bottom:28px;text-wrap:pretty}
+
+/* ===== 泳道图 ===== */
+.diagram{
+  border:1.5px solid #9ca3af;border-radius:3px;
+  overflow:hidden;margin-bottom:36px;
+}
+.diagram-header{
+  display:grid;grid-template-columns:44px 200px 1fr 200px;
+  border-bottom:2px solid #374151;
+}
+.diagram-header .col{
+  padding:12px 16px;font-size:14px;font-weight:700;
+  text-align:center;border-right:1px solid #d1d5db;
+  color:#111827;background:#f3f4f6;
+  min-width:0;
+  word-break:normal;
+  overflow-wrap:break-word;
+  text-wrap:balance;
+}
+html[lang="ja"] .diagram-header .col{
+  line-break:strict;
+}
+.diagram-header .col:last-child{border-right:none}
+.diagram-header .col.center{background:#ea580c;color:#fff}
+.diagram-header .col small{display:block;font-size:11px;font-weight:500;margin-top:2px;opacity:.85}
+.diagram-header .header-spacer{background:#fef2f2;border-right:1px solid #e5e7eb}
+
+/* 流程行容器（含 step 标签） */
+.step-row{
+  display:grid;grid-template-columns:44px 1fr;
+  border-bottom:1px solid #e5e7eb;
+}
+.step-label{
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#dc2626;
+  background:#fef2f2;border-right:1px solid #e5e7eb;
+  writing-mode:horizontal-tb;text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.row{
+  display:grid;grid-template-columns:200px 1fr 200px;
+  position:relative;
+}
+.cell{
+  padding:14px 16px;border-right:1px solid #e5e7eb;
+  display:flex;align-items:center;justify-content:center;
+  min-height:62px;
+  min-width:0;
+}
+.cell:last-child{border-right:none}
+
+/* 节点框（flex 子项须 min-width:0，否则窄列里容易出现一字一行） */
+.node{
+  display:inline-block;padding:8px 14px;border-radius:4px;
+  font-size:13px;font-weight:600;text-align:center;
+  line-height:1.4;width:100%;max-width:100%;
+  min-width:0;
+  word-break:normal;
+  overflow-wrap:break-word;
+  text-wrap:balance;
+}
+html[lang="ja"] .node{
+  line-break:strict;
+}
+.node small{display:block;font-size:11px;font-weight:400;margin-top:3px;text-wrap:pretty}
+.node-gray{background:#e5e7eb;color:#1f2937}
+.node-orange{background:#ea580c;color:#fff}
+.node-orange small{opacity:.88}
+
+/* 箭头 — 红色 */
+.arrow-h{
+  position:absolute;top:50%;width:28px;height:0;
+  border-top:1.5px solid #dc2626;z-index:2;
+}
+.arrow-h::after{
+  content:"";position:absolute;right:-1px;top:-4.5px;
+  border:4.5px solid transparent;border-left:6px solid #dc2626;
+}
+.arrow-h.left-to-mid{left:200px}
+.arrow-h.mid-to-right{right:200px}
+
+/* 箭头行 — 红色竖向 */
+.arrow-v-row{
+  display:grid;grid-template-columns:44px 1fr;
+  border-bottom:1px solid #e5e7eb;
+}
+.arrow-v-row .step-spacer{
+  background:#fef2f2;border-right:1px solid #e5e7eb;
+}
+.arrow-v{
+  display:flex;justify-content:center;align-items:center;
+  padding:0;color:#dc2626;font-size:16px;line-height:1;
+  min-height:22px;background:#fafafa;
+}
+
+/* 支付说明底栏 */
+.pay-bar{
+  display:grid;grid-template-columns:44px 1fr auto 1fr;
+  align-items:center;
+  background:#fffbeb;border-top:2px solid #f59e0b;
+  font-size:12px;color:#92400e;line-height:1.5;
+}
+.pay-bar .pay-label{
+  display:flex;align-items:center;justify-content:center;
+  background:#fef2f2;border-right:1px solid #e5e7eb;
+  align-self:stretch;font-size:10px;font-weight:700;color:#dc2626;
+}
+.pay-bar .pay-left,.pay-bar .pay-right{
+  text-align:center;font-weight:600;padding:12px 16px;
+  min-width:0;
+  word-break:normal;
+  overflow-wrap:break-word;
+  text-wrap:pretty;
+}
+html[lang="ja"] .pay-bar .pay-left,
+html[lang="ja"] .pay-bar .pay-right{
+  line-break:strict;
+  text-wrap:pretty;
+}
+.pay-bar .pay-sep{color:#d97706;font-size:18px}
+
+/* ===== 对比与价值模块 ===== */
+.section{margin-bottom:32px}
+.section-title{
+  font-size:15px;font-weight:700;color:#111827;
+  padding-bottom:6px;margin-bottom:14px;
+  border-bottom:2px solid #ea580c;
+  text-wrap:balance;
+}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.compare-card{padding:16px 18px;border-radius:4px;border:1px solid #e5e7eb}
+.compare-card.before{border-left:3px solid #dc2626;background:#fef2f2}
+.compare-card.after{border-left:3px solid #059669;background:#f0fdf4}
+.compare-card h3{font-size:13px;font-weight:700;color:#111827;margin-bottom:8px;text-wrap:balance}
+.compare-card ul{list-style:none}
+.compare-card li{
+  font-size:12.5px;color:#374151;padding:3px 0 3px 14px;position:relative;
+  word-break:normal;
+  overflow-wrap:break-word;
+  text-wrap:pretty;
+}
+html[lang="ja"] .compare-card li{line-break:strict}
+.compare-card li::before{content:"";position:absolute;left:0;top:10px;width:5px;height:5px;border-radius:50%}
+.compare-card.before li::before{background:#dc2626}
+.compare-card.after li::before{background:#059669}
+
+.values{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.val{padding:14px 16px;border-radius:4px;border:1px solid #e5e7eb;border-left:3px solid #ea580c;background:#fff}
+.val .num{font-size:11px;font-weight:700;color:#ea580c;margin-bottom:2px}
+.val .txt{font-size:13px;font-weight:600;color:#111827}
+.val p{font-size:11.5px;color:#6b7280;margin-top:3px}
+.val .txt{word-break:normal;overflow-wrap:break-word;text-wrap:balance}
+.val p{word-break:normal;overflow-wrap:break-word;text-wrap:pretty}
+html[lang="ja"] .val .txt,html[lang="ja"] .val p{line-break:strict}
+
+.footer{text-align:center;padding-top:20px;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb}
+
+@media print{
+  body{padding:24px 20px;max-width:100%}
+  .lang-bar{display:none}
+  .diagram{box-shadow:none}
+  .section{page-break-inside:avoid}
+}
+@media(max-width:700px){
+  body{padding:20px 16px}
+  .diagram-header,.row{grid-template-columns:1fr}
+  .step-row,.arrow-v-row{grid-template-columns:1fr}
+  .step-label,.arrow-v-row .step-spacer,.pay-bar .pay-label,.header-spacer{display:none}
+  .pay-bar{grid-template-columns:1fr auto 1fr}
+  .arrow-h{display:none}
+  .cell{border-right:none;border-bottom:1px solid #f3f4f6;justify-content:flex-start}
+  .compare,.values{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- 语言切换 -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="switchLang('ja')">日本語</button>
+  <button class="lang-btn" onclick="switchLang('en')">English</button>
+  <button class="lang-btn" onclick="switchLang('zh')">中文</button>
+</div>
+
+<div class="doc-title" data-zh="业务流程图" data-ja="業務プロセス図" data-en="Business Process Diagram">業務プロセス図</div>
+<div class="doc-subtitle" data-zh="多语言预约与客服业务流程 — IT导入补助金 说明资料" data-ja="多言語予約・カスタマーサービス業務フロー — IT導入補助金 説明資料" data-en="Multilingual Reservation & Customer Service Flow — IT Subsidy Application Document">多语言预约与客服业务流程 — IT導入補助金 説明資料</div>
+
+<!-- ===== 泳道图 ===== -->
+<div class="diagram">
+
+  <!-- 表头 -->
+  <div class="diagram-header">
+    <div class="header-spacer"></div>
+    <div class="col"><span data-zh="顾客" data-ja="顧客" data-en="Customer">顧客</span><small data-zh="外国游客" data-ja="外国人観光客" data-en="Foreign Tourists">外国游客</small></div>
+    <div class="col center"><span data-zh="平台" data-ja="プラットフォーム" data-en="Platform">平台</span><small data-zh="多语言预约 · 客服系统" data-ja="多言語予約・CSシステム" data-en="Multilingual Booking · CS System">多语言预约 · 客服系统</small></div>
+    <div class="col"><span data-zh="工具导入事业者" data-ja="ツール導入事業者" data-en="Merchant">ツール導入事業者</span><small data-zh="加盟商家" data-ja="加盟店舗" data-en="Partner Stores">加盟商家</small></div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step-row">
+    <div class="step-label">Step 1</div>
+    <div class="row">
+      <div class="cell">
+        <div class="node node-gray" data-zh="Google Maps<br>搜索店铺" data-ja="Google Maps<br>店舗を検索" data-en="Google Maps<br>Search Store">Google Maps<br>搜索店铺</div>
+      </div>
+      <div class="cell"></div>
+      <div class="cell"></div>
+    </div>
+  </div>
+
+  <div class="arrow-v-row"><div class="step-spacer"></div><div class="arrow-v">↓</div></div>
+
+  <!-- Step 2 -->
+  <div class="step-row">
+    <div class="step-label">Step 2</div>
+    <div class="row">
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="进入店铺页面" data-ja="店舗ページへ" data-en="Enter Store Page">进入店铺页面</span><small data-zh="通过 Google Maps 链接跳转" data-ja="Google Maps リンクから遷移" data-en="Via Google Maps link">通过 Google Maps 链接跳转</small></div>
+      </div>
+      <div class="cell">
+        <div class="node node-orange"><span data-zh="店铺网页" data-ja="店舗ウェブページ" data-en="Store Webpage">店铺网页</span><small data-zh="平台制作的多语言页面" data-ja="プラットフォームが作成した多言語ページ" data-en="Multilingual page built by platform">平台制作的多语言页面</small></div>
+      </div>
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="店铺信息登录" data-ja="店舗情報登録" data-en="Store Info Registration">店铺信息登录</span><small data-zh="菜单 · 服务 · 价格 · 图片" data-ja="メニュー・サービス・価格・写真" data-en="Menu · Services · Prices · Photos">菜单 · 服务 · 价格 · 图片</small></div>
+      </div>
+      <div class="arrow-h left-to-mid"></div>
+      <div class="arrow-h mid-to-right"></div>
+    </div>
+  </div>
+
+  <div class="arrow-v-row"><div class="step-spacer"></div><div class="arrow-v">↓</div></div>
+
+  <!-- Step 3 -->
+  <div class="step-row">
+    <div class="step-label">Step 3</div>
+    <div class="row">
+      <div class="cell">
+        <div class="node node-gray" data-zh="选择语言·<br>浏览服务" data-ja="言語選択・<br>サービス閲覧" data-en="Select Language<br>· Browse">选择语言·<br>浏览服务</div>
+      </div>
+      <div class="cell">
+        <div class="node node-orange"><span data-zh="多语言切换" data-ja="多言語切替" data-en="Language Switch">多语言切换</span><small data-zh="英语 · 中文 · 日语" data-ja="英語・中国語・日本語" data-en="English · Chinese · Japanese">英语 · 中文 · 日语</small></div>
+      </div>
+      <div class="cell"></div>
+      <div class="arrow-h left-to-mid"></div>
+    </div>
+  </div>
+
+  <div class="arrow-v-row"><div class="step-spacer"></div><div class="arrow-v">↓</div></div>
+
+  <!-- Step 4 -->
+  <div class="step-row">
+    <div class="step-label">Step 4</div>
+    <div class="row">
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="发送预约咨询" data-ja="予約問い合わせ送信" data-en="Send Booking Inquiry">发送预约咨询</span><small data-zh="门店 · 日期 · 时间 ·<br>人数 · 项目 · 联系方式" data-ja="店舗・日付・時間・<br>人数・メニュー・連絡先" data-en="Store · Date · Time ·<br>Guests · Service · Contact">门店 · 日期 · 时间 ·<br>人数 · 项目 · 联系方式</small></div>
+      </div>
+      <div class="cell">
+        <div class="node node-orange"><span data-zh="AI + 人工客服" data-ja="AIとオペレーターによる<br>カスタマーサポート" data-en="AI + Human Support">AI + 人工客服</span><small data-zh="接收 · 校验 · 分流处理" data-ja="受信・内容確認・振り分け対応" data-en="Receive · Validate · Route">接收 · 校验 · 分流处理</small></div>
+      </div>
+      <div class="cell"></div>
+      <div class="arrow-h left-to-mid"></div>
+    </div>
+  </div>
+
+  <div class="arrow-v-row"><div class="step-spacer"></div><div class="arrow-v">↓</div></div>
+
+  <!-- Step 5 -->
+  <div class="step-row">
+    <div class="step-label">Step 5</div>
+    <div class="row">
+      <div class="cell"></div>
+      <div class="cell">
+        <div class="node node-orange"><span data-zh="与商家确认" data-ja="加盟店と確認" data-en="Confirm with Merchant">与商家确认</span><small data-zh="确认空位 · 确认可接待" data-ja="空き確認・受入可否確認" data-en="Check availability · Confirm acceptance">确认空位 · 确认可接待</small></div>
+      </div>
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="确认可预约" data-ja="予約可否を確認" data-en="Confirm Available">确认可预约</span><small data-zh="反馈空位 · 时间 · 可接待" data-ja="空き状況・時間・<br>受入可否をフィードバック" data-en="Feedback availability<br>& time">反馈空位 · 时间 · 可接待</small></div>
+      </div>
+      <div class="arrow-h mid-to-right"></div>
+    </div>
+  </div>
+
+  <div class="arrow-v-row"><div class="step-spacer"></div><div class="arrow-v">↓</div></div>
+
+  <!-- Step 6 -->
+  <div class="step-row">
+    <div class="step-label">Step 6</div>
+    <div class="row">
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="收到预约确认" data-ja="予約確認を受信" data-en="Receive Confirmation">收到预约确认</span><small data-zh="预约成功通知" data-ja="予約確定の通知" data-en="Booking confirmed notification">预约成功通知</small></div>
+      </div>
+      <div class="cell">
+        <div class="node node-orange"><span data-zh="反馈客户" data-ja="顧客へ連絡" data-en="Notify Customer">反馈客户</span><small data-zh="发送确认 · 记录订单" data-ja="確認送信・注文記録" data-en="Send confirmation · Log order">发送确认 · 记录订单</small></div>
+      </div>
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="预约信息把握" data-ja="予約情報把握" data-en="Booking Info Received">预约信息把握</span><small data-zh="客户 · 时间 · 项目" data-ja="顧客・時間・メニュー" data-en="Customer · Time · Service">客户 · 时间 · 项目</small></div>
+      </div>
+      <div class="arrow-h left-to-mid"></div>
+      <div class="arrow-h mid-to-right"></div>
+    </div>
+  </div>
+
+  <div class="arrow-v-row"><div class="step-spacer"></div><div class="arrow-v">↓</div></div>
+
+  <!-- Step 7 -->
+  <div class="step-row" style="border-bottom:none">
+    <div class="step-label">Step 7</div>
+    <div class="row">
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="到店消费 · 支付" data-ja="来店・お支払い" data-en="Visit Store · Pay">到店消费 · 支付</span><small data-zh="直接支付给商家" data-ja="店舗へ直接支払い" data-en="Pay merchant directly">直接支付给商家</small></div>
+      </div>
+      <div class="cell"></div>
+      <div class="cell">
+        <div class="node node-gray"><span data-zh="来店対応 · 收款" data-ja="来店対応・代金受領" data-en="Serve Customer · Collect">来店対応 · 收款</span><small data-zh="当面接待 · 收取费用" data-ja="対面接客・料金収受" data-en="In-person service · Collect fee">当面接待 · 收取费用</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 支付/佣金说明 -->
+  <div class="pay-bar">
+    <div class="pay-label">💰</div>
+    <div class="pay-left" data-zh="客户 → 商家<br>直接支付服务费" data-ja="顧客 → 店舗<br>サービス料金を直接支払う" data-en="Customer → Merchant<br>Pay service fee directly">客户 → 商家<br>直接支付服务费</div>
+    <div class="pay-sep">|</div>
+    <div class="pay-right" data-zh="商家 → 平台<br>按约定支付佣金" data-ja="店舗 → プラットフォーム<br>契約に基づき手数料を支払う" data-en="Merchant → Platform<br>Pay commission as agreed">商家 → 平台<br>按约定支付佣金</div>
+  </div>
+
+</div>
+
+<!-- ===== IT 导入前后对比 ===== -->
+<div class="section">
+  <div class="section-title" data-zh="IT 导入前后的改善点" data-ja="IT導入前後の改善ポイント" data-en="Improvements Before / After IT Adoption">IT 导入前后的改善点</div>
+  <div class="compare">
+    <div class="compare-card before">
+      <h3 data-zh="IT 導入前" data-ja="IT導入前" data-en="Before IT Adoption">IT 導入前</h3>
+      <ul>
+        <li data-zh="客户咨询分散，各渠道无法统一管理" data-ja="顧客問い合わせが分散、各チャネルの一元管理ができない" data-en="Inquiries scattered across channels, hard to manage">客户咨询分散，各渠道无法统一管理</li>
+        <li data-zh="信息收集不完整，反复人工确认" data-ja="情報収集が不完全、繰り返し手動確認" data-en="Incomplete info collection, repeated manual confirmation">信息收集不完整，反复人工确认</li>
+        <li data-zh="容易漏单或传达错误" data-ja="注文漏れや伝達ミスが発生しやすい" data-en="Prone to missed orders or miscommunication">容易漏单或传达错误</li>
+        <li data-zh="订单记录分散，统计困难" data-ja="注文記録が分散、集計が困難" data-en="Order records scattered, hard to analyze">订单记录分散，统计困难</li>
+        <li data-zh="无法追踪渠道效果与转化" data-ja="チャネル別の効果および成約率の追跡ができない" data-en="Cannot track channel performance & conversion">无法追踪渠道效果与转化</li>
+      </ul>
+    </div>
+    <div class="compare-card after">
+      <h3 data-zh="IT 導入後" data-ja="IT導入後" data-en="After IT Adoption">IT 導入後</h3>
+      <ul>
+        <li data-zh="统一入口承接，集中处理" data-ja="統一窓口で受付、集中処理" data-en="Unified entry point, centralized processing">统一入口承接，集中处理</li>
+        <li data-zh="标准化信息收集与模板回复" data-ja="標準化された情報収集・テンプレート返信" data-en="Standardized info collection & template replies">标准化信息收集与模板回复</li>
+        <li data-zh="AI + 人工客服协同处理" data-ja="AIとオペレーターの連携対応" data-en="AI + human support collaboration">AI + 人工客服协同处理</li>
+        <li data-zh="Calendar / Sheets 统一记录" data-ja="Calendar / Sheets で統一記録" data-en="Unified records via Calendar / Sheets">Calendar / Sheets 统一记录</li>
+        <li data-zh="订单统计、业绩分析、经营优化" data-ja="注文集計・業績分析・経営最適化" data-en="Order stats, performance analysis & optimization">订单统计、业绩分析、经营优化</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 数字化价值总结 ===== -->
+<div class="section">
+  <div class="section-title" data-zh="数字化带来的价值" data-ja="デジタル化による効果" data-en="Value of Digitalization">デジタル化による価値</div>
+  <div class="values">
+    <div class="val">
+      <div class="num">01</div>
+      <div class="txt" data-zh="提升多语言接待效率" data-ja="多言語対応効率の向上" data-en="Improve multilingual service efficiency">提升多语言接待效率</div>
+      <p data-zh="标准化流程缩短响应时间，提高接待能力" data-ja="標準化フローで応答時間を短縮、対応能力を向上" data-en="Standardized flow reduces response time">标准化流程缩短响应时间，提高接待能力</p>
+    </div>
+    <div class="val">
+      <div class="num">02</div>
+      <div class="txt" data-zh="降低沟通与管理成本" data-ja="コミュニケーション・<br>管理コストの削減" data-en="Reduce communication<br>& management costs">降低沟通与管理成本</div>
+      <p data-zh="减少重复确认与人工记录，精力集中在高价值服务" data-ja="繰り返し確認・手動記録を削減、高付加価値サービスに集中" data-en="Less repeated confirmation, focus on high-value work">减少重复确认与人工记录，精力集中在高价值服务</p>
+    </div>
+    <div class="val">
+      <div class="num">03</div>
+      <div class="txt" data-zh="减少预约错误与漏单" data-ja="予約ミス・注文漏れの削減" data-en="Reduce booking errors & missed orders">减少预约错误与漏单</div>
+      <p data-zh="统一记录与流程规范，保障服务质量" data-ja="統一記録とフロー標準化でサービス品質を保証" data-en="Unified records & standard flow ensure quality">统一记录与流程规范，保障服务质量</p>
+    </div>
+    <div class="val">
+      <div class="num">04</div>
+      <div class="txt" data-zh="订单数据沉淀与<br>经营可视化" data-ja="注文データの蓄積と<br>経営の可視化" data-en="Order data accumulation<br>& business visualization">订单数据沉淀与<br>经营可视化</div>
+      <p data-zh="支持业绩分析、渠道评估与持续改善" data-ja="業績分析・チャネル評価・継続的改善を支援" data-en="Support performance analysis & continuous improvement">支持业绩分析、渠道评估与持续改善</p>
+    </div>
+  </div>
+</div>
+
+<div class="footer" data-zh="由 reserveinjp 提供技术支持" data-ja="reserveinjp による技術サポート" data-en="Technical support provided by reserveinjp">reserveinjp による技術サポート</div>
+
+<script>
+function switchLang(lang) {
+  var map = {zh:'中文', ja:'日本語', en:'English'};
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.trim() === map[lang]);
+  });
+  var key = 'data-' + lang;
+  document.querySelectorAll('[' + key + ']').forEach(function(el) {
+    if (el.children.length > 0 && Array.from(el.children).some(function(c){ return c.tagName !== 'BR'; })) return;
+    el.innerHTML = el.getAttribute(key);
+  });
+  document.documentElement.lang = {zh:'zh-CN', ja:'ja', en:'en'}[lang] || 'ja';
+}
+switchLang('ja');
+</script>
+</body>
+</html>

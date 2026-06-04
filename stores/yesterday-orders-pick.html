@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前日注文 — 店舗を選択</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-gold: #C9A961;
+            --bg-cream: #FAF8F3;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-medium);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--primary-gold); }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        .header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .header .sub { color: var(--text-medium); font-size: 0.95rem; margin-bottom: 0.5rem; }
+        .date-badge {
+            display: inline-block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-gold);
+            background: rgba(201, 169, 97, 0.12);
+            border: 1px solid rgba(201, 169, 97, 0.35);
+            border-radius: 8px;
+            padding: 0.35rem 0.75rem;
+        }
+        .header-content { flex: 1; min-width: 0; }
+        .language-switcher { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .lang-btn:hover { background: var(--primary-gold); color: #fff; border-color: var(--primary-gold); }
+        .lang-btn.active { background: var(--primary-gold); color: #fff; border-color: var(--primary-gold); }
+        .stores-list { display: flex; flex-direction: column; gap: 0.65rem; }
+        .store-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            min-height: 52px;
+        }
+        .store-row:hover, .store-row:active {
+            border-color: var(--primary-gold);
+            box-shadow: 0 4px 14px rgba(201, 169, 97, 0.18);
+        }
+        .store-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: left;
+            word-break: break-word;
+        }
+        .store-hint {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-gold);
+            flex-shrink: 0;
+        }
+        @media (max-width: 640px) {
+            .container { padding: 0.9rem 0.75rem 2.5rem; }
+            .back-link { font-size: 0.85rem; margin-bottom: 0.75rem; }
+            .header {
+                flex-direction: column;
+                padding: 1rem 1rem 1.1rem;
+                border-radius: 12px;
+                gap: 0.85rem;
+            }
+            .header h1 { font-size: 1.15rem; }
+            .header .sub { font-size: 0.82rem; }
+            .date-badge { font-size: 0.78rem; }
+            .language-switcher {
+                padding-top: 0.65rem;
+                border-top: 1px solid var(--card-border);
+                width: 100%;
+            }
+            .lang-btn { padding: 0.4rem 0.75rem; font-size: 0.78rem; min-height: 36px; }
+            .store-row { padding: 0.75rem 0.85rem; min-height: 48px; border-radius: 9px; }
+            .store-name { font-size: 0.92rem; }
+            .store-hint { font-size: 0.72rem; max-width: 42%; white-space: normal; text-align: right; line-height: 1.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../hub.html" class="back-link" data-i="back-hub">← 管理者ハブに戻る</a>
+        <div class="header">
+            <div class="header-content">
+                <h1 data-i="title">前日注文 — 店舗を選択</h1>
+                <p class="sub" data-i="subtitle">店舗を選ぶと、その店舗の前日注文一覧ページが開きます。</p>
+                <div class="date-badge" id="dateBadge"></div>
+            </div>
+            <div class="language-switcher">
+                <button type="button" class="lang-btn active" data-lang-set="ja">日本語</button>
+                <button type="button" class="lang-btn" data-lang-set="en">English</button>
+                <button type="button" class="lang-btn" data-lang-set="zh">中文</button>
+            </div>
+        </div>
+        <div class="stores-list" id="storesList"></div>
+    </div>
+    <script src="stores.config.js"></script>
+    <script>
+        function getStores() {
+            try {
+                const o = localStorage.getItem('stores_list_override');
+                if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length) return arr; }
+            } catch(e) {}
+            return STORES_LIST;
+        }
+
+        const i18n = {
+            ja: {
+                'back-hub': '← 管理者ハブに戻る',
+                title: '前日注文 — 店舗を選択',
+                subtitle: '店舗を選ぶと、その店舗の前日注文一覧ページが開きます。',
+                hint: '一覧を開く →',
+                docTitle: '前日注文 — 店舗を選択',
+            },
+            zh: {
+                'back-hub': '← 返回管理员中台',
+                title: '前一日订单 — 选择门店',
+                subtitle: '请选择门店，将打开该门店的前一日订单明细页。',
+                hint: '打开订单 →',
+                docTitle: '前一日订单 — 选择门店',
+            },
+            en: {
+                'back-hub': '← Back to Admin Hub',
+                title: "Yesterday's Orders — Choose Store",
+                subtitle: 'Pick a store to open the previous-day order list for that store.',
+                hint: 'Open →',
+                docTitle: "Yesterday's Orders — Choose Store",
+            },
+        };
+
+        function fmtDateParam(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function formatDateLine(d, lang) {
+            const y = d.getFullYear(), mo = d.getMonth() + 1, day = d.getDate();
+            if (lang === 'en') {
+                return `Date: ${y}/${String(mo).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
+            }
+            if (lang === 'zh') {
+                return `订单日期：${y}年${mo}月${day}日`;
+            }
+            return `対象日：${y}年${mo}月${day}日`;
+        }
+
+        let lang = localStorage.getItem('stores-lang') || 'ja';
+        const tx = k => i18n[lang]?.[k] ?? i18n.ja[k] ?? k;
+
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const dateParam = fmtDateParam(yesterday);
+
+        function buildList() {
+            const list = document.getElementById('storesList');
+            const hint = tx('hint');
+            list.innerHTML = getStores().map(name => `
+                <a class="store-row" href="yesterday-orders.html?store=${encodeURIComponent(name)}&date=${encodeURIComponent(dateParam)}">
+                    <div class="store-name">${name}</div>
+                    <div class="store-hint">${hint}</div>
+                </a>
+            `).join('');
+        }
+
+        function applyLang() {
+            document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+            document.querySelectorAll('[data-i]').forEach(el => {
+                const k = el.dataset.i;
+                if (i18n[lang]?.[k]) el.textContent = i18n[lang][k];
+            });
+            document.querySelectorAll('[data-lang-set]').forEach(b => {
+                b.classList.toggle('active', b.dataset.langSet === lang);
+            });
+            document.getElementById('dateBadge').textContent = formatDateLine(yesterday, lang);
+            document.title = tx('docTitle');
+            buildList();
+        }
+
+        document.querySelectorAll('[data-lang-set]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                lang = btn.dataset.langSet;
+                localStorage.setItem('stores-lang', lang);
+                applyLang();
+            });
+        });
+
+        applyLang();
+    </script>
+</body>
+</html>
