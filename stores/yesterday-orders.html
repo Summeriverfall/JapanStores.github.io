@@ -483,6 +483,57 @@
             .store-badge { font-size: 0.76rem; max-width: 50%; }
         }
 
+        /* ── Store selector ─────────────────────────────── */
+        .store-select-row { margin-bottom: 0.65rem; }
+        .store-select {
+            display: flex; align-items: center; gap: 0.55rem;
+            width: 100%; background: var(--bg-cream);
+            border: 1.5px solid var(--card-border); border-radius: 10px;
+            padding: 0.55rem 0.9rem; cursor: pointer;
+            font-family: inherit; font-size: 0.88rem; font-weight: 500;
+            color: var(--text-dark); text-align: left;
+            min-height: 44px; transition: border-color 0.18s, background 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .store-select:hover { border-color: var(--primary-gold); background: #fff; }
+        .store-select:active { background: rgba(201,169,97,0.06); }
+        .store-select-icon { color: var(--primary-gold); flex-shrink: 0; line-height: 1; }
+        .store-select-text { flex: 1; font-weight: 600; }
+        .store-select-chevron { color: var(--text-light); flex-shrink: 0; line-height: 1; transition: transform 0.2s; }
+        .store-select.open .store-select-chevron { transform: rotate(180deg); }
+        .store-overlay {
+            position: fixed; inset: 0; z-index: 1001; background: rgba(0,0,0,0);
+            display: flex; align-items: flex-end; justify-content: center;
+            pointer-events: none; transition: background 0.25s;
+        }
+        .store-overlay.open { background: rgba(0,0,0,0.42); pointer-events: all; }
+        .store-panel {
+            background: var(--card-bg); border-radius: 24px 24px 0 0;
+            padding: 0 1.35rem 2.5rem; width: 100%; max-width: 500px;
+            transform: translateY(110%); transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform;
+        }
+        .store-overlay.open .store-panel { transform: translateY(0); }
+        .store-panel-handle { width: 40px; height: 4px; background: var(--card-border); border-radius: 2px; margin: 0.9rem auto 1.2rem; }
+        .store-panel-title { font-size: 1rem; font-weight: 700; text-align: center; margin-bottom: 1rem; }
+        .store-option {
+            display: block; width: 100%; padding: 0.75rem 1rem;
+            border: 1px solid var(--card-border); border-radius: 10px;
+            background: var(--card-bg); font-family: inherit; font-size: 0.92rem;
+            font-weight: 500; color: var(--text-dark); cursor: pointer;
+            text-align: left; margin-bottom: 0.5rem; transition: all 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .store-option:hover, .store-option:active { border-color: var(--primary-gold); background: var(--primary-gold-light); }
+        .store-option.selected { border-color: var(--primary-gold); background: var(--primary-gold); color: #fff; font-weight: 700; }
+        @media (min-width: 641px) {
+            .store-overlay { align-items: center; }
+            .store-panel { border-radius: 20px; max-width: 400px; padding: 0 1.25rem 1.75rem; }
+        }
+        @media (max-width: 640px) {
+            .store-select { font-size: 0.9rem; }
+            .store-option { font-size: 0.88rem; padding: 0.7rem 0.9rem; }
+        }
+
         /* ── State ──────────────────────────────────────── */
         #stateMsg { margin-bottom: 1.25rem; }
         .alert { padding: 0.9rem 1.1rem; border-radius: 10px; font-size: 0.88rem; line-height: 1.7; }
@@ -516,6 +567,14 @@
                 <button class="btn-action btn-print" onclick="window.print()">🖨 印刷</button>
                 <button class="btn-action btn-share" id="shareBtn">↗ <span id="shareLabel">共有</span></button>
             </div>
+        </div>
+        <!-- Store selector (shown when no store in URL) -->
+        <div class="store-select-row" id="storeSelectRow" style="display:none;">
+            <button class="store-select" id="storeSelect">
+                <svg class="store-select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span class="store-select-text" id="storeSelectText">门店を選択</span>
+                <svg class="store-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
         </div>
         <!-- 行二：标题 + 日期 -->
         <div class="page-title" id="pageTitle">前日注文明細</div>
@@ -557,6 +616,15 @@
     <div class="page-footer" id="pageFooter"></div>
 </div>
 
+<!-- ── Store Selector Overlay ──────────────────────────────────────────── -->
+<div class="store-overlay" id="storeOverlay">
+    <div class="store-panel" id="storePanel">
+        <div class="store-panel-handle"></div>
+        <div class="store-panel-title" id="storePanelTitle">门店を選択</div>
+        <div id="storeOptions"></div>
+    </div>
+</div>
+
 <!-- ── Custom Calendar Overlay ─────────────────────────────────────────── -->
 <div class="dp-overlay" id="dpOverlay">
     <div class="dp-panel" id="dpPanel">
@@ -575,6 +643,7 @@
     </div>
 </div>
 
+<script src="stores.config.js"></script>
 <script>
     // ─── Config ──────────────────────────────────────────────────────────────
     const ORDERS_SHEET_ID = '1B_GTNGUHYN8xbXYAWjv_FosTAbVghyCbmX5N9fvgrEc';
@@ -616,6 +685,8 @@
             table_title: '📄 注文一覧',
             no_data: 'この日の注文データがありません',
             no_store: '店舗が指定されていません',
+            select_store: '店舗を選択',
+            store_label: '店舗',
             footer: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 生成`,
             access_err: 'データを読み込めません。Google Sheetを「リンクを知っている全員」→「閲覧者」に設定してください',
             row: '件', share: '共有',
@@ -629,6 +700,8 @@
             table_title: '📄 订单列表',
             no_data: '该日暂无订单数据',
             no_store: '未指定门店，请在 URL 中添加 ?store=门店名',
+            select_store: '選択してください',
+            store_label: '店舗',
             footer: d => `生成于 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
             access_err: '无法读取数据，请确认 Google Sheet 已设为「任何人可查看」',
             row: '条', share: '分享',
@@ -642,6 +715,8 @@
             table_title: '📄 Order List',
             no_data: 'No orders found for this date',
             no_store: 'No store specified. Add ?store=StoreName to the URL',
+            select_store: 'Select a store',
+            store_label: 'Store',
             footer: d => `Generated ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
             access_err: 'Cannot load data. Share the Google Sheet as "Anyone with the link – Viewer"',
             row: ' orders', share: 'Share',
@@ -663,6 +738,7 @@
         const shareLabel = document.getElementById('shareLabel');
         if (shareLabel) shareLabel.textContent = tx('share');
         document.getElementById('dateTriggerText').textContent = tx('date')(targetDate);
+        if (!storeName) document.getElementById('storeSelectText').textContent = tx('select_store');
         // 如果日历已打开则刷新星期行
         if (document.getElementById('dpOverlay').classList.contains('open')) renderDpWeekdays();
     }
@@ -1000,6 +1076,47 @@
         }).join('');
     }
 
+    // ─── Store selector ───────────────────────────────────────────────────────
+    function getStores() {
+        try {
+            const o = localStorage.getItem('stores_list_override');
+            if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length) return arr; }
+        } catch(e) {}
+        return typeof STORES_LIST !== 'undefined' ? STORES_LIST : [];
+    }
+
+    function openStorePicker() {
+        const stores = getStores();
+        document.getElementById('storePanelTitle').textContent = tx('select_store');
+        document.getElementById('storeOptions').innerHTML = stores.map(s =>
+            `<button class="store-option${s === storeName ? ' selected' : ''}" data-store="${s.replace(/"/g, '&quot;')}">${s}</button>`
+        ).join('');
+        document.getElementById('storeOptions').querySelectorAll('.store-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const s = btn.dataset.store;
+                const url = new URL(location.href);
+                url.searchParams.set('store', s);
+                location.href = url.toString();
+            });
+        });
+        document.getElementById('storeOverlay').classList.add('open');
+        document.getElementById('storeSelect').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeStorePicker() {
+        document.getElementById('storeOverlay').classList.remove('open');
+        document.getElementById('storeSelect').classList.remove('open');
+        if (!document.getElementById('dpOverlay').classList.contains('open')) {
+            document.body.style.overflow = '';
+        }
+    }
+
+    document.getElementById('storeSelect').addEventListener('click', openStorePicker);
+    document.getElementById('storeOverlay').addEventListener('click', e => {
+        if (e.target === document.getElementById('storeOverlay')) closeStorePicker();
+    });
+
     // ─── Fetch & load ────────────────────────────────────────────────────────
     function xhrGet(url) {
         return new Promise((resolve, reject) => {
@@ -1032,10 +1149,13 @@
     async function main() {
         const stateEl = document.getElementById('stateMsg');
         if (!storeName) {
-            stateEl.innerHTML = `<div class="alert alert-warn">⚠️ ${tx('no_store')}</div>`;
+            document.getElementById('storeSelectRow').style.display = 'block';
+            document.getElementById('storeSelectText').textContent = tx('select_store');
+            document.getElementById('storeBadge').textContent = '—';
             document.getElementById('tableDesktop').innerHTML = '';
             return;
         }
+        document.getElementById('storeSelectRow').style.display = 'none';
         try {
             const csv  = await fetchCSV(ORDERS_SHEET_ID, ORDERS_RAW_GID);
             const data = parseCSV(csv);
