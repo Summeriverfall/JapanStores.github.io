@@ -534,6 +534,65 @@
             .store-option { font-size: 0.88rem; padding: 0.7rem 0.9rem; }
         }
 
+        /* ── Confirmation panel ──────────────────────────── */
+        .confirm-panel {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .confirm-panel-title {
+            font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .confirm-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 0.75rem; padding: 0.7rem 0; flex-wrap: wrap;
+        }
+        .confirm-row + .confirm-row { border-top: 1px solid #F2EFE9; }
+        .confirm-label {
+            font-weight: 600; font-size: 0.88rem; color: var(--text-dark);
+            display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0;
+        }
+        .confirm-status-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .confirm-status-dot.pending { background: #CCC; }
+        .confirm-status-dot.done { background: #4CAF50; }
+        .confirm-action {
+            display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
+        }
+        .confirm-input {
+            padding: 0.45rem 0.7rem; border: 1.5px solid var(--card-border);
+            border-radius: 8px; font-size: 0.85rem; font-family: inherit;
+            width: 120px; background: var(--bg-cream); color: var(--text-dark);
+            transition: border-color 0.18s;
+        }
+        .confirm-input:focus { border-color: var(--primary-gold); outline: none; background: #fff; }
+        .confirm-btn {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.45rem 0.9rem; border: none; border-radius: 8px;
+            font-size: 0.82rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; min-height: 38px; white-space: nowrap;
+            transition: opacity 0.18s, background 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .confirm-btn:active { opacity: 0.7; }
+        .confirm-btn:hover { opacity: 0.85; }
+        .confirm-btn.staff { background: var(--primary-gold); color: #fff; }
+        .confirm-btn.store { background: var(--text-dark); color: #fff; }
+        .confirm-btn:disabled { background: #CCC; color: #999; cursor: not-allowed; opacity: 1; }
+        .confirm-done {
+            font-size: 0.82rem; color: var(--text-medium); line-height: 1.45;
+        }
+        .confirm-done strong { color: var(--text-dark); }
+        .confirm-done .time { color: var(--text-light); font-size: 0.76rem; }
+        @media (max-width: 640px) {
+            .confirm-panel { padding: 1rem 0.9rem; border-radius: 12px; }
+            .confirm-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .confirm-action { width: 100%; }
+            .confirm-input { flex: 1; width: auto; min-width: 0; }
+        }
+
         /* ── State ──────────────────────────────────────── */
         #stateMsg { margin-bottom: 1.25rem; }
         .alert { padding: 0.9rem 1.1rem; border-radius: 10px; font-size: 0.88rem; line-height: 1.7; }
@@ -564,7 +623,8 @@
         <div class="header-row1">
             <div class="store-badge" id="storeBadge">—</div>
             <div class="header-btns">
-                <button class="btn-action btn-print" onclick="window.print()">🖨 印刷</button>
+                <button class="btn-action btn-print" id="refreshBtn" style="background:var(--primary-gold);">🔄 <span id="refreshLabel">更新</span></button>
+                <button class="btn-action btn-print" onclick="window.print()">🖨 <span id="printLabel">印刷</span></button>
                 <button class="btn-action btn-share" id="shareBtn">↗ <span id="shareLabel">共有</span></button>
             </div>
         </div>
@@ -600,6 +660,29 @@
 
     <!-- Summary stats -->
     <div class="stats-grid" id="statsGrid" style="display:none;"></div>
+
+    <!-- Confirmation panel -->
+    <div class="confirm-panel" id="confirmPanel" style="display:none;">
+        <div class="confirm-panel-title">🔍 <span id="confirmPanelTitle">注文確認</span></div>
+        <!-- Staff row -->
+        <div class="confirm-row" id="staffConfirmRow">
+            <div class="confirm-label">
+                <span class="confirm-status-dot pending" id="staffDot"></span>
+                <span id="staffLabel">スタッフ確認</span>
+            </div>
+            <div class="confirm-action" id="staffAction"></div>
+            <div class="confirm-done" id="staffDone" style="display:none;"></div>
+        </div>
+        <!-- Store row -->
+        <div class="confirm-row" id="storeConfirmRow">
+            <div class="confirm-label">
+                <span class="confirm-status-dot pending" id="storeDot"></span>
+                <span id="storeLabel">店舗確認</span>
+            </div>
+            <div class="confirm-action" id="storeAction"></div>
+            <div class="confirm-done" id="storeDone" style="display:none;"></div>
+        </div>
+    </div>
 
     <!-- Table / Cards -->
     <div class="table-card">
@@ -687,9 +770,19 @@
             no_store: '店舗が指定されていません',
             select_store: '店舗を選択',
             store_label: '店舗',
+            confirm_title: '注文確認',
+            staff_label: 'スタッフ確認',
+            store_confirm_label: '店舗確認',
+            staff_name_placeholder: '名前を入力',
+            staff_btn: '確認完了',
+            store_btn: '注文を確認',
+            staff_done: '確認済み',
+            store_done: '確認済み',
+            reviewed_by: '確認者',
+            confirmed_at: '確認日時',
             footer: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 生成`,
             access_err: 'データを読み込めません。Google Sheetを「リンクを知っている全員」→「閲覧者」に設定してください',
-            row: '件', share: '共有',
+            row: '件', share: '共有', refresh: '更新', refresh_loading: '更新中...', print_label: '印刷',
             date_picker_label: '日付選択',
             date_apply: '表示',
         },
@@ -702,9 +795,19 @@
             no_store: '未指定门店，请在 URL 中添加 ?store=门店名',
             select_store: '選択してください',
             store_label: '店舗',
+            confirm_title: '订单核对确认',
+            staff_label: '工作人员复核',
+            store_confirm_label: '店家确认',
+            staff_name_placeholder: '输入姓名',
+            staff_btn: '确认复核',
+            store_btn: '确认订单无误',
+            staff_done: '已复核',
+            store_done: '已确认',
+            reviewed_by: '复核人',
+            confirmed_at: '确认时间',
             footer: d => `生成于 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
             access_err: '无法读取数据，请确认 Google Sheet 已设为「任何人可查看」',
-            row: '条', share: '分享',
+            row: '条', share: '分享', refresh: '刷新', refresh_loading: '刷新中...', print_label: '打印',
             date_picker_label: '选择日期',
             date_apply: '查询',
         },
@@ -717,9 +820,19 @@
             no_store: 'No store specified. Add ?store=StoreName to the URL',
             select_store: 'Select a store',
             store_label: 'Store',
+            confirm_title: 'Order Verification',
+            staff_label: 'Staff Review',
+            store_confirm_label: 'Store Confirmation',
+            staff_name_placeholder: 'Enter name',
+            staff_btn: 'Confirm Review',
+            store_btn: 'Confirm Orders',
+            staff_done: 'Reviewed',
+            store_done: 'Confirmed',
+            reviewed_by: 'Reviewed by',
+            confirmed_at: 'Confirmed at',
             footer: d => `Generated ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
             access_err: 'Cannot load data. Share the Google Sheet as "Anyone with the link – Viewer"',
-            row: ' orders', share: 'Share',
+            row: ' orders', share: 'Share', refresh: 'Refresh', refresh_loading: 'Loading...', print_label: 'Print',
             date_picker_label: 'Select Date',
             date_apply: 'Apply',
         }
@@ -737,6 +850,10 @@
         document.title = storeName ? `${storeName} — ${tx('title')}` : tx('title');
         const shareLabel = document.getElementById('shareLabel');
         if (shareLabel) shareLabel.textContent = tx('share');
+        const refreshLabel = document.getElementById('refreshLabel');
+        if (refreshLabel) refreshLabel.textContent = tx('refresh');
+        const printLabel = document.getElementById('printLabel');
+        if (printLabel) printLabel.textContent = tx('print_label');
         document.getElementById('dateTriggerText').textContent = tx('date')(targetDate);
         if (!storeName) document.getElementById('storeSelectText').textContent = tx('select_store');
         // 如果日历已打开则刷新星期行
@@ -749,6 +866,7 @@
             localStorage.setItem('stores-lang', lang);
             applyLang();
             if (window._loadedData) renderAll(window._loadedData);
+            loadConfirmation().then(renderConfirmation);
         });
     });
 
@@ -840,6 +958,7 @@
                 url.searchParams.set('date', toDateStr(targetDate));
                 history.replaceState(null, '', url.toString());
                 if (window._loadedData) renderAll(window._loadedData);
+                loadConfirmation().then(renderConfirmation);
             });
             return el;
         }
@@ -1117,6 +1236,103 @@
         if (e.target === document.getElementById('storeOverlay')) closeStorePicker();
     });
 
+    // ─── Confirmation logic ───────────────────────────────────────────────────
+    function apiDate() { return toDateStr(targetDate); }
+
+    async function loadConfirmation() {
+        try {
+            const r = await fetch(`/api/confirm?date=${apiDate()}&store=${encodeURIComponent(storeName)}`);
+            if (r.ok) return await r.json();
+        } catch (_) {}
+        return { staff: null, store_confirm: null };
+    }
+
+    async function submitConfirmation(role, name) {
+        const r = await fetch('/api/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: apiDate(), store: storeName, role, name: name || '' }),
+        });
+        if (!r.ok) throw new Error('Failed to save');
+        return await r.json();
+    }
+
+    function renderConfirmation(confirmData) {
+        const panel = document.getElementById('confirmPanel');
+        if (!storeName) { panel.style.display = 'none'; return; }
+        panel.style.display = 'block';
+
+        document.getElementById('confirmPanelTitle').textContent = tx('confirm_title');
+        document.getElementById('staffLabel').textContent = tx('staff_label');
+        document.getElementById('storeLabel').textContent = tx('store_confirm_label');
+
+        // Staff
+        const staff = confirmData.staff;
+        const staffDot = document.getElementById('staffDot');
+        const staffAction = document.getElementById('staffAction');
+        const staffDone = document.getElementById('staffDone');
+
+        if (staff) {
+            staffDot.className = 'confirm-status-dot done';
+            staffAction.style.display = 'none';
+            staffDone.style.display = 'block';
+            const d = new Date(staff.time);
+            const timeStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            staffDone.innerHTML = `<span style="color:#4CAF50;font-weight:700;">✅ ${tx('staff_done')}</span> — <strong>${tx('reviewed_by')}: ${staff.name || '—'}</strong> <span class="time">${timeStr}</span>`;
+        } else {
+            staffDot.className = 'confirm-status-dot pending';
+            staffDone.style.display = 'none';
+            staffAction.style.display = 'flex';
+            staffAction.innerHTML = `<input class="confirm-input" id="staffNameInput" placeholder="${tx('staff_name_placeholder')}" maxlength="30">
+                <button class="confirm-btn staff" id="staffConfirmBtn">✅ ${tx('staff_btn')}</button>`;
+            document.getElementById('staffConfirmBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                this.textContent = '...';
+                try {
+                    const name = document.getElementById('staffNameInput').value.trim() || '—';
+                    const result = await submitConfirmation('staff', name);
+                    renderConfirmation(result);
+                } catch (e) {
+                    this.disabled = false;
+                    this.textContent = '✅ ' + tx('staff_btn');
+                    alert('Error: ' + e.message);
+                }
+            });
+        }
+
+        // Store
+        const storeConfirm = confirmData.store_confirm;
+        const storeDot = document.getElementById('storeDot');
+        const storeAction = document.getElementById('storeAction');
+        const storeDone = document.getElementById('storeDone');
+
+        if (storeConfirm) {
+            storeDot.className = 'confirm-status-dot done';
+            storeAction.style.display = 'none';
+            storeDone.style.display = 'block';
+            const d = new Date(storeConfirm.time);
+            const timeStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            storeDone.innerHTML = `<span style="color:#4CAF50;font-weight:700;">✅ ${tx('store_done')}</span> <span class="time">${tx('confirmed_at')}: ${timeStr}</span>`;
+        } else {
+            storeDot.className = 'confirm-status-dot pending';
+            storeDone.style.display = 'none';
+            storeAction.style.display = 'flex';
+            storeAction.innerHTML = `<button class="confirm-btn store" id="storeConfirmBtn">✅ ${tx('store_btn')}</button>`;
+            document.getElementById('storeConfirmBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                this.textContent = '...';
+                try {
+                    const result = await submitConfirmation('store');
+                    renderConfirmation(result);
+                } catch (e) {
+                    this.disabled = false;
+                    this.textContent = '✅ ' + tx('store_btn');
+                    alert('Error: ' + e.message);
+                }
+            });
+        }
+    }
+
     // ─── Fetch & load ────────────────────────────────────────────────────────
     function xhrGet(url) {
         return new Promise((resolve, reject) => {
@@ -1154,6 +1370,7 @@
             document.getElementById('storeSelectText').textContent = tx('select_store');
             document.getElementById('storeBadge').textContent = '—';
             document.getElementById('tableDesktop').innerHTML = '';
+            document.getElementById('confirmPanel').style.display = 'none';
             return;
         }
         document.getElementById('storeSelectRow').style.display = 'none';
@@ -1165,15 +1382,46 @@
             stateEl.innerHTML = '';
             renderAll(data);
         } catch (err) {
+            window._loadedData = null;
             document.getElementById('statsGrid').style.display = 'none';
             stateEl.innerHTML = err.message === 'ACCESS_DENIED'
                 ? `<div class="alert alert-warn">⚠️ ${tx('access_err')}</div>`
                 : `<div class="alert alert-error">❌ ${err.message}</div>`;
             document.getElementById('tableDesktop').innerHTML = '';
         }
+        // Always load confirmation (even if no orders — confirming zero is valid)
+        if (storeName) {
+            const confirmData = await loadConfirmation();
+            renderConfirmation(confirmData);
+        }
     }
 
     main();
+
+    // ─── Refresh button ──────────────────────────────────────────────────────
+    document.getElementById('refreshBtn').addEventListener('click', async function() {
+        const btn = this;
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        const origText = btn.innerHTML;
+        btn.innerHTML = '⏳ ' + tx('refresh_loading');
+        try {
+            const csv  = await fetchCSV(ORDERS_SHEET_ID, ORDERS_RAW_GID);
+            const data = parseCSV(csv);
+            window._loadedData = data;
+            document.getElementById('stateMsg').innerHTML = '';
+            renderAll(data);
+            const confirmData = await loadConfirmation();
+            renderConfirmation(confirmData);
+        } catch (err) {
+            document.getElementById('stateMsg').innerHTML =
+                `<div class="alert alert-error">❌ ${err.message}</div>`;
+        } finally {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.innerHTML = origText;
+        }
+    });
 </script>
 </body>
 </html>

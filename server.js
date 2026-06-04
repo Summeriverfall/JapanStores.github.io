@@ -5,6 +5,7 @@ const path = require('path');
 
 const PORT = process.env.PORT || 8765;
 const ROOT = __dirname;
+const CONFIRM_FILE = path.join(ROOT, 'confirmations.json');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -41,6 +42,60 @@ function fetchUrl(url, cb) {
     res.on('data', c => data += c);
     res.on('end', () => cb(null, data, res.statusCode));
   }).on('error', err => cb(err, null, 0));
+}
+
+// ─── Confirmation storage ──────────────────────────────────────────────
+function readConfirmations() {
+  try { return JSON.parse(fs.readFileSync(CONFIRM_FILE, 'utf8')); }
+  catch (_) { return {}; }
+}
+function writeConfirmations(data) {
+  fs.writeFileSync(CONFIRM_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+function handleGetConfirm(res, query) {
+  const data = readConfirmations();
+  const date = query.date;
+  const store = query.store;
+  if (date && store) {
+    const day = data[date] || {};
+    const entry = day[store] || {};
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ date, store, staff: entry.staff || null, store_confirm: entry.store || null }));
+  } else if (date) {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify(data[date] || {}));
+  } else {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify(data));
+  }
+}
+
+function handlePostConfirm(req, res, body) {
+  try {
+    const { date, store, role, name } = JSON.parse(body);
+    if (!date || !store || !role) {
+      res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Missing date, store, or role' }));
+      return;
+    }
+    const data = readConfirmations();
+    if (!data[date]) data[date] = {};
+    if (!data[date][store]) data[date][store] = {};
+    const time = new Date().toISOString();
+    if (role === 'staff') {
+      data[date][store].staff = { name: name || 'unknown', time };
+    } else if (role === 'store') {
+      data[date][store].store = { time };
+    }
+    writeConfirmations(data);
+    console.log('[confirm] Saved:', date, store, role);
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ ok: true, date, store, staff: data[date][store].staff || null, store_confirm: data[date][store].store || null }));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ error: e.message }));
+  }
 }
 
 function proxySheets(req, res, query) {
@@ -105,6 +160,23 @@ const server = http.createServer((req, res) => {
 
   if (u.pathname === '/api/sheets') {
     return proxySheets(req, res, Object.fromEntries(u.searchParams));
+  }
+
+  if (u.pathname === '/api/confirm') {
+    if (req.method === 'GET') {
+      return handleGetConfirm(res, Object.fromEntries(u.searchParams));
+    }
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', c => body += c);
+      req.on('end', () => handlePostConfirm(req, res, body));
+      return;
+    }
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
+      res.end();
+      return;
+    }
   }
 
   let filePath = path.join(ROOT, u.pathname === '/' ? 'index.html' : u.pathname.replace(/^\/+/, ''));
