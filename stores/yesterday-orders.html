@@ -614,7 +614,7 @@
         }
 
         /* ── Per-order checkbox column ──────────────────── */
-        .col-chk { width: 2.0rem; text-align: center; padding: 0.35rem 0.25rem !important; vertical-align: middle; }
+        .col-chk { min-width: 52px; text-align: center; padding: 0.35rem 0.2rem !important; vertical-align: middle; }
         .col-chk input[type="checkbox"] {
             width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary-gold);
             margin: 0; vertical-align: middle;
@@ -622,9 +622,8 @@
         .desktop-table tr.row-checked td { background: rgba(76, 175, 80, 0.06); }
         .desktop-table tr.row-checked:hover td { background: rgba(76, 175, 80, 0.13); }
         .review-badge {
-            display: block; font-size: 0.58rem; color: #4CAF50; line-height: 1.3;
-            margin-top: 2px; white-space: nowrap; max-width: 62px;
-            overflow: hidden; text-overflow: ellipsis; text-align: center;
+            display: block; font-size: 0.6rem; color: #4CAF50; line-height: 1.35;
+            margin-top: 2px; text-align: center; word-break: keep-all;
         }
 
         /* ── Checked mobile card ────────────────────────── */
