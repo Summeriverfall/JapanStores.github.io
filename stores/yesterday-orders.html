@@ -700,7 +700,7 @@
 </div>
 
 <!-- ── Store Selector Overlay ──────────────────────────────────────────── -->
-<div class="store-overlay" id="storeOverlay">
+<div class="store-overlay" id="storeOverlay" style="display:none;">
     <div class="store-panel" id="storePanel">
         <div class="store-panel-handle"></div>
         <div class="store-panel-title" id="storePanelTitle">门店を選択</div>
@@ -1218,14 +1218,25 @@
                 location.href = url.toString();
             });
         });
-        document.getElementById('storeOverlay').classList.add('open');
+        var overlay = document.getElementById('storeOverlay');
+        overlay.style.display = 'flex';
+        // Force reflow so the display change takes effect before adding .open (for CSS transition)
+        overlay.offsetHeight;
+        overlay.classList.add('open');
         document.getElementById('storeSelect').classList.add('open');
         document.body.style.overflow = 'hidden';
     }
 
     function closeStorePicker() {
-        document.getElementById('storeOverlay').classList.remove('open');
+        var overlay = document.getElementById('storeOverlay');
+        overlay.classList.remove('open');
         document.getElementById('storeSelect').classList.remove('open');
+        // Hide after transition completes
+        setTimeout(function() {
+            if (!overlay.classList.contains('open')) {
+                overlay.style.display = 'none';
+            }
+        }, 350);
         if (!document.getElementById('dpOverlay').classList.contains('open')) {
             document.body.style.overflow = '';
         }
