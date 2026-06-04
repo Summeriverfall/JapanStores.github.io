@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者ハブ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #C9A961;
+            --gold2: #D4AF37;
+            --cream: #FAF8F3;
+            --card: #FFFFFF;
+            --border: #E8E5DF;
+            --dark: #2C2C2C;
+            --medium: #4A4A4A;
+            --light: #7A7A7A;
+            --shadow: rgba(0,0,0,0.05);
+            --shadow-md: rgba(0,0,0,0.09);
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--cream);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* ── Login overlay ──────────────────────────────── */
+        #loginOverlay {
+            position: fixed; inset: 0;
+            background: var(--cream);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100;
+            padding: 1.5rem;
+        }
+        .login-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 8px 32px var(--shadow-md);
+            text-align: center;
+        }
+        .login-logo { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .login-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .login-sub { font-size: 0.88rem; color: var(--light); margin-bottom: 2rem; }
+        .login-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s;
+        }
+        .login-input:focus { outline: none; border-color: var(--gold); }
+        .login-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--gold);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .login-btn:hover { background: var(--gold2); }
+        .login-error {
+            color: #DC3545;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* ── Hub layout ─────────────────────────────────── */
+        #hubContent { display: none; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+        /* ── Header ─────────────────────────────────────── */
+        .hub-header {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.1rem 1.5rem;
+            margin-bottom: 1.75rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .hub-header-left { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+        .hub-logo { font-size: 1.6rem; flex-shrink: 0; }
+        .hub-title { font-size: 1.15rem; font-weight: 700; }
+        .hub-sub { font-size: 0.8rem; color: var(--light); }
+        .admin-badge {
+            background: var(--gold);
+            color: #fff;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .hub-header-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .lang-btn {
+            padding: 0.3rem 0.65rem;
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--medium);
+            cursor: pointer;
+            transition: all 0.18s;
+            min-height: 30px;
+        }
+        .lang-btn:hover, .lang-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+        .logout-btn {
+            padding: 0.3rem 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.75rem;
+            color: var(--light);
+            cursor: pointer;
+            min-height: 30px;
+            transition: all 0.18s;
+        }
+        .logout-btn:hover { border-color: #DC3545; color: #DC3545; }
+
+        /* ── Sections ────────────────────────────────────── */
+        .hub-section { margin-bottom: 2rem; }
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--light);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── Tool cards ──────────────────────────────────── */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .tool-card {
+            display: flex;
+            flex-direction: column;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem 1.25rem 1rem;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px var(--shadow);
+            cursor: pointer;
+        }
+        .tool-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(201,169,97,0.18);
+        }
+        .tool-icon { font-size: 1.75rem; margin-bottom: 0.6rem; }
+        .tool-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .tool-desc { font-size: 0.78rem; color: var(--light); line-height: 1.5; }
+        .tool-arrow {
+            margin-top: auto;
+            padding-top: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* ── Store list（桌面多列长条 / 手机单列）──────────────── */
+        .stores-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.65rem;
+            align-items: stretch;
+        }
+        .store-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 0.85rem;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px var(--shadow);
+            min-width: 0;
+        }
+        .store-row:hover {
+            border-color: var(--gold);
+            box-shadow: 0 4px 14px rgba(201,169,97,0.15);
+        }
+        .store-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .store-link-hint {
+            font-size: 0.72rem;
+            color: var(--gold);
+            font-weight: 600;
+            flex-shrink: 0;
+            max-width: min(10rem, 38%);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ── Mobile ──────────────────────────────────────── */
+        @media (max-width: 640px) {
+            .container { padding: 0.85rem 0.75rem 3rem; }
+            /* Header: 上下两行 */
+            .hub-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+                padding: 0.9rem 1rem;
+                border-radius: 12px;
+            }
+            .hub-header-left { gap: 0.5rem; }
+            .hub-logo { font-size: 1.3rem; }
+            .hub-title { font-size: 0.95rem; }
+            .hub-sub { display: none; } /* 手机上隐藏副标题 */
+            .admin-badge { font-size: 0.68rem; padding: 0.15rem 0.55rem; }
+            .hub-header-right {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px solid var(--border);
+                padding-top: 0.65rem;
+            }
+            .lang-btn { padding: 0.3rem 0.55rem; font-size: 0.72rem; min-height: 28px; }
+            .logout-btn { padding: 0.3rem 0.65rem; font-size: 0.72rem; min-height: 28px; }
+            /* Tool cards */
+            .tools-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+            .tool-card { padding: 0.9rem 0.9rem 0.75rem; border-radius: 12px; }
+            .tool-icon { font-size: 1.35rem; margin-bottom: 0.35rem; }
+            .tool-name { font-size: 0.82rem; }
+            .tool-desc { display: none; } /* 手机隐藏描述，保持卡片紧凑 */
+            .tool-arrow { padding-top: 0.5rem; font-size: 0.7rem; }
+            /* Store list：整行一条 */
+            .stores-list { grid-template-columns: 1fr; }
+            .store-row { padding: 0.7rem 0.85rem; border-radius: 9px; gap: 0.75rem; }
+            .store-name {
+                font-size: 0.85rem;
+                white-space: normal;
+                word-break: break-word;
+                overflow: visible;
+                text-overflow: unset;
+            }
+            .store-link-hint {
+                font-size: 0.72rem;
+                max-width: none;
+                white-space: normal;
+                text-align: right;
+                line-height: 1.25;
+            }
+            /* Section titles */
+            .hub-section { margin-bottom: 1.5rem; }
+            /* Login box */
+            .login-box { padding: 1.75rem 1.25rem; border-radius: 16px; }
+            .login-logo { font-size: 2rem; }
+            .login-title { font-size: 1.1rem; }
+        }
+        @media (max-width: 380px) {
+            .tools-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+    <script src="stores/stores.config.js"></script>
+</head>
+<body>
+
+<!-- ── Login Overlay ─────────────────────────────────────── -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <div class="login-logo">🔐</div>
+        <div class="login-title" id="loginTitle">管理者ログイン</div>
+        <div class="login-sub" id="loginSub">管理者パスワードを入力してください</div>
+        <form id="loginForm" autocomplete="off">
+            <input type="password" id="adminPwd" class="login-input" placeholder="Password" autocomplete="current-password">
+            <div class="login-error" id="loginError">パスワードが正しくありません</div>
+            <button type="submit" class="login-btn" id="loginBtn">ログイン</button>
+        </form>
+    </div>
+</div>
+
+<!-- ── Hub Content ───────────────────────────────────────── -->
+<div id="hubContent">
+<div class="container">
+
+    <!-- Header -->
+    <div class="hub-header">
+        <div class="hub-header-left">
+            <div class="hub-logo">🏠</div>
+            <div>
+                <div class="hub-title" id="hubTitle">管理者ハブ</div>
+                <div class="hub-sub" id="hubSub">全機能へのアクセス</div>
+            </div>
+            <div class="admin-badge" id="adminBadge">管理者</div>
+        </div>
+        <div class="hub-header-right">
+            <button class="lang-btn active" data-lang="ja">日本語</button>
+            <button class="lang-btn" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+            <button class="logout-btn" id="logoutBtn" onclick="doLogout()">⏻ ログアウト</button>
+        </div>
+    </div>
+
+    <!-- Section 1: 数据与报表 -->
+    <div class="hub-section">
+        <div class="section-title" id="sec1Title">📊 データ・レポート</div>
+        <div class="tools-grid">
+            <a href="dashboard.html" class="tool-card">
+                <div class="tool-icon">🗂</div>
+                <div class="tool-name" data-i="ops-dashboard-name">運営ダッシュボード</div>
+                <div class="tool-desc" data-i="ops-dashboard-desc">全店舗の売上・注文数を一覧表示</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="stores/index.html" class="tool-card">
+                <div class="tool-icon">🏪</div>
+                <div class="tool-name" data-i="store-portal-name">店舗データ門戸</div>
+                <div class="tool-desc" data-i="store-portal-desc">各店舗の月次データ・6ヶ月推移</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="stores/manage.html" class="tool-card">
+                <div class="tool-icon">⚙️</div>
+                <div class="tool-name" data-i="manage-stores-name">店舗管理</div>
+                <div class="tool-desc" data-i="manage-stores-desc">店舗の追加・削除・設定</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="stores/monthly-orders.html" class="tool-card">
+                <div class="tool-icon">📊</div>
+                <div class="tool-name" data-i="monthly-orders-name">月次注文統計</div>
+                <div class="tool-desc" data-i="monthly-orders-desc">月別・店舗別の注文明細と集計</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="stores/monthly-orders-pick.html" class="tool-card">
+                <div class="tool-icon">🔗</div>
+                <div class="tool-name" data-i="monthly-pick-name">月次注文（店舗選択）</div>
+                <div class="tool-desc" data-i="monthly-pick-desc">店舗ごとの月次注文ページを共有</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Section 2: 日常运营 -->
+    <div class="hub-section">
+        <div class="section-title" id="sec2Title">📅 日常オペレーション</div>
+        <div class="tools-grid">
+            <a href="schedule.html" class="tool-card">
+                <div class="tool-icon">👥</div>
+                <div class="tool-name" data-i="schedule-name">カスタマーシフト</div>
+                <div class="tool-desc" data-i="schedule-desc">CS担当者の週次シフト管理</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="calendar-viewer.html" class="tool-card">
+                <div class="tool-icon">📆</div>
+                <div class="tool-name" data-i="calendar-name">Googleカレンダー</div>
+                <div class="tool-desc" data-i="calendar-desc">全店舗の予約・スケジュール確認</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="stores/yesterday-orders-pick.html" class="tool-card" id="allYesterdayCard">
+                <div class="tool-icon">📄</div>
+                <div class="tool-name" data-i="yesterday-name">前日注文一覧</div>
+                <div class="tool-desc" data-i="yesterday-desc">前日の全店舗注文を確認・共有</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+            <a href="booking-confirm.html" class="tool-card">
+                <div class="tool-icon">✉️</div>
+                <div class="tool-name" data-i="booking-confirm-name">予約確認メッセージ</div>
+                <div class="tool-desc" data-i="booking-confirm-desc">予約確認文を即時生成してコピー</div>
+                <div class="tool-arrow" data-i="open">開く →</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Section 3: 门店快速入口 -->
+    <div class="hub-section">
+        <div class="section-title" id="sec3Title">🏪 店舗クイックアクセス</div>
+        <div class="stores-list" id="storesGrid"></div>
+    </div>
+
+</div>
+</div>
+
+<script>
+    // ─── Config ──────────────────────────────────────────────────────────────
+    const ADMIN_PASSWORD = 'admin2026';  // ← 管理员密码，可修改
+
+    // 读取有效门店列表：优先读取 localStorage 中的覆盖数据，否则使用 stores.config.js
+    function getStores() {
+        try {
+            const o = localStorage.getItem('stores_list_override');
+            if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length) return arr; }
+        } catch(e) {}
+        return STORES_LIST;
+    }
+
+    // ─── i18n ─────────────────────────────────────────────────────────────────
+    const i18n = {
+        ja: {
+            loginTitle: '管理者ログイン', loginSub: '管理者パスワードを入力してください',
+            loginBtn: 'ログイン', loginError: 'パスワードが正しくありません',
+            hubTitle: '管理者ハブ', hubSub: '全機能へのアクセス', adminBadge: '管理者',
+            logout: '⏻ ログアウト',
+            sec1: '📊 データ・レポート', sec2: '📅 日常オペレーション',
+            sec3: '🏪 店舗クイックアクセス',
+            'ops-dashboard-name': '運営ダッシュボード', 'ops-dashboard-desc': '全店舗の売上・注文数を一覧表示',
+            'store-portal-name': '店舗データ門戸', 'store-portal-desc': '各店舗の月次データ・6ヶ月推移',
+            'schedule-name': 'CSシフト表', 'schedule-desc': 'CS担当者の週次シフト管理',
+            'calendar-name': 'Googleカレンダー', 'calendar-desc': '全店舗の予約・スケジュール確認',
+            'yesterday-name': '前日注文一覧', 'yesterday-desc': '前日の全店舗注文を確認・共有',
+            'open': '開く →', 'store-open': '中台を開く →',
+            'manage-stores-name': '店舗管理', 'manage-stores-desc': '店舗の追加・削除・設定',
+            'monthly-orders-name': '月次注文統計', 'monthly-orders-desc': '月別・店舗別の注文明細と集計',
+            'monthly-pick-name': '月次注文（店舗選択）', 'monthly-pick-desc': '店舗ごとの月次注文ページを共有',
+            'booking-confirm-name': '予約確認メッセージ', 'booking-confirm-desc': '予約確認文を即時生成してコピー',
+        },
+        zh: {
+            loginTitle: '管理员登录', loginSub: '请输入管理员密码',
+            loginBtn: '登录', loginError: '密码错误，请重试',
+            hubTitle: '管理员中台', hubSub: '所有功能入口', adminBadge: '管理员',
+            logout: '⏻ 退出登录',
+            sec1: '📊 数据与报表', sec2: '📅 日常运营',
+            sec3: '🏪 门店快速入口',
+            'ops-dashboard-name': '运营仪表盘', 'ops-dashboard-desc': '全店销售额、订单数汇总图表',
+            'store-portal-name': '门店数据门户', 'store-portal-desc': '各门店月度数据与6个月趋势',
+            'schedule-name': '客服排班表', 'schedule-desc': '客服人员周排班管理',
+            'calendar-name': 'Google 日历', 'calendar-desc': '查看全店预约与日程安排',
+            'yesterday-name': '前一日订单', 'yesterday-desc': '查看并分享昨日各店订单明细',
+            'open': '打开 →', 'store-open': '进入中台 →',
+            'manage-stores-name': '门店管理', 'manage-stores-desc': '新增或删除门店',
+            'monthly-orders-name': '月度订单统计', 'monthly-orders-desc': '按门店查看每月订单明细与汇总',
+            'monthly-pick-name': '月度订单（门店选择）', 'monthly-pick-desc': '选择门店查看月订单，可直接发给门店',
+            'booking-confirm-name': '预约确认生成器', 'booking-confirm-desc': '快速生成预约确认消息并一键复制',
+        },
+        en: {
+            loginTitle: 'Admin Login', loginSub: 'Enter the admin password to continue',
+            loginBtn: 'Log in', loginError: 'Incorrect password, please try again',
+            hubTitle: 'Admin Hub', hubSub: 'All tools in one place', adminBadge: 'Admin',
+            logout: '⏻ Log out',
+            sec1: '📊 Data & Reports', sec2: '📅 Daily Operations',
+            sec3: '🏪 Store Quick Access',
+            'ops-dashboard-name': 'Operations Dashboard', 'ops-dashboard-desc': 'Sales and order summary for all stores',
+            'store-portal-name': 'Store Data Portal', 'store-portal-desc': 'Monthly data and 6-month trends per store',
+            'schedule-name': 'CS Schedule', 'schedule-desc': 'Weekly shift management for CS team',
+            'calendar-name': 'Google Calendar', 'calendar-desc': 'View all store bookings and schedules',
+            'yesterday-name': "Yesterday's Orders", 'yesterday-desc': 'Review and share previous day order details',
+            'open': 'Open →', 'store-open': 'Open Hub →',
+            'manage-stores-name': 'Store Management', 'manage-stores-desc': 'Add or remove stores',
+            'monthly-orders-name': 'Monthly Orders', 'monthly-orders-desc': 'Per-store monthly order detail and summary',
+            'monthly-pick-name': 'Monthly Orders (Store Picker)', 'monthly-pick-desc': 'Pick a store and share its monthly order page',
+            'booking-confirm-name': 'Booking Confirmation', 'booking-confirm-desc': 'Generate and copy appointment confirmation messages',
+        }
+    };
+
+    let lang = localStorage.getItem('stores-lang') || 'ja';
+    const tx = k => i18n[lang]?.[k] ?? i18n.zh[k] ?? k;
+
+    // ─── Auth ─────────────────────────────────────────────────────────────────
+    function checkAuth() {
+        if (sessionStorage.getItem('stores_admin') === '1') { showHub(); }
+    }
+
+    function showHub() {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('hubContent').style.display = 'block';
+        buildStoreGrid();
+        applyLang();
+    }
+
+    function doLogout() {
+        sessionStorage.removeItem('stores_admin');
+        document.getElementById('hubContent').style.display = 'none';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('adminPwd').value = '';
+    }
+
+    document.getElementById('loginForm').onsubmit = function(e) {
+        e.preventDefault();
+        const pwd = document.getElementById('adminPwd').value;
+        const errEl = document.getElementById('loginError');
+        if (pwd === ADMIN_PASSWORD) {
+            sessionStorage.setItem('stores_admin', '1');
+            errEl.style.display = 'none';
+            showHub();
+        } else {
+            errEl.style.display = 'block';
+            errEl.textContent = tx('loginError');
+            document.getElementById('adminPwd').select();
+        }
+    };
+
+    // ─── Store grid ───────────────────────────────────────────────────────────
+    function buildStoreGrid() {
+        const grid = document.getElementById('storesGrid');
+        grid.innerHTML = getStores().map(name => `
+            <a href="stores/portal.html?store=${encodeURIComponent(name)}" class="store-row">
+                <div class="store-name">${name}</div>
+                <div class="store-link-hint" data-i="store-open">${tx('store-open')}</div>
+            </a>
+        `).join('');
+    }
+
+    // ─── Language ────────────────────────────────────────────────────────────
+    function applyLang() {
+        document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+        // Login overlay
+        document.getElementById('loginTitle').textContent = tx('loginTitle');
+        document.getElementById('loginSub').textContent   = tx('loginSub');
+        document.getElementById('loginBtn').textContent   = tx('loginBtn');
+        document.getElementById('loginError').textContent = tx('loginError');
+
+        // Hub header
+        document.getElementById('hubTitle').textContent   = tx('hubTitle');
+        document.getElementById('hubSub').textContent     = tx('hubSub');
+        document.getElementById('adminBadge').textContent = tx('adminBadge');
+        document.getElementById('logoutBtn').textContent  = tx('logout');
+        document.getElementById('sec1Title').textContent  = tx('sec1');
+        document.getElementById('sec2Title').textContent  = tx('sec2');
+        document.getElementById('sec3Title').textContent  = tx('sec3');
+        document.title = tx('hubTitle');
+
+        // Tool cards
+        document.querySelectorAll('[data-i]').forEach(el => {
+            const v = tx(el.dataset.i);
+            if (v) el.textContent = v;
+        });
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            lang = b.dataset.lang;
+            localStorage.setItem('stores-lang', lang);
+            applyLang();
+        });
+    });
+
+    // ─── Init ────────────────────────────────────────────────────────────────
+    // Apply lang to login screen first
+    document.getElementById('loginTitle').textContent = tx('loginTitle');
+    document.getElementById('loginSub').textContent   = tx('loginSub');
+    document.getElementById('loginBtn').textContent   = tx('loginBtn');
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+
+    checkAuth();
+</script>
+</body>
+</html>

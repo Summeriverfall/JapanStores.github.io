@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月次注文 — 店舗を選択</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #C9A961;
+            --gold-light: rgba(201,169,97,0.12);
+            --cream: #FAF8F3;
+            --card: #FFFFFF;
+            --border: #E8E5DF;
+            --dark: #2C2C2C;
+            --medium: #4A4A4A;
+            --light: #7A7A7A;
+            --shadow: rgba(0,0,0,0.05);
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--cream); color: var(--dark);
+            line-height: 1.6; min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            overscroll-behavior-y: contain;
+        }
+        .container { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+
+        /* ── Header card ───────────────────────────────── */
+        .header {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 1.5rem 1.5rem 1.1rem;
+            margin-bottom: 1.25rem; box-shadow: 0 2px 8px var(--shadow);
+        }
+        .header-icon { font-size: 1.75rem; margin-bottom: 0.35rem; line-height: 1; }
+        .header-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.2rem; }
+        .header-sub   { font-size: 0.85rem; color: var(--light); margin-bottom: 1rem; }
+
+        /* ── Month picker ──────────────────────────────── */
+        .month-row {
+            display: flex; align-items: center; gap: 0;
+            border: 1.5px solid var(--border); border-radius: 10px;
+            overflow: hidden; min-height: 44px; background: var(--cream);
+            margin-bottom: 0.9rem;
+        }
+        .mp-nav {
+            display: flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; background: transparent; border: none;
+            cursor: pointer; color: var(--medium); flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .mp-nav:hover  { background: var(--gold-light); color: var(--gold); }
+        .mp-nav:active { background: var(--gold); color: #fff; }
+        .mp-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+        .mp-label-btn {
+            flex: 1; text-align: center; font-size: 1rem; font-weight: 700;
+            color: var(--dark); background: transparent; border: none;
+            cursor: pointer; min-height: 44px; display: flex; align-items: center;
+            justify-content: center; gap: 0.35rem; transition: color 0.15s; font-family: inherit;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .mp-label-btn:hover { color: var(--gold); }
+        .mp-icon { color: var(--gold); font-size: 0.85rem; font-style: normal; }
+
+        /* ── Language ──────────────────────────────────── */
+        .lang-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .lang-btn {
+            padding: 0.3rem 0.75rem; background: var(--cream);
+            border: 1px solid var(--border); border-radius: 7px;
+            font-size: 0.78rem; font-weight: 600; color: var(--medium);
+            cursor: pointer; transition: all 0.18s; min-height: 34px;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .lang-btn:hover, .lang-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+        /* ── Section label ─────────────────────────────── */
+        .section-label {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--light);
+            margin-bottom: 0.55rem; padding-left: 0.1rem;
+        }
+
+        /* ── Store list ────────────────────────────────── */
+        .stores-list { display: flex; flex-direction: column; gap: 0.6rem; }
+        .store-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 0.9rem 1rem;
+            text-decoration: none; color: var(--dark);
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+            box-shadow: 0 2px 6px var(--shadow); min-height: 54px;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .store-row:hover  { border-color: var(--gold); box-shadow: 0 4px 14px rgba(201,169,97,0.18); transform: translateY(-1px); }
+        .store-row:active { transform: translateY(0); opacity: 0.82; }
+        .store-emoji { font-size: 1.15rem; flex-shrink: 0; }
+        .store-name { flex: 1; min-width: 0; font-size: 0.98rem; font-weight: 600; word-break: break-word; }
+        .store-hint { font-size: 0.78rem; font-weight: 600; color: var(--gold); flex-shrink: 0; white-space: nowrap; }
+
+        /* ── Year-month picker overlay ─────────────────── */
+        .ymp-overlay {
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0); display: flex;
+            align-items: flex-end; justify-content: center;
+            pointer-events: none; transition: background 0.25s;
+        }
+        .ymp-overlay.open { background: rgba(0,0,0,0.42); pointer-events: all; }
+        .ymp-panel {
+            background: var(--card); border-radius: 24px 24px 0 0;
+            padding: 0 1.35rem 2.5rem; width: 100%; max-width: 500px;
+            transform: translateY(110%);
+            transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            will-change: transform;
+        }
+        .ymp-overlay.open .ymp-panel { transform: translateY(0); }
+        .ymp-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0.9rem auto 1.2rem; }
+        .ymp-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.1rem; }
+        .ymp-year-label { flex: 1; text-align: center; font-size: 1rem; font-weight: 700; color: var(--dark); }
+        .ymp-nav {
+            display: flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; border: 1.5px solid var(--border);
+            border-radius: 10px; background: var(--cream); cursor: pointer;
+            color: var(--medium); transition: all 0.15s;
+            touch-action: manipulation; flex-shrink: 0;
+        }
+        .ymp-nav:hover  { border-color: var(--gold); color: var(--gold); background: #fff; }
+        .ymp-nav:active { background: var(--gold); color: #fff; border-color: var(--gold); }
+        .ymp-months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+        .ymp-month {
+            display: flex; align-items: center; justify-content: center;
+            height: 44px; border-radius: 10px; font-size: 0.9rem; font-weight: 500;
+            cursor: pointer; color: var(--dark);
+            transition: background 0.12s, color 0.12s;
+            touch-action: manipulation; user-select: none;
+        }
+        .ymp-month:hover { background: var(--gold-light); }
+        .ymp-month.ymp-current  { background: var(--gold-light); color: var(--gold); font-weight: 700; }
+        .ymp-month.ymp-selected { background: var(--gold) !important; color: #fff !important; font-weight: 700; }
+        .ymp-month.ymp-future   { opacity: 0.3; pointer-events: none; }
+
+        @media (min-width: 641px) {
+            .ymp-overlay { align-items: center; }
+            .ymp-panel {
+                border-radius: 20px; max-width: 380px; padding: 0 1.5rem 1.75rem;
+                transform: scale(0.93) translateY(12px); opacity: 0;
+                transition: transform 0.22s cubic-bezier(0.34,1.4,0.64,1), opacity 0.18s;
+            }
+            .ymp-overlay.open .ymp-panel { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        @media (max-width: 640px) {
+            .container { padding: 0.9rem 0.75rem 2.5rem; }
+            .header { padding: 1rem 1rem 0.9rem; border-radius: 12px; }
+            .header-icon  { font-size: 1.35rem; margin-bottom: 0.25rem; }
+            .header-title { font-size: 1.05rem; }
+            .header-sub   { font-size: 0.8rem; margin-bottom: 0.75rem; }
+            .store-row { padding: 0.75rem 0.85rem; border-radius: 9px; min-height: 48px; }
+            .store-name { font-size: 0.92rem; }
+            .store-hint { font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header card -->
+    <div class="header">
+        <div class="header-icon">📊</div>
+        <div class="header-title" id="headerTitle">月次注文 — 店舗を選択</div>
+        <div class="header-sub"   id="headerSub">店舗を選ぶと、その月の注文明細ページが開きます</div>
+
+        <!-- Month picker -->
+        <div class="month-row">
+            <button class="mp-nav" id="mpPrev" aria-label="prev month">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="mp-divider"></div>
+            <button class="mp-label-btn" id="mpLabelBtn" aria-label="select month">
+                <i class="mp-icon">📅</i>
+                <span id="mpLabelText">—</span>
+            </button>
+            <div class="mp-divider"></div>
+            <button class="mp-nav" id="mpNext" aria-label="next month">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+
+        <!-- Language switcher -->
+        <div class="lang-group">
+            <button class="lang-btn active" data-lang="ja">日本語</button>
+            <button class="lang-btn" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="en">English</button>
+        </div>
+    </div>
+
+    <div class="section-label" id="sectionLabel">店舗を選択</div>
+    <div class="stores-list" id="storesList"></div>
+</div>
+
+<!-- Year-Month Picker Overlay -->
+<div class="ymp-overlay" id="ympOverlay">
+    <div class="ymp-panel">
+        <div class="ymp-handle"></div>
+        <div class="ymp-header">
+            <button class="ymp-nav" id="ympPrevYear" aria-label="prev year">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <span class="ymp-year-label" id="ympYearLabel"></span>
+            <button class="ymp-nav" id="ympNextYear" aria-label="next year">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+        <div class="ymp-months" id="ympMonths"></div>
+    </div>
+</div>
+
+<script src="stores.config.js"></script>
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const now = new Date();
+let selYear  = now.getFullYear();
+let selMonth = now.getMonth(); // 0-indexed
+let lang     = localStorage.getItem('stores-lang') || 'ja';
+let ympYear  = selYear;
+
+// ─── i18n ─────────────────────────────────────────────────────────────────────
+const i18n = {
+    ja: {
+        title:   '月次注文 — 店舗を選択',
+        sub:     '店舗を選ぶと、その月の注文明細ページが開きます',
+        section: '店舗リスト',
+        hint:    '月次明細を開く →',
+        month:   (y, m) => `${y}年${m+1}月`,
+        docTitle:'月次注文 — 店舗を選択',
+    },
+    zh: {
+        title:   '月度订单 — 选择门店',
+        sub:     '选择门店后，将打开该月的订单明细页，可直接分享给门店',
+        section: '门店列表',
+        hint:    '查看月度明细 →',
+        month:   (y, m) => `${y}年${m+1}月`,
+        docTitle:'月度订单 — 选择门店',
+    },
+    en: {
+        title:   'Monthly Orders — Choose Store',
+        sub:     'Select a store to open its monthly order detail page',
+        section: 'Store List',
+        hint:    'View Monthly Orders →',
+        month:   (y, m) => `${y} / ${String(m+1).padStart(2,'0')}`,
+        docTitle:'Monthly Orders — Choose Store',
+    },
+};
+const tx   = k => i18n[lang]?.[k] ?? i18n.ja[k] ?? k;
+const txFn = (k, ...args) => { const v = i18n[lang]?.[k] ?? i18n.ja[k]; return typeof v === 'function' ? v(...args) : v; };
+
+// ─── Stores ───────────────────────────────────────────────────────────────────
+function getStores() {
+    try {
+        const o = localStorage.getItem('stores_list_override');
+        if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length) return arr; }
+    } catch(e) {}
+    return typeof STORES_LIST !== 'undefined' ? STORES_LIST : [];
+}
+
+function buildList() {
+    const hint = tx('hint');
+    document.getElementById('storesList').innerHTML = getStores().map(name =>
+        `<a class="store-row" href="monthly-orders.html?store=${encodeURIComponent(name)}&year=${selYear}&month=${selMonth + 1}">
+            <div class="store-emoji">🏪</div>
+            <div class="store-name">${escHtml(name)}</div>
+            <div class="store-hint">${hint}</div>
+        </a>`
+    ).join('');
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Apply language ───────────────────────────────────────────────────────────
+function applyLang() {
+    document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    document.getElementById('headerTitle').textContent  = tx('title');
+    document.getElementById('headerSub').textContent    = tx('sub');
+    document.getElementById('sectionLabel').textContent = tx('section');
+    document.getElementById('mpLabelText').textContent  = txFn('month', selYear, selMonth);
+    document.title = tx('docTitle');
+    buildList();
+}
+
+document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => {
+        lang = b.dataset.lang;
+        localStorage.setItem('stores-lang', lang);
+        applyLang();
+    });
+});
+
+// ─── Month picker ─────────────────────────────────────────────────────────────
+function updateMonthLabel() {
+    document.getElementById('mpLabelText').textContent = txFn('month', selYear, selMonth);
+    buildList();
+}
+
+document.getElementById('mpPrev').addEventListener('click', () => {
+    selMonth--;
+    if (selMonth < 0) { selMonth = 11; selYear--; }
+    updateMonthLabel();
+});
+document.getElementById('mpNext').addEventListener('click', () => {
+    const ny = selMonth === 11 ? selYear + 1 : selYear;
+    const nm = selMonth === 11 ? 0 : selMonth + 1;
+    if (ny > now.getFullYear() || (ny === now.getFullYear() && nm > now.getMonth())) return;
+    selYear = ny; selMonth = nm;
+    updateMonthLabel();
+});
+
+// ─── Year-Month overlay ───────────────────────────────────────────────────────
+function openYMP() {
+    ympYear = selYear;
+    renderYMP();
+    document.getElementById('ympOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeYMP() {
+    document.getElementById('ympOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function renderYMP() {
+    document.getElementById('ympYearLabel').textContent = ympYear + (lang === 'en' ? '' : '年');
+    const names = {
+        ja: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        zh: ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],
+        en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    }[lang] || ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+    const container = document.getElementById('ympMonths');
+    container.innerHTML = '';
+    names.forEach((name, mi) => {
+        const isSel = ympYear === selYear && mi === selMonth;
+        const isCur = ympYear === now.getFullYear() && mi === now.getMonth();
+        const isFut = ympYear > now.getFullYear() || (ympYear === now.getFullYear() && mi > now.getMonth());
+        const el = document.createElement('div');
+        el.className = ['ymp-month',
+            isSel ? 'ymp-selected' : '',
+            isCur && !isSel ? 'ymp-current' : '',
+            isFut ? 'ymp-future' : '',
+        ].filter(Boolean).join(' ');
+        el.textContent = name;
+        if (!isFut) {
+            el.addEventListener('click', () => {
+                selYear = ympYear; selMonth = mi;
+                closeYMP();
+                updateMonthLabel();
+            });
+        }
+        container.appendChild(el);
+    });
+}
+
+document.getElementById('mpLabelBtn').addEventListener('click', openYMP);
+document.getElementById('ympOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('ympOverlay')) closeYMP();
+});
+document.getElementById('ympPrevYear').addEventListener('click', () => { ympYear--; renderYMP(); });
+document.getElementById('ympNextYear').addEventListener('click', () => {
+    if (ympYear < now.getFullYear()) { ympYear++; renderYMP(); }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+applyLang();
+</script>
+</body>
+</html>

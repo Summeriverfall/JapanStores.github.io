@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前日注文明細</title>
+
+    <!-- ── Open Graph / WeChat 分享卡片 ──────────────────────────────────── -->
+    <meta property="og:type"         content="website">
+    <meta property="og:site_name"    content="門店管理">
+    <meta property="og:title"        content="订单明细">
+    <meta property="og:description"  content="门店昨日订单数据汇总">
+    <meta property="og:image"        content="">
+    <meta property="og:image:width"  content="300">
+    <meta property="og:image:height" content="300">
+    <meta property="og:url"          content="">
+    <!-- 根据 URL 参数动态更新 OG 标签（微信内置浏览器分享时生效） -->
+    <script>
+    (function () {
+        try {
+            var p     = new URLSearchParams(location.search);
+            var store = decodeURIComponent((p.get('store') || '').trim());
+            var dp    = p.get('date') || '';
+            var d;
+            if (dp && /^\d{4}-\d{2}-\d{2}$/.test(dp)) {
+                var pts = dp.split('-');
+                d = new Date(+pts[0], +pts[1] - 1, +pts[2]);
+            } else {
+                d = new Date(); d.setDate(d.getDate() - 1);
+            }
+            var dateLabel = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+            var title = store ? store + ' — 订单明细' : '订单明细';
+            var desc  = store
+                ? store + ' ' + dateLabel + ' 的订单数据'
+                : '门店昨日订单数据汇总';
+
+            /* 构造封面图绝对 URL（与页面同目录的 share-thumb.svg） */
+            var base   = location.origin + location.pathname.replace(/[^\/]+$/, '');
+            var imgUrl = base + 'share-thumb.svg';
+
+            var setMeta = function (prop, val) {
+                var el = document.querySelector('meta[property="' + prop + '"]');
+                if (el) el.setAttribute('content', val);
+            };
+            setMeta('og:title',       title);
+            setMeta('og:description', desc);
+            setMeta('og:image',       imgUrl);
+            setMeta('og:url',         location.href);
+            document.title = title;
+        } catch (e) {}
+    })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-gold: #C9A961;
+            --bg-cream: #FAF8F3;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #7A7A7A;
+            --error: #DC3545;
+            --shadow: rgba(0,0,0,0.05);
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+            /* 消除 iOS 橡皮筋滚动的多余背景色 */
+            overscroll-behavior-y: contain;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+        /* ── Header ─────────────────────────────────────── */
+        .page-header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.1rem 1.25rem 1rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        /* 第一行：门店徽章 + 操作按钮 */
+        .header-row1 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.55rem;
+        }
+        .store-badge {
+            background: var(--primary-gold);
+            color: #fff;
+            padding: 0.22rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            max-width: 55%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-shrink: 1;
+        }
+        .header-btns {
+            display: flex;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.35rem 0.8rem;
+            border: none;
+            border-radius: 7px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 40px;
+            white-space: nowrap;
+            transition: opacity 0.18s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .btn-print { background: var(--text-dark); color: #fff; }
+        .btn-share { background: var(--primary-gold); color: #fff; display: none; }
+        .btn-action:active { opacity: 0.7; }
+        .btn-action:hover { opacity: 0.82; }
+        .can-share .btn-share { display: inline-flex; }
+        .can-share .btn-print { display: none; }
+
+        /* 第二行：标题 + 日期 */
+        .page-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 0.15rem;
+        }
+        .page-date { color: var(--text-medium); font-size: 0.85rem; margin-bottom: 0.75rem; }
+
+        /* 第三行：语言切换 */
+        .lang-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .lang-btn {
+            padding: 0.3rem 0.8rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.18s;
+            min-height: 36px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .lang-btn:active { opacity: 0.75; }
+        .lang-btn:hover, .lang-btn.active { background: var(--primary-gold); color: #fff; border-color: var(--primary-gold); }
+
+        /* ── Date trigger button ────────────────────────── */
+        .date-picker-row { margin-bottom: 0.65rem; }
+        .date-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            width: 100%;
+            background: var(--bg-cream);
+            border: 1.5px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.55rem 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            text-align: left;
+            min-height: 44px;
+            transition: border-color 0.18s, background 0.15s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .date-trigger:hover { border-color: var(--primary-gold); background: #fff; }
+        .date-trigger:active { background: rgba(201,169,97,0.06); }
+        .date-trigger-icon { color: var(--primary-gold); flex-shrink: 0; line-height: 1; }
+        .date-trigger-text { flex: 1; font-weight: 600; }
+        .date-trigger-chevron { color: var(--text-light); flex-shrink: 0; line-height: 1; transition: transform 0.2s; }
+        .date-trigger.open .date-trigger-chevron { transform: rotate(180deg); }
+
+        /* ── Calendar overlay ───────────────────────────── */
+        .dp-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            pointer-events: none;
+            transition: background 0.25s;
+        }
+        .dp-overlay.open {
+            background: rgba(0,0,0,0.42);
+            pointer-events: all;
+        }
+        .dp-panel {
+            background: var(--card-bg);
+            border-radius: 24px 24px 0 0;
+            padding: 0 1.35rem 2.5rem;
+            width: 100%;
+            max-width: 500px;
+            transform: translateY(110%);
+            transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+            will-change: transform;
+        }
+        .dp-overlay.open .dp-panel { transform: translateY(0); }
+
+        .dp-handle {
+            width: 40px; height: 4px;
+            background: var(--card-border);
+            border-radius: 2px;
+            margin: 0.9rem auto 1.2rem;
+        }
+        .dp-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.1rem;
+        }
+        .dp-month-label {
+            flex: 1;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.01em;
+        }
+        .dp-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px; height: 38px;
+            border: 1.5px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--bg-cream);
+            cursor: pointer;
+            color: var(--text-medium);
+            transition: all 0.15s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
+        }
+        .dp-nav:hover { border-color: var(--primary-gold); color: var(--primary-gold); background: #fff; }
+        .dp-nav:active { background: var(--primary-gold); color: #fff; border-color: var(--primary-gold); }
+
+        .dp-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            margin-bottom: 0.3rem;
+        }
+        .dp-wd {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-light);
+            padding: 0.25rem 0 0.4rem;
+            letter-spacing: 0.03em;
+        }
+        .dp-wd-sat { color: #4A7FD4; }
+        .dp-wd-sun { color: #D44A4A; }
+
+        .dp-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .dp-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-dark);
+            position: relative;
+            transition: background 0.12s, color 0.12s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .dp-day:not(.dp-empty):hover { background: rgba(201,169,97,0.18); }
+        .dp-day.other-month { color: var(--text-light); opacity: 0.35; }
+        .dp-day.dp-sat { color: #4A7FD4; }
+        .dp-day.dp-sun { color: #D44A4A; }
+        .dp-day.dp-today::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px; height: 4px;
+            border-radius: 50%;
+            background: var(--primary-gold);
+        }
+        .dp-day.dp-selected {
+            background: var(--primary-gold) !important;
+            color: #fff !important;
+            font-weight: 700;
+        }
+        .dp-day.dp-selected.dp-today::after { background: #fff; }
+        .dp-empty { pointer-events: none; }
+
+        @media (min-width: 641px) {
+            .dp-overlay { align-items: center; }
+            .dp-panel {
+                border-radius: 20px;
+                max-width: 340px;
+                padding: 0 1.25rem 1.75rem;
+                transform: scale(0.93) translateY(12px);
+                opacity: 0;
+                transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.18s;
+            }
+            .dp-overlay.open .dp-panel { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* ── Stats ──────────────────────────────────────── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 1.25rem;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem 1rem 0.9rem;
+            box-shadow: 0 2px 6px var(--shadow);
+            text-align: center;
+        }
+        .stat-label { font-size: 0.72rem; color: var(--text-light); letter-spacing: 0.03em; margin-bottom: 0.35rem; }
+        .stat-value { font-size: 1.35rem; font-weight: 700; }
+
+        /* ── Table card ─────────────────────────────────── */
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.25rem 1.25rem 0.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        .table-card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .record-count { font-size: 0.8rem; color: var(--text-light); font-weight: 400; }
+
+        /* Desktop table */
+        .desktop-table { width: 100%; border-collapse: collapse; }
+        .desktop-table th {
+            background: var(--bg-cream);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+            white-space: nowrap;
+        }
+        .desktop-table td {
+            padding: 0.65rem 0.75rem;
+            font-size: 0.88rem;
+            border-bottom: 1px solid #F2EFE9;
+            vertical-align: middle;
+        }
+        .desktop-table tr:last-child td { border-bottom: none; }
+        .desktop-table tr:hover td { background: rgba(201,169,97,0.04); }
+        .col-num { color: var(--text-light); font-size: 0.78rem; text-align: center; width: 2.2rem; }
+
+        /* ── Mobile card list ───────────────────────────── */
+        .mobile-cards { display: none; }
+        .order-card {
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 0.85rem;
+        }
+        .order-card-head {
+            background: var(--bg-cream);
+            padding: 0.65rem 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .order-card-num {
+            background: var(--primary-gold);
+            color: #fff;
+            border-radius: 50%;
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+        }
+        .order-card-head-title { font-weight: 600; font-size: 0.92rem; flex: 1; line-height: 1.35; }
+        .order-card-time {
+            font-size: 0.82rem;
+            color: var(--text-medium);
+            white-space: nowrap;
+            background: rgba(201,169,97,0.12);
+            padding: 0.15rem 0.45rem;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        .order-card-body { padding: 0; }
+        .order-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.55rem 0.9rem;
+            border-bottom: 1px solid #F2EFE9;
+            font-size: 0.88rem;
+            min-height: 40px;
+        }
+        .order-field:last-child { border-bottom: none; }
+        .order-field-label { color: var(--text-light); font-size: 0.76rem; flex-shrink: 0; }
+        .order-field-value { text-align: right; word-break: break-word; font-size: 0.88rem; }
+        .order-field.highlight .order-field-value {
+            font-weight: 700;
+            color: var(--primary-gold);
+            font-size: 0.95rem;
+        }
+
+        /* ── Responsive breakpoints ─────────────────────── */
+        @media (max-width: 640px) {
+            .container { padding: 0.75rem 0.65rem 4rem; }
+            .page-header { padding: 0.85rem 0.9rem 0.8rem; border-radius: 12px; }
+            .page-title { font-size: 1.05rem; }
+            .page-date { font-size: 0.82rem; margin-bottom: 0.6rem; }
+
+            /* 触控目标放大 */
+            .btn-action { min-height: 44px; padding: 0.45rem 0.9rem; font-size: 0.82rem; }
+            .lang-btn { min-height: 40px; padding: 0.38rem 0.85rem; font-size: 0.8rem; }
+            .lang-group { gap: 0.45rem; }
+            .date-trigger { font-size: 0.9rem; }
+
+            /* 统计卡片 */
+            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+            .stat-card { padding: 0.7rem 0.4rem; border-radius: 10px; }
+            .stat-label { font-size: 0.62rem; margin-bottom: 0.25rem; }
+            .stat-value { font-size: 1.05rem; }
+
+            /* 订单卡片 */
+            .table-card { padding: 0.9rem 0.75rem 0.5rem; border-radius: 12px; }
+            .table-card-title { font-size: 0.9rem; margin-bottom: 0.75rem; }
+            .order-card { margin-bottom: 0.75rem; border-radius: 10px; }
+
+            /* 手机显示卡片，隐藏表格 */
+            .desktop-table { display: none; }
+            .mobile-cards { display: block; }
+        }
+        @media (max-width: 400px) {
+            .container { padding: 0.65rem 0.5rem 4rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stat-card:last-child { grid-column: 1 / -1; }
+            .store-badge { font-size: 0.76rem; max-width: 50%; }
+        }
+
+        /* ── State ──────────────────────────────────────── */
+        #stateMsg { margin-bottom: 1.25rem; }
+        .alert { padding: 0.9rem 1.1rem; border-radius: 10px; font-size: 0.88rem; line-height: 1.7; }
+        .alert-warn { background: #FFF8E7; border: 1px solid #F0C040; color: #7A5A00; }
+        .alert-error { background: rgba(220,53,69,0.08); border: 1px solid var(--error); color: var(--error); }
+        .no-data, .loading { text-align: center; padding: 2.5rem 1rem; color: var(--text-light); font-size: 0.95rem; }
+
+        /* ── Footer ─────────────────────────────────────── */
+        .page-footer { text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.75rem; }
+
+        /* ── Print ──────────────────────────────────────── */
+        @media print {
+            body { background: #fff; }
+            .btn-action, .lang-btn, .date-picker-row { display: none !important; }
+            .page-header, .table-card, .stat-card, .order-card { box-shadow: none; border-color: #ccc; }
+            .container { padding: 0; }
+            .mobile-cards { display: none !important; }
+            .desktop-table { display: table !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="page-header">
+        <!-- 行一：门店徽章 + 打印/分享 -->
+        <div class="header-row1">
+            <div class="store-badge" id="storeBadge">—</div>
+            <div class="header-btns">
+                <button class="btn-action btn-print" onclick="window.print()">🖨 印刷</button>
+                <button class="btn-action btn-share" id="shareBtn">↗ <span id="shareLabel">共有</span></button>
+            </div>
+        </div>
+        <!-- 行二：标题 + 日期 -->
+        <div class="page-title" id="pageTitle">前日注文明細</div>
+        <div class="page-date" id="pageDate"></div>
+        <!-- 日期选择器触发按钮 -->
+        <div class="date-picker-row">
+            <button class="date-trigger" id="dateTrigger">
+                <svg class="date-trigger-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span class="date-trigger-text" id="dateTriggerText">—</span>
+                <svg class="date-trigger-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+        </div>
+        <!-- 行三：语言切换 -->
+        <div class="lang-group">
+            <button class="lang-btn active" data-lang="ja">日本語</button>
+            <button class="lang-btn" data-lang="zh">中文</button>
+            <button class="lang-btn" data-lang="en">English</button>
+        </div>
+    </div>
+
+    <!-- State messages -->
+    <div id="stateMsg"></div>
+
+    <!-- Summary stats -->
+    <div class="stats-grid" id="statsGrid" style="display:none;"></div>
+
+    <!-- Table / Cards -->
+    <div class="table-card">
+        <div class="table-card-title">
+            <span id="tableTitle">📄 注文一覧</span>
+            <span class="record-count" id="recordCount"></span>
+        </div>
+        <!-- Desktop table -->
+        <div id="tableDesktop"><div class="loading">⏳ データを読み込み中...</div></div>
+        <!-- Mobile card list -->
+        <div class="mobile-cards" id="tableMobile"></div>
+    </div>
+
+    <div class="page-footer" id="pageFooter"></div>
+</div>
+
+<!-- ── Custom Calendar Overlay ─────────────────────────────────────────── -->
+<div class="dp-overlay" id="dpOverlay">
+    <div class="dp-panel" id="dpPanel">
+        <div class="dp-handle"></div>
+        <div class="dp-header">
+            <button class="dp-nav" id="dpPrev" aria-label="prev">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <span class="dp-month-label" id="dpMonthLabel"></span>
+            <button class="dp-nav" id="dpNext" aria-label="next">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+        <div class="dp-weekdays" id="dpWeekdays"></div>
+        <div class="dp-days" id="dpDays"></div>
+    </div>
+</div>
+
+<script>
+    // ─── Config ──────────────────────────────────────────────────────────────
+    const ORDERS_SHEET_ID = '1B_GTNGUHYN8xbXYAWjv_FosTAbVghyCbmX5N9fvgrEc';
+    const ORDERS_RAW_GID  = '0';
+    const SKIP_COLS  = new Set(['event_id','calendar_id','store_id','store_name',
+                                'month_key','tax_rate','commission_rate',
+                                'last_updated','event_last_updated',
+                                'start_time','description']);
+    const MONEY_COLS = new Set(['project_amount','settle_amount']);
+    const TIME_COLS  = new Set(['start_time','end_time']);
+    const COL_LABELS = {
+        'end_time':        { ja: '時刻',     zh: '时间',     en: 'Time' },
+        'title':           { ja: 'サービス', zh: '项目',     en: 'Service' },
+        'guest_name':      { ja: '氏名',     zh: '客人姓名', en: 'Guest Name' },
+        'guest_contact':   { ja: '連絡先',   zh: '联系方式', en: 'Contact' },
+        'people':          { ja: '人数',     zh: '人数',     en: 'Guests' },
+        'project_amount':  { ja: '施術金額', zh: '项目金额', en: 'Amount' },
+        'settle_amount':   { ja: '決済金額', zh: '结算金额', en: 'Settlement' },
+    };
+
+    // ─── URL params ───────────────────────────────────────────────────────────
+    const params     = new URLSearchParams(location.search);
+    const storeName  = decodeURIComponent((params.get('store') || '').trim());
+    const dateParam  = params.get('date') || '';
+    let targetDate = (() => {
+        if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+            const [y,m,d] = dateParam.split('-').map(Number);
+            return new Date(y, m-1, d);
+        }
+        const d = new Date(); d.setDate(d.getDate() - 1); return d;
+    })();
+
+    // ─── i18n ─────────────────────────────────────────────────────────────────
+    const i18n = {
+        ja: {
+            title: '注文明細',
+            date: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
+            stats_count: '注文件数', stats_project: '施術金額合計', stats_settle: '決済金額合計',
+            table_title: '📄 注文一覧',
+            no_data: 'この日の注文データがありません',
+            no_store: '店舗が指定されていません',
+            footer: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 生成`,
+            access_err: 'データを読み込めません。Google Sheetを「リンクを知っている全員」→「閲覧者」に設定してください',
+            row: '件', share: '共有',
+            date_picker_label: '日付選択',
+            date_apply: '表示',
+        },
+        zh: {
+            title: '订单明细',
+            date: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
+            stats_count: '订单数', stats_project: '项目金额合计', stats_settle: '结算金额合计',
+            table_title: '📄 订单列表',
+            no_data: '该日暂无订单数据',
+            no_store: '未指定门店，请在 URL 中添加 ?store=门店名',
+            footer: d => `生成于 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
+            access_err: '无法读取数据，请确认 Google Sheet 已设为「任何人可查看」',
+            row: '条', share: '分享',
+            date_picker_label: '选择日期',
+            date_apply: '查询',
+        },
+        en: {
+            title: 'Order Details',
+            date: d => `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
+            stats_count: 'Orders', stats_project: 'Project Total', stats_settle: 'Settlement',
+            table_title: '📄 Order List',
+            no_data: 'No orders found for this date',
+            no_store: 'No store specified. Add ?store=StoreName to the URL',
+            footer: d => `Generated ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
+            access_err: 'Cannot load data. Share the Google Sheet as "Anyone with the link – Viewer"',
+            row: ' orders', share: 'Share',
+            date_picker_label: 'Select Date',
+            date_apply: 'Apply',
+        }
+    };
+    let lang = localStorage.getItem('stores-lang') || 'ja';
+    const tx = k => i18n[lang]?.[k] ?? i18n.zh[k] ?? k;
+
+    function applyLang() {
+        document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        document.getElementById('pageTitle').textContent = tx('title');
+        document.getElementById('pageDate').textContent = tx('date')(targetDate);
+        document.getElementById('tableTitle').textContent = tx('table_title');
+        document.getElementById('pageFooter').textContent = tx('footer')(new Date());
+        document.title = storeName ? `${storeName} — ${tx('title')}` : tx('title');
+        const shareLabel = document.getElementById('shareLabel');
+        if (shareLabel) shareLabel.textContent = tx('share');
+        document.getElementById('dateTriggerText').textContent = tx('date')(targetDate);
+        // 如果日历已打开则刷新星期行
+        if (document.getElementById('dpOverlay').classList.contains('open')) renderDpWeekdays();
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            lang = b.dataset.lang;
+            localStorage.setItem('stores-lang', lang);
+            applyLang();
+            if (window._loadedData) renderAll(window._loadedData);
+        });
+    });
+
+    // ─── Share button ────────────────────────────────────────────────────────
+    if (navigator.share) {
+        document.body.classList.add('can-share');
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            navigator.share({ title: document.title, url: location.href }).catch(() => {});
+        });
+    }
+    // Print fallback label on desktop (no share API)
+    document.getElementById('shareLabel').textContent = tx('share');
+
+    // ─── Custom calendar picker ───────────────────────────────────────────────
+    function toDateStr(d) {
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    const DP_WEEKDAYS = {
+        ja: ['月','火','水','木','金','土','日'],
+        zh: ['一','二','三','四','五','六','日'],
+        en: ['Mo','Tu','We','Th','Fr','Sa','Su'],
+    };
+
+    let dpYear = targetDate.getFullYear();
+    let dpMonth = targetDate.getMonth();
+
+    function openDatePicker() {
+        dpYear  = targetDate.getFullYear();
+        dpMonth = targetDate.getMonth();
+        renderDpWeekdays();
+        renderDpDays();
+        document.getElementById('dpOverlay').classList.add('open');
+        document.getElementById('dateTrigger').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDatePicker() {
+        document.getElementById('dpOverlay').classList.remove('open');
+        document.getElementById('dateTrigger').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function renderDpWeekdays() {
+        const wds = DP_WEEKDAYS[lang] || DP_WEEKDAYS.ja;
+        document.getElementById('dpWeekdays').innerHTML = wds.map((w, i) => {
+            const cls = i === 5 ? ' dp-wd-sat' : i === 6 ? ' dp-wd-sun' : '';
+            return `<div class="dp-wd${cls}">${w}</div>`;
+        }).join('');
+    }
+
+    function renderDpDays() {
+        const firstDay = new Date(dpYear, dpMonth, 1);
+        const lastDay  = new Date(dpYear, dpMonth + 1, 0);
+        const today    = new Date();
+
+        // 月份标题（英文用 toLocaleDateString，中日文手动拼）
+        document.getElementById('dpMonthLabel').textContent = lang === 'en'
+            ? firstDay.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
+            : `${dpYear}年${dpMonth + 1}月`;
+
+        // 周一为起始，计算偏移
+        const startOffset = (firstDay.getDay() + 6) % 7;
+
+        const daysEl = document.getElementById('dpDays');
+        daysEl.innerHTML = '';
+
+        function buildDay(date, otherMonth) {
+            const isToday    = date.toDateString() === today.toDateString();
+            const isSelected = date.toDateString() === targetDate.toDateString();
+            const col = (date.getDay() + 6) % 7; // 0=Mon…5=Sat,6=Sun
+
+            const el = document.createElement('div');
+            el.className = ['dp-day',
+                otherMonth ? 'other-month' : '',
+                isToday    ? 'dp-today'    : '',
+                isSelected ? 'dp-selected' : '',
+                col === 5  ? 'dp-sat'      : '',
+                col === 6  ? 'dp-sun'      : '',
+            ].filter(Boolean).join(' ');
+            el.textContent = date.getDate();
+            el.addEventListener('click', () => {
+                targetDate = new Date(date);
+                closeDatePicker();
+                document.getElementById('pageDate').textContent      = tx('date')(targetDate);
+                document.getElementById('dateTriggerText').textContent = tx('date')(targetDate);
+                document.title = storeName ? `${storeName} — ${tx('title')}` : tx('title');
+                const url = new URL(location.href);
+                url.searchParams.set('date', toDateStr(targetDate));
+                history.replaceState(null, '', url.toString());
+                if (window._loadedData) renderAll(window._loadedData);
+            });
+            return el;
+        }
+
+        // 上月补位
+        for (let i = 0; i < startOffset; i++) {
+            const d = new Date(dpYear, dpMonth, i - startOffset + 1);
+            daysEl.appendChild(buildDay(d, true));
+        }
+        // 当月
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+            daysEl.appendChild(buildDay(new Date(dpYear, dpMonth, d), false));
+        }
+        // 下月补位
+        const total = startOffset + lastDay.getDate();
+        const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+        for (let i = 1; i <= rem; i++) {
+            daysEl.appendChild(buildDay(new Date(dpYear, dpMonth + 1, i), true));
+        }
+    }
+
+    document.getElementById('dateTrigger').addEventListener('click', openDatePicker);
+    document.getElementById('dpOverlay').addEventListener('click', e => {
+        if (e.target === document.getElementById('dpOverlay')) closeDatePicker();
+    });
+    document.getElementById('dpPrev').addEventListener('click', () => {
+        dpMonth--; if (dpMonth < 0)  { dpMonth = 11; dpYear--; } renderDpDays();
+    });
+    document.getElementById('dpNext').addEventListener('click', () => {
+        dpMonth++; if (dpMonth > 11) { dpMonth = 0;  dpYear++; } renderDpDays();
+    });
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    document.getElementById('storeBadge').textContent = storeName || '—';
+    applyLang();
+
+    // ─── CSV utils ────────────────────────────────────────────────────────────
+    function parseCSV(csv) {
+        const rows = [];
+        let row = [], field = '', inQ = false;
+        const text = csv.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (inQ) {
+                if (ch === '"') {
+                    if (text[i + 1] === '"') { field += '"'; i++; } // escaped ""
+                    else inQ = false;                                // end of quoted field
+                } else { field += ch; }                             // newlines inside quotes are kept
+            } else {
+                if      (ch === '"') { inQ = true; }
+                else if (ch === ',') { row.push(field.trim()); field = ''; }
+                else if (ch === '\n') {
+                    row.push(field.trim());
+                    if (row.some(c => c)) rows.push(row);
+                    row = []; field = '';
+                } else { field += ch; }
+            }
+        }
+        // last field / row
+        if (field || row.length) { row.push(field.trim()); if (row.some(c => c)) rows.push(row); }
+        return rows;
+    }
+
+    // 从 description 文本中提取客人姓名和联系方式
+    function parseDesc(text) {
+        const t = String(text || '');
+        const name    = (t.match(/(?:Guest\s*Name|Name|姓名|客人姓名|お名前|氏名)\s*[:：]\s*(.+)/i) || [])[1]?.trim() || '';
+        const contact = (t.match(/(?:Contact|联系方式|联系电话|連絡先|電話)[^:：\n]*[:：]\s*(.+)/i)  || [])[1]?.trim() || '';
+        return { name, contact };
+    }
+
+    function isSameDate(cell, target) {
+        if (!cell || !String(cell).trim()) return false;
+        const s = String(cell).trim();
+        const [ty,tm,td] = [target.getFullYear(), target.getMonth(), target.getDate()];
+        for (const f of [s, s.split('T')[0], s.split(' ')[0]]) {
+            const m = f.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+            if (m && +m[1]===ty && (+m[2]-1)===tm && +m[3]===td) return true;
+        }
+        return false;
+    }
+
+    function matchStore(val) {
+        if (!val || !storeName) return false;
+        const a = String(val).toLowerCase().replace(/\s/g,'');
+        const b = storeName.toLowerCase().replace(/\s/g,'');
+        return a===b || a.includes(b) || b.includes(a);
+    }
+
+    function fmtCell(colKey, raw) {
+        const v = String(raw ?? '').trim();
+        if (!v) return '—';
+        if (MONEY_COLS.has(colKey)) {
+            const n = parseFloat(v.replace(/[^\d.-]/g,''));
+            return isNaN(n) ? v : '¥' + Math.round(n).toLocaleString();
+        }
+        if (TIME_COLS.has(colKey)) {
+            // ISO T format: already 24h (e.g. T14:30)
+            const mIso = v.match(/T(\d{2}:\d{2})/);
+            if (mIso) return mIso[1];
+            // Chinese 上午/下午 format (e.g. "2025-6-11 下午01:30:00" / "上午11:30")
+            const mCn = v.match(/([上下]午)(\d{1,2}):(\d{2})/);
+            if (mCn) {
+                let h = parseInt(mCn[2]);
+                const mi = mCn[3];
+                if (mCn[1] === '下午' && h !== 12) h += 12;
+                if (mCn[1] === '上午' && h === 12) h = 0;
+                return `${String(h).padStart(2, '0')}:${mi}`;
+            }
+            // English AM/PM format
+            const m12 = v.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+            if (m12) {
+                let h = parseInt(m12[1]);
+                const mi = m12[2];
+                const ap = m12[3].toUpperCase();
+                if (ap === 'PM' && h !== 12) h += 12;
+                if (ap === 'AM' && h === 12) h = 0;
+                return `${String(h).padStart(2, '0')}:${mi}`;
+            }
+            // Date object fallback (getHours is always 24h)
+            const d = new Date(v);
+            if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            // Plain HH:MM last resort
+            const mPlain = v.match(/(\d{1,2}:\d{2})/);
+            if (mPlain) return mPlain[1].padStart(5, '0');
+        }
+        return v;
+    }
+
+    // ─── Render ───────────────────────────────────────────────────────────────
+    function renderAll(data) {
+        const headers  = data[0] || [];
+        const storeIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'store_name');
+        const dateIdx  = headers.findIndex(h => String(h).trim().toLowerCase() === 'start_time');
+
+        const rows = data.slice(1)
+            .filter(r => r.some(c => String(c).trim()))
+            .filter(r => storeIdx < 0 || matchStore(r[storeIdx]))
+            .filter(r => dateIdx  < 0 || isSameDate(r[dateIdx], targetDate));
+
+        // Stats
+        const statsGrid  = document.getElementById('statsGrid');
+        const recordCount = document.getElementById('recordCount');
+        if (rows.length > 0) {
+            const pi = headers.findIndex(h => String(h).trim().toLowerCase() === 'project_amount');
+            const si = headers.findIndex(h => String(h).trim().toLowerCase() === 'settle_amount');
+            const tProj = rows.reduce((s,r) => s+(parseFloat(String(r[pi]||'').replace(/[^\d.-]/g,''))||0), 0);
+            const tSet  = rows.reduce((s,r) => s+(parseFloat(String(r[si]||'').replace(/[^\d.-]/g,''))||0), 0);
+            statsGrid.innerHTML = [
+                { l: tx('stats_count'),   v: rows.length + tx('row') },
+                { l: tx('stats_project'), v: tProj ? '¥'+Math.round(tProj).toLocaleString() : '—' },
+                { l: tx('stats_settle'),  v: tSet  ? '¥'+Math.round(tSet).toLocaleString()  : '—' },
+            ].map(s => `<div class="stat-card"><div class="stat-label">${s.l}</div><div class="stat-value">${s.v}</div></div>`).join('');
+            statsGrid.style.display = 'grid';
+            recordCount.textContent = rows.length + tx('row');
+        } else {
+            statsGrid.style.display = 'none';
+            recordCount.textContent = '';
+        }
+
+        const tableDesktop = document.getElementById('tableDesktop');
+        const tableMobile  = document.getElementById('tableMobile');
+
+        if (rows.length === 0) {
+            tableDesktop.innerHTML = `<div class="no-data">📭 ${tx('no_data')}</div>`;
+            tableMobile.innerHTML  = '';
+            return;
+        }
+
+        // Columns to show
+        const descIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'description');
+        const baseCols = headers
+            .map((h, i) => {
+                const key = String(h).trim().toLowerCase();
+                const label = COL_LABELS[key]?.[lang] || String(h).trim();
+                return { key, label, i };
+            })
+            .filter(({ key, label }) => label && !SKIP_COLS.has(key) && !/^第\s*\d+\s*列$/.test(label));
+
+        // 在 title 列之后注入虚拟列（从 description 解析出的客人姓名、联系方式）
+        const virtualCols = [
+            { key: 'guest_name',    label: COL_LABELS['guest_name']?.[lang]    || 'Guest Name', i: '__name' },
+            { key: 'guest_contact', label: COL_LABELS['guest_contact']?.[lang] || 'Contact',    i: '__contact' },
+        ];
+        const titleColPos = baseCols.findIndex(c => c.key === 'title');
+        const cols = titleColPos >= 0
+            ? [...baseCols.slice(0, titleColPos + 1), ...virtualCols, ...baseCols.slice(titleColPos + 1)]
+            : [...baseCols, ...virtualCols];
+
+        // 统一取值：处理虚拟列（从 description 解析）和普通列
+        function getCell(c, r) {
+            if (c.i === '__name' || c.i === '__contact') {
+                const desc = descIdx >= 0 ? String(r[descIdx] || '') : '';
+                const parsed = parseDesc(desc);
+                const v = c.i === '__name' ? parsed.name : parsed.contact;
+                return v || '—';
+            }
+            return fmtCell(c.key, r[c.i]);
+        }
+
+        // ── Desktop table ──
+        const thead = `<thead><tr><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
+        const tbody = `<tbody>${rows.map((r,i) =>
+            `<tr><td class="col-num">${i+1}</td>${cols.map(c=>`<td>${getCell(c,r)}</td>`).join('')}</tr>`
+        ).join('')}</tbody>`;
+        tableDesktop.innerHTML = `<table class="desktop-table">${thead}${tbody}</table>`;
+
+        // ── Mobile cards ──
+        const titleIdx  = cols.findIndex(c => c.key === 'title');
+        const endIdx    = cols.findIndex(c => c.key === 'end_time');
+        const bodyColFilter = c => c.key !== 'title' && c.key !== 'end_time';
+
+        tableMobile.innerHTML = rows.map((r, i) => {
+            const titleVal = titleIdx >= 0 ? getCell(cols[titleIdx], r) : '—';
+            const timeStr  = endIdx   >= 0 ? getCell(cols[endIdx], r) : '';
+
+            const bodyFields = cols.filter(bodyColFilter).map(c => {
+                const v = getCell(c, r);
+                const isHighlight = MONEY_COLS.has(c.key);
+                return `<div class="order-field${isHighlight?' highlight':''}">
+                    <span class="order-field-label">${c.label}</span>
+                    <span class="order-field-value">${v}</span>
+                </div>`;
+            }).join('');
+
+            return `<div class="order-card">
+                <div class="order-card-head">
+                    <div class="order-card-num">${i+1}</div>
+                    <div class="order-card-head-title">${titleVal}</div>
+                    ${timeStr ? `<div class="order-card-time">${timeStr}</div>` : ''}
+                </div>
+                <div class="order-card-body">${bodyFields}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // ─── Fetch & load ────────────────────────────────────────────────────────
+    function xhrGet(url) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.withCredentials = true;
+            xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 400) resolve(xhr.responseText); else reject(new Error('status ' + xhr.status)); };
+            xhr.onerror = () => reject(new Error('network error'));
+            xhr.ontimeout = () => reject(new Error('timeout'));
+            xhr.timeout = 15000;
+            xhr.send();
+        });
+    }
+
+    async function fetchCSV(sheetId, gid) {
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+        const gvizUrl   = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
+        const pubUrl    = `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv&gid=${gid}`;
+
+        try { const t = await xhrGet(exportUrl); if (t.trim()) return t; } catch (_) {}
+        try { const r = await fetch(exportUrl, { mode: 'cors', credentials: 'include' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+        try { const r = await fetch(`/api/sheets?sheetId=${sheetId}&gid=${gid}`); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+        try { const r = await fetch(gvizUrl, { mode: 'cors', credentials: 'omit' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+        try { const t = await xhrGet(gvizUrl); if (t.trim()) return t; } catch (_) {}
+        try { const r = await fetch(pubUrl); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+
+        throw new Error('ACCESS_DENIED');
+    }
+
+    async function main() {
+        const stateEl = document.getElementById('stateMsg');
+        if (!storeName) {
+            stateEl.innerHTML = `<div class="alert alert-warn">⚠️ ${tx('no_store')}</div>`;
+            document.getElementById('tableDesktop').innerHTML = '';
+            return;
+        }
+        try {
+            const csv  = await fetchCSV(ORDERS_SHEET_ID, ORDERS_RAW_GID);
+            const data = parseCSV(csv);
+            window._loadedData = data;
+            if (!data || data.length < 2) throw new Error('EMPTY');
+            stateEl.innerHTML = '';
+            renderAll(data);
+        } catch (err) {
+            document.getElementById('statsGrid').style.display = 'none';
+            stateEl.innerHTML = err.message === 'ACCESS_DENIED'
+                ? `<div class="alert alert-warn">⚠️ ${tx('access_err')}</div>`
+                : `<div class="alert alert-error">❌ ${err.message}</div>`;
+            document.getElementById('tableDesktop').innerHTML = '';
+        }
+    }
+
+    main();
+</script>
+</body>
+</html>

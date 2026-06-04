@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>门店数据 - Store Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-gold: #C9A961;
+            --secondary-gold: #D4AF37;
+            --bg-cream: #FAF8F3;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #6B6B6B;
+            --success: #1E8E4F;
+            --error: #DC3545;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+        }
+        body { font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif; background: var(--bg-cream); color: var(--text-dark); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-medium); text-decoration: none; font-size: 0.9rem; margin-bottom: 1rem; }
+        .back-link:hover { color: var(--primary-gold); }
+        .header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .header .store-badge { display: inline-block; background: var(--primary-gold); color: white; padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .header p { color: var(--text-medium); font-size: 0.95rem; }
+        .config-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        .section-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-label { display: block; font-weight: 500; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .input-field:focus { outline: none; border-color: var(--primary-gold); }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--primary-gold);
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: var(--secondary-gold); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        .stat-label { font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .data-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        .chart-container { position: relative; height: 280px; }
+        .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .alert-success { background: rgba(30, 142, 79, 0.1); border: 1px solid var(--success); }
+        .alert-error { background: rgba(220, 53, 69, 0.1); border: 1px solid var(--error); }
+        .alert-info { background: rgba(13, 110, 253, 0.1); }
+        .hidden { display: none !important; }
+        .month-selector-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--card-border); }
+        .data-table th { background: var(--bg-cream); font-weight: 600; }
+        .config-toggle { font-size: 0.85rem; color: var(--text-light); cursor: pointer; margin-top: 0.5rem; }
+        .config-toggle:hover { color: var(--primary-gold); }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+        .header-content { flex: 1; }
+        .language-switcher { display: flex; gap: 0.5rem; }
+        .lang-btn { padding: 0.5rem 1rem; background: var(--bg-cream); border: 1px solid var(--card-border); border-radius: 8px; font-size: 0.9rem; font-weight: 500; color: var(--text-medium); cursor: pointer; transition: all 0.3s ease; }
+        .lang-btn:hover { background: var(--primary-gold); color: white; border-color: var(--primary-gold); }
+        .lang-btn.active { background: var(--primary-gold); color: white; border-color: var(--primary-gold); }
+        .quick-links { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .quick-link-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 0.4rem; padding: 1.25rem 2rem; background: var(--bg-cream);
+            border: 1.5px solid var(--card-border); border-radius: 12px;
+            text-decoration: none; color: var(--text-dark); transition: all 0.2s;
+            min-width: 160px; cursor: pointer;
+        }
+        .quick-link-card:hover { border-color: var(--primary-gold); background: rgba(201, 169, 97, 0.08); transform: translateY(-2px); }
+        .quick-icon { font-size: 1.75rem; }
+        .quick-label { font-weight: 600; font-size: 0.95rem; text-align: center; }
+        .quick-date { font-size: 0.78rem; color: var(--text-light); }
+        .quick-link-card.disabled { opacity: 0.45; pointer-events: none; }
+        .quick-link-card.active { border-color: var(--primary-gold); background: rgba(201, 169, 97, 0.12); box-shadow: 0 0 0 2px rgba(201,169,97,0.25); }
+        .order-table-wrap { overflow-x: auto; margin-top: 0.75rem; }
+        .order-table-wrap .data-table td, .order-table-wrap .data-table th { white-space: nowrap; font-size: 0.88rem; padding: 0.6rem 0.75rem; }
+        .order-table-wrap .data-table tr:hover td { background: rgba(201,169,97,0.06); }
+        .order-count-badge { display: inline-block; background: var(--primary-gold); color: #fff; border-radius: 20px; font-size: 0.78rem; font-weight: 600; padding: 0.15rem 0.65rem; margin-left: 0.5rem; vertical-align: middle; }
+        .order-section-date { font-size: 0.9rem; color: var(--text-medium); font-weight: 400; margin-left: 0.5rem; }
+        .order-empty { text-align: center; padding: 2rem; color: var(--text-light); font-size: 0.95rem; }
+        .order-loading { text-align: center; padding: 2rem; color: var(--text-light); }
+        .order-section { scroll-margin-top: 1rem; }
+
+        /* ── Mobile ─────────────────────────────────────── */
+        @media (max-width: 640px) {
+            .container { padding: 0.85rem 0.75rem 3rem; }
+            /* Header */
+            .header { padding: 1rem; border-radius: 12px; gap: 0.5rem; }
+            .header h1 { font-size: 1.05rem; }
+            .header p { font-size: 0.8rem; }
+            .header .store-badge { font-size: 0.78rem; padding: 0.18rem 0.6rem; }
+            .language-switcher { gap: 0.3rem; }
+            .lang-btn { padding: 0.3rem 0.55rem !important; font-size: 0.72rem !important; }
+            .back-link { font-size: 0.8rem; margin-bottom: 0.65rem; }
+            /* Quick access — 3列网格 */
+            .quick-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.55rem; }
+            .quick-link-card { min-width: 0; padding: 0.8rem 0.4rem; }
+            .quick-icon { font-size: 1.3rem; }
+            .quick-label { font-size: 0.7rem; }
+            .quick-date { font-size: 0.6rem; }
+            /* Stats */
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+            .stat-card { padding: 0.9rem 0.85rem; }
+            .stat-label { font-size: 0.72rem; }
+            .stat-value { font-size: 1.15rem; }
+            /* Data sections */
+            .data-section { padding: 1rem; border-radius: 12px; }
+            .section-title { font-size: 0.95rem; }
+            /* Trend charts — 垂直堆叠 */
+            .trend-charts { grid-template-columns: 1fr !important; gap: 1rem !important; }
+            .chart-container { height: 200px; }
+            /* Month selector — 垂直堆叠 */
+            .month-selector-row { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+            #monthSelector { max-width: 100% !important; width: 100% !important; }
+            #updateMonthBtn { width: 100%; }
+            /* Order table */
+            .order-table-wrap .data-table td,
+            .order-table-wrap .data-table th { font-size: 0.72rem; padding: 0.4rem 0.45rem; }
+            /* Config section */
+            .config-section { padding: 1rem; }
+            .config-toggle { display: block; margin-top: 0.75rem; }
+        }
+        @media (max-width: 380px) {
+            .quick-links { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link" data-lang="back-list">← 返回门店列表</a>
+        <div class="header">
+            <div class="header-content">
+                <div class="store-badge" id="storeBadge">门店</div>
+                <h1 id="pageTitle" data-lang="page-title">门店数据</h1>
+                <p data-lang="subtitle">查看本月业绩与过去 6 个月趋势</p>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+            </div>
+        </div>
+
+        <div class="data-section" id="quickAccessSection" style="margin-bottom:1.5rem;">
+            <h2 class="section-title" data-lang="section-quick">🗂 快捷入口</h2>
+            <div class="quick-links">
+                <div class="quick-link-card" id="todayOrderBtn" onclick="toggleOrderSection('today')">
+                    <div class="quick-icon">📋</div>
+                    <div class="quick-label" data-lang="today-orders">当日订单</div>
+                    <div class="quick-date" id="todayDateLabel"></div>
+                </div>
+                <a class="quick-link-card" id="yesterdayOrderBtn" href="#" target="_blank">
+                    <div class="quick-icon">📄</div>
+                    <div class="quick-label" data-lang="yesterday-orders">前一日订单明细</div>
+                    <div class="quick-date" id="yesterdayDateLabel"></div>
+                </a>
+                <a class="quick-link-card" href="../sop.html" target="_blank">
+                    <div class="quick-icon">📘</div>
+                    <div class="quick-label" data-lang="link-sop">客服 SOP</div>
+                    <div class="quick-date" data-lang="link-sop-sub">作業手順書</div>
+                </a>
+                <a class="quick-link-card" id="calendarBtn" href="../calendar-viewer.html" target="_blank">
+                    <div class="quick-icon">📆</div>
+                    <div class="quick-label" data-lang="link-calendar">门店日历</div>
+                    <div class="quick-date" data-lang="link-calendar-sub">予約カレンダー</div>
+                </a>
+                <a class="quick-link-card" href="../multilang-reservation-flow.html" target="_blank">
+                    <div class="quick-icon">🔄</div>
+                    <div class="quick-label" data-lang="link-flow">预约流程</div>
+                    <div class="quick-date" data-lang="link-flow-sub">業務フロー図</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="config-section hidden" id="configSection">
+            <h2 class="section-title" data-lang="config-title">📋 数据源配置</h2>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 1rem;" data-lang="config-desc">数据源已内置，通常无需修改。如需更换数据源可在此配置</p>
+            <div class="input-group">
+                <label class="input-label" data-lang="config-sheets">Google Sheets 链接</label>
+                <input type="text" id="sheetsUrl" class="input-field">
+            </div>
+            <div class="input-group">
+                <label class="input-label" data-lang="config-sheet-name">Sheet 名称</label>
+                <input type="text" id="sheetName" class="input-field" value="Dashboard">
+            </div>
+            <div class="input-group">
+                <label class="input-label" data-lang="config-script">Apps Script URL（用于切换月份与本店6个月趋势）</label>
+                <input type="text" id="scriptUrl" class="input-field" placeholder="https://script.google.com/...">
+            </div>
+            <div class="input-group">
+                <label class="input-label" data-lang="config-monthly-gid">Monthly_Summary GID（用于本店6个月趋势，已默认填充）</label>
+                <input type="text" id="monthlySummaryGid" class="input-field" value="2010875890" placeholder="如 2010875890">
+            </div>
+            <button type="button" class="btn" id="loadBtn" data-lang="btn-reload">重新加载数据</button>
+        </div>
+        <a class="config-toggle" id="configToggle" data-lang="config-toggle-show">显示数据源配置</a>
+
+        <div id="messageArea"></div>
+
+        <div id="dataSection" class="hidden">
+            <div class="month-selector-row">
+                <label class="input-label" style="margin: 0;" data-lang="select-month">选择月份</label>
+                <select id="monthSelector" class="input-field" style="width: auto; max-width: 180px;"></select>
+                <button type="button" class="btn" id="updateMonthBtn" data-lang="btn-update">更新数据</button>
+                <span id="currentMonthText" style="color: var(--text-medium);"></span>
+            </div>
+
+            <div class="data-section">
+                <h2 class="section-title" data-lang="section-stats">📊 本月业绩</h2>
+                <div class="stats-grid" id="storeStatsGrid"></div>
+            </div>
+
+            <div class="data-section">
+                <h2 class="section-title" data-lang="section-trend">📈 本店最近 6 个月趋势</h2>
+                <div id="storeTrendLoading" class="hidden" style="padding: 2rem; text-align: center; color: var(--text-light);" data-lang="loading-trend">正在加载本店6个月趋势...</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;" class="trend-charts" id="storeTrendCharts">
+                    <div>
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;" data-lang="chart-orders">订单数量</h3>
+                        <div class="chart-container"><canvas id="trendChartOrders"></canvas></div>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 0.95rem; margin-bottom: 0.5rem;" data-lang="chart-settlement">结算金额</h3>
+                        <div class="chart-container"><canvas id="trendChartSettlement"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 当日订单表格 -->
+        <div class="data-section order-section" id="todayOrdersSection" style="display:none;">
+            <h2 class="section-title">
+                📋 <span data-lang="today-orders">当日订单</span>
+                <span class="order-section-date" id="todayOrdersSectionDate"></span>
+                <span class="order-count-badge" id="todayOrdersCount" style="display:none;"></span>
+            </h2>
+            <div id="todayOrdersContent"><div class="order-loading">加载中...</div></div>
+        </div>
+
+    </div>
+
+    <script>
+        const DEFAULT_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1B_GTNGUHYN8xbXYAWjv_FosTAbVghyCbmX5N9fvgrEc/edit?gid=1706509085#gid=1706509085';
+        const DEFAULT_MONTHLY_SUMMARY_GID = '2010875890';
+
+        // Orders_Raw：所有门店的订单原始数据（同一公开主表，gid=0）
+        const DEFAULT_ORDERS_SHEET_ID = '1B_GTNGUHYN8xbXYAWjv_FosTAbVghyCbmX5N9fvgrEc';
+        const ORDERS_RAW_GID = '0';
+
+        // Orders_Raw 列定义
+        const ORDERS_STORE_COL  = 'store_name';   // 门店列（D）
+        const ORDERS_DATE_COL   = 'start_time';   // 预约开始时间列（E）
+        // 展示时跳过的技术列
+        const ORDERS_SKIP_COLS  = new Set(['event_id','calendar_id','store_id','store_name',
+                                           'month_key','tax_rate','commission_rate',
+                                           'last_updated','event_last_updated']);
+        const ORDERS_MONEY_COLS = new Set(['project_amount','settle_amount']);
+        const ORDERS_TIME_COLS  = new Set(['start_time','end_time']);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeNameParam = urlParams.get('store') || '';
+        const storeName = decodeURIComponent(storeNameParam.trim()) || '未选择门店';
+
+        if (storeName !== '未选择门店') {
+            const authKey = 'store_auth_' + encodeURIComponent(storeName);
+            const isAuthed = sessionStorage.getItem(authKey) === '1';
+            const isAdmin = sessionStorage.getItem('stores_admin') === '1';
+            if (!isAuthed && !isAdmin) {
+                location.replace('login.html?store=' + encodeURIComponent(storeName));
+                throw new Error('auth required');
+            }
+        }
+
+        const translations = {
+            ja: {
+                "back-list": "← 店舗一覧に戻る", "page-title": "店舗データ", "subtitle": "今月の実績と過去6ヶ月の推移をご確認ください",
+                "config-title": "📋 データソース設定", "config-desc": "データソースは内蔵済みです。変更が必要な場合のみ設定してください",
+                "config-sheets": "Google Sheets リンク", "config-sheet-name": "Sheet 名", "config-script": "Apps Script URL（月切替・6ヶ月推移用）",
+                "config-monthly-gid": "Monthly_Summary GID（6ヶ月推移用、デフォルト設定済み）",
+                "btn-reload": "データを再読み込み",
+                "config-toggle-show": "データソース設定を表示", "config-toggle-hide": "データソース設定を非表示",
+                "select-month": "月を選択", "btn-update": "データを更新", "section-stats": "📊 今月の実績", "section-trend": "📈 過去6ヶ月の推移",
+                "section-quick": "🗂 クイックアクセス",
+                "today-orders": "当日注文", "yesterday-orders": "前日注文明細",
+                "link-sop": "CS SOP", "link-sop-sub": "作業手順書",
+                "link-calendar": "店舗カレンダー", "link-calendar-sub": "予約カレンダー",
+                "link-flow": "予約フロー", "link-flow-sub": "業務フロー図",
+                "chart-orders": "注文数", "chart-settlement": "決済金額", "unit-orders": "件", "loading-trend": "6ヶ月の推移を読み込み中...",
+                "fallback-note": "（現在は全社データです。Apps Script URL を設定すると店舗別推移を表示できます）",
+                "no-trend-hint": "6ヶ月推移がありません。設定で Apps Script URL または Monthly_Summary GID を設定してください",
+                "msg-enter-url": "Google Sheets リンクを入力してください", "msg-invalid-url": "リンク形式が正しくありません",
+                "msg-loading": "読み込み中...", "msg-success": "データの読み込みが完了しました", "msg-load-first": "先にデータを読み込みしてください", "msg-load-failed": "読み込みに失敗しました：",
+                "msg-select-store": "店舗一覧から店舗を選択してください", "current-prefix": "現在：",
+                "no-store-data": "該当店舗のデータがありません。Google Sheets の B 区域（A10以降）に店舗が含まれているか確認してください",
+                "store-not-found": "「{0}」のデータが見つかりません。Sheet の店舗名と一致する必要があります（大文字小文字区別なし）",
+                "msg-month-updated": "月を更新しました"
+            },
+            en: {
+                "back-list": "← Back to store list", "page-title": "Store data", "subtitle": "View this month's performance and past 6 months trend",
+                "config-title": "📋 Data source config", "config-desc": "Data source is built-in. Configure here only if you need to change it",
+                "config-sheets": "Google Sheets link", "config-sheet-name": "Sheet name", "config-script": "Apps Script URL (for month switch & 6-month trend)",
+                "config-monthly-gid": "Monthly_Summary GID (for 6-month trend, default set)",
+                "btn-reload": "Reload data",
+                "config-toggle-show": "Show data source config", "config-toggle-hide": "Hide data source config",
+                "select-month": "Select month", "btn-update": "Update data", "section-stats": "📊 This month's performance", "section-trend": "📈 Last 6 months trend",
+                "section-quick": "🗂 Quick Access",
+                "today-orders": "Today's Orders", "yesterday-orders": "Yesterday's Order Details",
+                "link-sop": "CS SOP", "link-sop-sub": "Work procedures",
+                "link-calendar": "Store Calendar", "link-calendar-sub": "Booking calendar",
+                "link-flow": "Reservation Flow", "link-flow-sub": "Workflow diagram",
+                "chart-orders": "Orders", "chart-settlement": "Settlement amount", "unit-orders": " orders", "loading-trend": "Loading 6-month trend...",
+                "fallback-note": "(Currently showing company-wide data. Set Apps Script URL in config to view store-specific trend)",
+                "no-trend-hint": "No 6-month trend. Please set Apps Script URL or Monthly_Summary GID in config",
+                "msg-enter-url": "Please enter Google Sheets link", "msg-invalid-url": "Invalid link format",
+                "msg-loading": "Loading...", "msg-success": "Data loaded successfully", "msg-load-first": "Please load data first", "msg-load-failed": "Load failed: ",
+                "msg-select-store": "Please select a store from the store list", "current-prefix": "Current: ",
+                "no-store-data": "No data for this store. Please confirm the B area (from A10) in Google Sheets includes this store",
+                "store-not-found": "Data for \"{0}\" not found. Store name must match the Sheet (case-insensitive)",
+                "msg-month-updated": "Month updated"
+            },
+            zh: {
+                "back-list": "← 返回门店列表", "page-title": "门店数据", "subtitle": "查看本月业绩与过去 6 个月趋势",
+                "config-title": "📋 数据源配置", "config-desc": "数据源已内置，通常无需修改。如需更换数据源可在此配置",
+                "config-sheets": "Google Sheets 链接", "config-sheet-name": "Sheet 名称", "config-script": "Apps Script URL（用于切换月份与本店6个月趋势）",
+                "config-monthly-gid": "Monthly_Summary GID（用于本店6个月趋势，已默认填充）",
+                "btn-reload": "重新加载数据",
+                "config-toggle-show": "显示数据源配置", "config-toggle-hide": "隐藏数据源配置",
+                "select-month": "选择月份", "btn-update": "更新数据", "section-stats": "📊 本月业绩", "section-trend": "📈 本店最近 6 个月趋势",
+                "section-quick": "🗂 快捷入口",
+                "today-orders": "当日订单", "yesterday-orders": "前一日订单明细",
+                "link-sop": "客服 SOP", "link-sop-sub": "标准作业手册",
+                "link-calendar": "门店日历", "link-calendar-sub": "预约日历",
+                "link-flow": "预约流程", "link-flow-sub": "业务流程图",
+                "chart-orders": "订单数量", "chart-settlement": "结算金额", "unit-orders": " 单", "loading-trend": "正在加载本店6个月趋势...",
+                "fallback-note": "（当前为全司数据。在配置中设置 Apps Script URL 可查看本店专属趋势）",
+                "no-trend-hint": "暂无本店6个月趋势。请在配置中设置 Apps Script URL 或 Monthly_Summary GID。",
+                "msg-enter-url": "请输入 Google Sheets 链接", "msg-invalid-url": "链接格式不正确",
+                "msg-loading": "加载中...", "msg-success": "数据加载成功", "msg-load-first": "请先加载数据", "msg-load-failed": "加载失败：",
+                "msg-select-store": "请从门店列表选择门店进入", "current-prefix": "当前：",
+                "no-store-data": "暂无本门店数据，请确认 Google Sheets 中 B 区域（A10起）包含该门店",
+                "store-not-found": "未找到「{0}」的数据。Sheet 中门店名需与此匹配（不区分大小写）",
+                "msg-month-updated": "月份已更新"
+            }
+        };
+        let currentLang = localStorage.getItem('stores-lang') || 'ja';  // 默认日文
+
+        function t(key) { return (translations[currentLang]?.[key] || translations.zh?.[key] || key).replace('{0}', storeName); }
+        function updateContent() {
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                if (el.tagName === 'BUTTON') return;
+                const k = el.dataset.lang;
+                if (translations[currentLang]?.[k]) el.textContent = translations[currentLang][k];
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === currentLang));
+            const configToggle = document.getElementById('configToggle');
+            if (configToggle) configToggle.textContent = document.getElementById('configSection').classList.contains('hidden') ? t('config-toggle-show') : t('config-toggle-hide');
+            const pgTitle = document.getElementById('pageTitle');
+            if (pgTitle) pgTitle.textContent = storeName + ' - ' + (translations[currentLang]?.['page-title'] || translations.zh['page-title']);
+            document.title = storeName + ' - ' + (translations[currentLang]?.['page-title'] || translations.zh['page-title']);
+            if (document.getElementById('monthSelector')?.options?.length) generateMonthSelector(true);
+            if (typeof initQuickAccess === 'function') initQuickAccess();
+        }
+
+        document.getElementById('storeBadge').textContent = storeName;
+        document.getElementById('pageTitle').textContent = storeName + ' - ' + (translations.ja['page-title']);
+        document.title = storeName + ' - ' + translations.ja['page-title'];
+
+        // 快捷入口日期初始化
+        function formatDateLabel(d) {
+            const y = d.getFullYear(), mo = d.getMonth() + 1, day = d.getDate();
+            if (currentLang === 'en') return `${y}/${String(mo).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+            return `${y}年${mo}月${day}日`;
+        }
+
+        function fmtDateParam(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        function initQuickAccess() {
+            const today = new Date();
+            const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+
+            document.getElementById('todayDateLabel').textContent = formatDateLabel(today);
+            document.getElementById('yesterdayDateLabel').textContent = formatDateLabel(yesterday);
+            document.getElementById('todayOrdersSectionDate').textContent = formatDateLabel(today);
+
+            // 前一日 → 跳转独立分享页，携带门店名和日期参数
+            const yestUrl = `yesterday-orders.html?store=${encodeURIComponent(storeName)}&date=${fmtDateParam(yesterday)}`;
+            document.getElementById('yesterdayOrderBtn').href = yestUrl;
+
+            // Orders_Raw 在主表中，主表已公开，直接启用
+            document.getElementById('todayOrderBtn').classList.remove('disabled');
+            document.getElementById('yesterdayOrderBtn').classList.remove('disabled');
+            // 日历链接带上门店名，calendar-viewer 会自动只显示该门店
+            const calBtn = document.getElementById('calendarBtn');
+            if (calBtn && storeName && storeName !== '未选择门店') {
+                calBtn.href = `../calendar-viewer.html?store=${encodeURIComponent(storeName)}`;
+            }
+        }
+        initQuickAccess();
+
+        // ─── 订单表格：展开/折叠 ───────────────────────────────────────
+        const orderState = { today: 'idle', yesterday: 'idle' };
+
+        function toggleOrderSection(which) {
+            const sectionId = which === 'today' ? 'todayOrdersSection' : 'yesterdayOrdersSection';
+            const btnId     = which === 'today' ? 'todayOrderBtn'     : 'yesterdayOrderBtn';
+            const section   = document.getElementById(sectionId);
+            const btn       = document.getElementById(btnId);
+            const isOpen    = section.style.display !== 'none';
+
+            if (isOpen) {
+                section.style.display = 'none';
+                btn.classList.remove('active');
+            } else {
+                section.style.display = 'block';
+                btn.classList.add('active');
+                setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                if (orderState[which] === 'idle') loadOrdersSection(which);
+            }
+        }
+
+        async function fetchOrdersCsv(sheetId, gid) {
+            // Google Visualization API endpoint — supports CORS, no redirect
+            const urls = [
+                `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`,
+                `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`,
+                `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv&gid=${gid}`,
+            ];
+            let lastErr = null;
+            for (const url of urls) {
+                try {
+                    const resp = await fetch(url);
+                    if (resp.ok) {
+                        const text = await resp.text();
+                        if (text && text.trim().length > 0) return text;
+                    }
+                } catch (e) { lastErr = e; }
+            }
+            throw new Error('SHEET_ACCESS_DENIED');
+        }
+
+        const ACCESS_DENIED_HTML = `
+            <div class="order-empty" style="line-height:2;">
+                ⚠️ 无法读取订单表格数据<br>
+                <span style="font-size:0.85rem;color:var(--text-light);">
+                    请确认该 Google Sheet 已设置为公开可读：<br>
+                    打开表格 → 右上角「共有」→「リンクを知っている全員」→「閲覧者」→ 保存
+                </span>
+            </div>`;
+
+        async function loadOrdersSection(which) {
+            if (which !== 'today') return; // 前一日已改为独立页面
+            const contentEl = document.getElementById('todayOrdersContent');
+            const countEl   = document.getElementById('todayOrdersCount');
+            contentEl.innerHTML = '<div class="order-loading">⏳ 正在加载订单数据...</div>';
+            countEl.style.display = 'none';
+            orderState[which] = 'loading';
+
+            try {
+                const csv = await fetchOrdersCsv(DEFAULT_ORDERS_SHEET_ID, ORDERS_RAW_GID);
+                const data = parseCSV(csv);
+                if (!data || data.length < 2) throw new Error('EMPTY');
+
+                const count = renderOrdersTable(contentEl, data, new Date());
+                countEl.textContent = count + (currentLang === 'en' ? ' orders' : currentLang === 'ja' ? ' 件' : ' 条');
+                countEl.style.display = '';
+                orderState[which] = 'loaded';
+            } catch (err) {
+                if (err.message === 'SHEET_ACCESS_DENIED') {
+                    contentEl.innerHTML = ACCESS_DENIED_HTML;
+                } else if (err.message === 'EMPTY') {
+                    contentEl.innerHTML = '<div class="order-empty">📭 订单表格暂无数据</div>';
+                } else {
+                    contentEl.innerHTML = `<div class="order-empty" style="color:var(--error);">❌ ${err.message}</div>`;
+                }
+                orderState[which] = 'idle';
+            }
+        }
+
+        function isSameDate(cellValue, targetDate) {
+            if (!cellValue || !String(cellValue).trim()) return false;
+            const s = String(cellValue).trim();
+            const ty = targetDate.getFullYear(), tm = targetDate.getMonth(), td = targetDate.getDate();
+            // 尝试 ISO 8601 / 各种日期格式
+            for (const f of [s, s.split('T')[0], s.split(' ')[0]]) {
+                const m = f.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                if (m) {
+                    if (+m[1] === ty && (+m[2] - 1) === tm && +m[3] === td) return true;
+                }
+            }
+            return false;
+        }
+
+        function formatOrderCell(colName, rawVal) {
+            const v = String(rawVal ?? '').trim();
+            if (!v) return '—';
+            if (ORDERS_MONEY_COLS.has(colName)) {
+                const n = parseFloat(v.replace(/[^\d.-]/g, ''));
+                return isNaN(n) ? v : '¥' + Math.round(n).toLocaleString();
+            }
+            if (ORDERS_TIME_COLS.has(colName)) {
+                // start_time / end_time：只显示 HH:MM（日期已在标题显示）
+                const m = v.match(/T?(\d{2}:\d{2})/);
+                if (m) return m[1];
+                const d = new Date(v);
+                if (!isNaN(d.getTime())) return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            }
+            return v;
+        }
+
+        function renderOrdersTable(container, data, targetDate) {
+            const rawHeaders = data[0] || [];
+            const allRows    = data.slice(1).filter(r => r.some(c => String(c).trim()));
+
+            // 找到 store_name 和 start_time 列的实际索引
+            const storeIdx = rawHeaders.findIndex(h => String(h).trim().toLowerCase() === ORDERS_STORE_COL);
+            const dateIdx  = rawHeaders.findIndex(h => String(h).trim().toLowerCase() === ORDERS_DATE_COL);
+
+            // 双重过滤：该门店 + 目标日期
+            const rows = allRows
+                .filter(r => storeIdx < 0 || matchStoreName(r[storeIdx] ?? ''))
+                .filter(r => dateIdx  < 0 || isSameDate(r[dateIdx] ?? '', targetDate));
+
+            if (rows.length === 0) {
+                container.innerHTML = `<div class="order-empty">📭 ${formatDateLabel(targetDate)} 暂无订单数据</div>`;
+                return 0;
+            }
+
+            // 决定要展示的列：跳过内部技术列和"第 X 列"占位列
+            const displayCols = rawHeaders
+                .map((h, i) => ({ key: String(h).trim().toLowerCase(), label: String(h).trim(), i }))
+                .filter(({ key, label }) =>
+                    label && !ORDERS_SKIP_COLS.has(key) && !/^第\s*\d+\s*列$/.test(label)
+                );
+
+            const thead = `<thead><tr>${displayCols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>`;
+            const tbody = `<tbody>${rows.map(r =>
+                `<tr>${displayCols.map(c => `<td>${formatOrderCell(c.key, r[c.i])}</td>`).join('')}</tr>`
+            ).join('')}</tbody>`;
+
+            container.innerHTML = `<div class="order-table-wrap"><table class="data-table">${thead}${tbody}</table></div>`;
+            return rows.length;
+        }
+
+        let currentSheetId = null;
+        let currentGid = 0;
+
+        document.getElementById('sheetsUrl').value = DEFAULT_SHEETS_URL;
+        updateContent();
+
+        document.getElementById('loadBtn').addEventListener('click', () => { loadData(); initQuickAccess(); });
+        document.getElementById('updateMonthBtn').addEventListener('click', updateMonthData);
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => { currentLang = btn.dataset.lang; localStorage.setItem('stores-lang', currentLang); updateContent(); });
+        });
+
+        document.getElementById('configToggle').addEventListener('click', function() {
+            const section = document.getElementById('configSection');
+            const isHidden = section.classList.contains('hidden');
+            section.classList.toggle('hidden', !isHidden);
+            this.textContent = isHidden ? t('config-toggle-hide') : t('config-toggle-show');
+        });
+
+        function showMessage(msg, type = 'info') {
+            const area = document.getElementById('messageArea');
+            const cls = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+            area.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
+            if (type !== 'error') setTimeout(() => area.innerHTML = '', 3000);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+                    else inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else current += char;
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(l => l.trim());
+            return lines.map(l => parseCSVLine(l));
+        }
+
+        function extractRange(data, startRow, endRow, startCol, endCol) {
+            const result = [];
+            const startR = startRow - 1;
+            const endR = endRow - 1;
+            const startC = startCol - 1;
+            const endC = endCol - 1;
+            for (let i = startR; i <= endR && i < data.length; i++) {
+                const row = [];
+                for (let j = startC; j <= endC && data[i]; j++) {
+                    row.push((data[i][j] !== undefined ? data[i][j] : ''));
+                }
+                result.push(row);
+            }
+            return result;
+        }
+
+        function extractDynamicRange(data, startRow, startCol, endCol) {
+            const result = [];
+            const startR = startRow - 1;
+            const startC = startCol - 1;
+            const endC = endCol - 1;
+            for (let i = startR; i < data.length; i++) {
+                if (!data[i] || data[i].length === 0) break;
+                const first = data[i][startC];
+                if (i > startR && (first === undefined || first === null || String(first).trim() === '')) break;
+                const row = [];
+                for (let j = startC; j <= endC; j++) row.push(data[i][j] || '');
+                result.push(row);
+            }
+            return result;
+        }
+
+        function getCellValue(data, row, col) {
+            const r = row - 1, c = col - 1;
+            return (data[r] && data[r][c] !== undefined) ? data[r][c] : '';
+        }
+
+        function cleanNumberValue(v) {
+            if (!v) return 0;
+            const n = parseFloat(String(v).replace(/[^\d.-]/g, ''));
+            return isNaN(n) ? 0 : n;
+        }
+
+        function matchStoreName(sheetValue) {
+            if (!sheetValue) return false;
+            const s = String(sheetValue).toLowerCase().trim();
+            const t = String(storeName).toLowerCase().trim();
+            return s === t || s.includes(t) || t.includes(s) || s.replace(/\s/g, '') === t.replace(/\s/g, '');
+        }
+
+        async function loadData() {
+            const url = document.getElementById('sheetsUrl').value.trim();
+            if (!url) {
+                showMessage(t('msg-enter-url'), 'error');
+                return;
+            }
+            const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            if (!match) {
+                showMessage(t('msg-invalid-url'), 'error');
+                return;
+            }
+            const sheetId = match[1];
+            const sheetName = document.getElementById('sheetName').value.trim() || 'Dashboard';
+
+            showMessage(t('msg-loading'), 'info');
+
+            let targetGid = 0;
+            const gidMatch = url.match(/[#&]gid=(\d+)/);
+            if (gidMatch) targetGid = parseInt(gidMatch[1]);
+
+            if (sheetName && !gidMatch) {
+                try {
+                    const resp = await fetch(url);
+                    const html = await resp.text();
+                    const regex = new RegExp(`(?:'${sheetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'|"${sheetName.replace(/"/g, '\\"')}")\\s*.*?gid=(\\d+)`, 'gi');
+                    const m = html.match(regex);
+                    if (m) for (const x of m) {
+                        const g = x.match(/gid=(\d+)/);
+                        if (g) { targetGid = parseInt(g[1]); break; }
+                    }
+                } catch (e) {}
+            }
+
+            try {
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${targetGid}`;
+                const resp = await fetch(csvUrl);
+                if (!resp.ok) throw new Error('无法访问表格');
+                const csv = await resp.text();
+                const data = parseCSV(csv);
+                if (!data || data.length === 0) throw new Error('数据为空');
+
+                currentSheetId = sheetId;
+                currentGid = targetGid;
+                processData(data);
+                document.getElementById('dataSection').classList.remove('hidden');
+                showMessage(t('msg-success'), 'success');
+            } catch (err) {
+                showMessage(t('msg-load-failed') + err.message, 'error');
+            }
+        }
+
+        function processData(csvData) {
+            const monthValue = getCellValue(csvData, 2, 2);
+            let formattedMonth = formatMonthValue(monthValue);
+            generateMonthSelector(false);
+            const sel = document.getElementById('monthSelector');
+            if (sel && formattedMonth) sel.value = formattedMonth;
+            document.getElementById('currentMonthText').textContent = t('current-prefix') + (formattedMonth || monthValue || '-');
+
+            const sectionB = extractDynamicRange(csvData, 10, 1, 8);
+
+            renderStoreStats(sectionB);
+            loadStoreTrendData(csvData);
+        }
+
+        function formatMonthValue(v) {
+            if (!v) return '';
+            if (/^\d{4}-\d{2}$/.test(v)) return v;
+            const d = new Date(v);
+            if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const ym = v.match(/(\d{4})/), mm = v.match(/(\d{1,2})/);
+            if (ym && mm) return `${ym[1]}-${String(parseInt(mm[1])).padStart(2, '0')}`;
+            return v;
+        }
+
+        function renderStoreStats(data) {
+            if (!data || data.length < 2) {
+                document.getElementById('storeStatsGrid').innerHTML = '<p>' + t('no-store-data') + '</p>';
+                return;
+            }
+            const headers = data[0] || [];
+            const rows = data.slice(1);
+            const storeCol = 0;
+            const storeRow = rows.find(r => matchStoreName(r[storeCol]));
+            if (!storeRow) {
+                document.getElementById('storeStatsGrid').innerHTML = '<p>' + t('store-not-found') + '</p>';
+                return;
+            }
+
+            // 跳过列：门店名、占比/比例类列
+            const SKIP_KEYWORDS = ['占比', '比例', 'percentage', 'ratio', 'percent', '割合'];
+            const cards = [];
+            for (let i = 1; i < headers.length; i++) {
+                const header = String(headers[i] || '').trim();
+                if (!header) continue;
+                const hl = header.toLowerCase();
+                if (SKIP_KEYWORDS.some(kw => hl.includes(kw.toLowerCase()))) continue;
+
+                let val = storeRow[i] ?? '-';
+                const isOrder = hl.includes('订单') || hl.includes('注文') || hl === 'orders';
+                const isMoney = hl.includes('金额') || hl.includes('金額') || hl.includes('settle') ||
+                                hl.includes('结算') || hl.includes('決済') || hl.includes('项目') || hl.includes('プロジェクト');
+
+                if (isOrder) {
+                    val = Math.round(cleanNumberValue(val)).toLocaleString();
+                } else if (isMoney) {
+                    const n = cleanNumberValue(val);
+                    val = n ? '￥' + Math.round(n).toLocaleString() : '-';
+                } else {
+                    const n = cleanNumberValue(val);
+                    if (!isNaN(n) && n !== 0) val = n.toLocaleString();
+                }
+                cards.push({ label: header, value: val });
+            }
+            const html = cards.map(c => `
+                <div class="stat-card">
+                    <div class="stat-label">${c.label}</div>
+                    <div class="stat-value">${c.value}</div>
+                </div>
+            `).join('');
+            document.getElementById('storeStatsGrid').innerHTML = html || '<p>' + t('no-store-data') + '</p>';
+        }
+
+        async function loadStoreTrendData(dashboardData, endMonth) {
+            const loadingEl = document.getElementById('storeTrendLoading');
+            const chartsEl = document.getElementById('storeTrendCharts');
+            loadingEl.classList.remove('hidden');
+            chartsEl.style.opacity = '0.5';
+
+            let trendData = null;
+
+            const sheetId = currentSheetId;
+            const scriptUrl = (document.getElementById('scriptUrl') || {}).value?.trim();
+            const monthlyGid = (document.getElementById('monthlySummaryGid')?.value?.trim()) || DEFAULT_MONTHLY_SUMMARY_GID;
+
+            if (monthlyGid) {
+                try {
+                    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${monthlyGid}`;
+                    const resp = await fetch(csvUrl);
+                    if (resp.ok) {
+                        const data = parseCSV(await resp.text());
+                        trendData = parseMonthlySummaryForStore(data, endMonth);
+                    }
+                } catch (e) { console.warn('Monthly_Summary load failed:', e); }
+            }
+
+            if (!trendData && scriptUrl) {
+                trendData = await fetchStoreTrendViaScript(sheetId, scriptUrl, dashboardData);
+            }
+
+            if (!trendData && dashboardData) {
+                const sectionTrend = extractRange(dashboardData, 1, 7, 7, 9);
+                if (sectionTrend && sectionTrend.length >= 2) {
+                    const rows = sectionTrend.slice(1).filter(r => (r[0] || '').toString().trim());
+                    if (rows.length > 0) {
+                        trendData = {
+                            months: rows.map(r => formatMonthValue(r[0]) || r[0]).reverse(),
+                            orders: rows.map(r => cleanNumberValue(r[1])).reverse(),
+                            settlements: rows.map(r => cleanNumberValue(r[2])).reverse(),
+                            isFallback: true
+                        };
+                    }
+                }
+            }
+
+            loadingEl.classList.add('hidden');
+            chartsEl.style.opacity = '1';
+
+            if (trendData && trendData.months && trendData.months.length > 0) {
+                renderTrendCharts(trendData);
+                let note = document.getElementById('storeTrendNote');
+                if (note) note.remove();
+                if (trendData.isFallback) {
+                    note = document.createElement('p');
+                    note.id = 'storeTrendNote';
+                    note.style.cssText = 'color: var(--text-light); font-size: 0.85rem; margin-top: 0.5rem;';
+                    note.textContent = t('fallback-note');
+                    chartsEl.parentElement.insertBefore(note, chartsEl.nextSibling);
+                }
+            } else {
+                const container = chartsEl.parentElement;
+                let note = document.getElementById('storeTrendNote');
+                if (!note) {
+                    note = document.createElement('p');
+                    note.id = 'storeTrendNote';
+                    note.style.cssText = 'color: var(--text-light); font-size: 0.9rem; margin-top: 1rem;';
+                    container.insertBefore(note, chartsEl);
+                }
+                note.textContent = t('no-trend-hint');
+            }
+        }
+
+        function parseMonthlySummaryForStore(data, endMonth) {
+            if (!data || data.length < 2) return null;
+            const headers = (data[0] || []).map(h => String(h || '').toLowerCase());
+            const storeNameIdx = headers.findIndex(h => h.includes('store_name') || h.includes('门店') || h === 'store');
+            const storeIdIdx = headers.findIndex(h => h.includes('store_id') || h.includes('id'));
+            const storeIdx = storeNameIdx >= 0 ? storeNameIdx : (storeIdIdx >= 0 ? storeIdIdx : 0);
+            const monthIdx = headers.findIndex(h => h.includes('month') || h.includes('月份') || h.includes('月'));
+            const orderIdx = headers.findIndex(h =>
+                h === 'orders' || (h.includes('订单') && (h.includes('数') || h.includes('量')))
+            );
+            const settleIdx = headers.findIndex(h =>
+                h.includes('settle') || h.includes('结算') || h.includes('金額') || h.includes('決済')
+            );
+            if (storeIdx < 0 || (orderIdx < 0 && settleIdx < 0)) return null;
+
+            const storeRows = data.slice(1).filter(r => matchStoreName(r[storeIdx] || r[0]));
+            if (storeRows.length === 0) return null;
+
+            const byMonth = {};
+            storeRows.forEach(r => {
+                const m = formatMonthValue(r[monthIdx >= 0 ? monthIdx : 0] || r[0]);
+                if (m) {
+                    byMonth[m] = {
+                        orders: orderIdx >= 0 ? cleanNumberValue(r[orderIdx]) : 0,
+                        settlement: settleIdx >= 0 ? cleanNumberValue(r[settleIdx]) : 0
+                    };
+                }
+            });
+            const allMonths = Object.keys(byMonth).sort();
+            const months = endMonth
+                ? allMonths.filter(m => m <= endMonth).slice(-6)
+                : allMonths.slice(-6);
+            return {
+                months,
+                orders: months.map(m => byMonth[m]?.orders ?? 0),
+                settlements: months.map(m => byMonth[m]?.settlement ?? 0)
+            };
+        }
+
+        async function fetchStoreTrendViaScript(sheetId, scriptUrl, dashboardData) {
+            const monthValue = getCellValue(dashboardData, 2, 2);
+            const currentMonth = formatMonthValue(monthValue);
+            const sixMonths = [];
+            const now = new Date();
+            for (let i = 0; i < 6; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                sixMonths.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+            }
+            sixMonths.reverse();
+
+            const results = [];
+            for (const month of sixMonths) {
+                try {
+                    const [y, m] = month.split('-');
+                    const url = `${scriptUrl}?action=updateMonth&sheetId=${encodeURIComponent(sheetId)}&month=${y}-${m}-01`;
+                    const resp = await fetch(url);
+                    const json = await resp.json();
+                    if (!json.success) break;
+                    await new Promise(r => setTimeout(r, 1200));
+                    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${currentGid}`;
+                    const dataResp = await fetch(csvUrl);
+                    if (!dataResp.ok) break;
+                    const data = parseCSV(await dataResp.text());
+                    const sectionB = extractDynamicRange(data, 10, 1, 5);
+                    if (!sectionB || sectionB.length < 2) break;
+                    const rows = sectionB.slice(1);
+                    const storeRow = rows.find(r => matchStoreName(r[0]));
+                    if (!storeRow) {
+                        results.push({ month, orders: 0, settlement: 0 });
+                    } else {
+                        results.push({
+                            month,
+                            orders: cleanNumberValue(storeRow[1]),
+                            settlement: cleanNumberValue(storeRow[3])
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Fetch month failed:', month, e);
+                    break;
+                }
+            }
+            if (results.length === 0) return null;
+            try {
+                const [y, m] = currentMonth.split('-');
+                await fetch(`${scriptUrl}?action=updateMonth&sheetId=${encodeURIComponent(sheetId)}&month=${y}-${m}-01`);
+            } catch (e) {}
+            return {
+                months: results.map(r => r.month),
+                orders: results.map(r => r.orders),
+                settlements: results.map(r => r.settlement)
+            };
+        }
+
+        function renderTrendCharts(trendData) {
+            const months = trendData.months || [];
+            const orders = trendData.orders || [];
+            const settlements = trendData.settlements || [];
+            if (months.length === 0) return;
+
+            if (window.trendOrders) window.trendOrders.destroy();
+            if (window.trendSettlement) window.trendSettlement.destroy();
+
+            const scalesConfig = {
+                x: { offset: true },
+                y: { beginAtZero: true, grace: '8%' }
+            };
+            const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
+            const plugin = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
+
+            window.trendOrders = new Chart(document.getElementById('trendChartOrders').getContext('2d'), {
+                type: 'line',
+                plugins: plugin,
+                data: {
+                    labels: months,
+                    datasets: [{
+                        data: orders,
+                        borderColor: 'rgba(212, 175, 55, 1)',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        datalabels: { formatter: v => Math.round(v) + t('unit-orders') }
+                    }]
+                },
+                options: { ...opts, scales: scalesConfig }
+            });
+
+            window.trendSettlement = new Chart(document.getElementById('trendChartSettlement').getContext('2d'), {
+                type: 'line',
+                plugins: plugin,
+                data: {
+                    labels: months,
+                    datasets: [{
+                        data: settlements,
+                        borderColor: 'rgba(201, 169, 97, 1)',
+                        backgroundColor: 'rgba(201, 169, 97, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        datalabels: { formatter: v => '￥' + Math.round(v).toLocaleString() }
+                    }]
+                },
+                options: { ...opts, scales: scalesConfig }
+            });
+        }
+
+        function formatMonthLabel(y, m) {
+            if (currentLang === 'en') {
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                return months[m] + ' ' + y;
+            }
+            return `${y}年${m + 1}月`;
+        }
+        function generateMonthSelector(keepValue) {
+            const sel = document.getElementById('monthSelector');
+            if (!sel) return;
+            const prev = keepValue && sel.value;
+            sel.innerHTML = '';
+            const now = new Date();
+            for (let y = now.getFullYear(); y >= 2024; y--) {
+                for (let m = 11; m >= 0; m--) {
+                    if (y === now.getFullYear() && m > now.getMonth()) continue;
+                    const val = `${y}-${String(m + 1).padStart(2, '0')}`;
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = formatMonthLabel(y, m);
+                    sel.appendChild(opt);
+                }
+            }
+            if (prev) sel.value = prev;
+        }
+
+        async function updateMonthData() {
+            if (!currentSheetId) {
+                showMessage(t('msg-load-first'), 'error');
+                return;
+            }
+            const month = document.getElementById('monthSelector').value;
+            if (!month) {
+                showMessage('请选择月份', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('updateMonthBtn');
+            btn.disabled = true;
+            showMessage(t('msg-loading'), 'info');
+
+            const scriptUrl = document.getElementById('scriptUrl').value.trim();
+
+            if (scriptUrl) {
+                // 有 Apps Script：远程更新 Sheet 再重新拉取
+                try {
+                    const [y, m] = month.split('-');
+                    const url = `${scriptUrl}?action=updateMonth&sheetId=${encodeURIComponent(currentSheetId)}&month=${y}-${m}-01`;
+                    const resp = await fetch(url);
+                    const json = await resp.json();
+                    if (!json.success) throw new Error(json.error || '更新失败');
+                    await new Promise(r => setTimeout(r, 1500));
+                } catch (e) {
+                    showMessage('Apps Script 更新失败：' + e.message, 'error');
+                    btn.disabled = false;
+                    return;
+                }
+                try {
+                    await loadSheetData(currentSheetId, currentGid);
+                    showMessage(t('msg-month-updated'), 'success');
+                } catch (e) {
+                    showMessage('重新加载失败', 'error');
+                }
+            } else {
+                // 无 Apps Script：直接从 Monthly_Summary 按所选月份渲染
+                try {
+                    const monthlyGid = (document.getElementById('monthlySummaryGid')?.value?.trim()) || DEFAULT_MONTHLY_SUMMARY_GID;
+                    const csvUrl = `https://docs.google.com/spreadsheets/d/${currentSheetId}/export?format=csv&gid=${monthlyGid}`;
+                    const resp = await fetch(csvUrl);
+                    if (!resp.ok) throw new Error('无法访问 Monthly_Summary 表格');
+                    const data = parseCSV(await resp.text());
+                    renderStatsFromMonthlySummary(data, month);
+                    document.getElementById('currentMonthText').textContent = t('current-prefix') + month;
+                    // 更新趋势图：显示所选月份结尾的近 6 个月
+                    loadStoreTrendData(null, month);
+                    showMessage(t('msg-month-updated'), 'success');
+                } catch (e) {
+                    showMessage(t('msg-load-failed') + e.message, 'error');
+                }
+            }
+
+            btn.disabled = false;
+        }
+
+        function renderStatsFromMonthlySummary(data, selectedMonth) {
+            const grid = document.getElementById('storeStatsGrid');
+            if (!data || data.length < 2) {
+                grid.innerHTML = '<p>' + t('no-store-data') + '</p>';
+                return;
+            }
+            const headers = data[0] || [];
+            const headersLower = headers.map(h => String(h || '').toLowerCase().trim());
+
+            const storeIdx = headersLower.findIndex(h => h === 'store_name' || h === 'store');
+            const monthIdx = headersLower.findIndex(h => h === 'month_key' || h === 'month' || h.includes('月份'));
+
+            if (storeIdx < 0) {
+                grid.innerHTML = '<p>' + t('no-store-data') + '</p>';
+                return;
+            }
+
+            const rows = data.slice(1).filter(r => {
+                if (!matchStoreName(r[storeIdx] || '')) return false;
+                if (monthIdx >= 0) {
+                    return formatMonthValue(r[monthIdx] || '') === selectedMonth;
+                }
+                return true;
+            });
+
+            if (rows.length === 0) {
+                grid.innerHTML = `<p style="color:var(--text-light);padding:1rem;">📭 ${selectedMonth} 暂无数据</p>`;
+                return;
+            }
+
+            const storeRow = rows[0];
+            const SKIP_KEYWORDS = ['占比', '比例', 'percentage', 'ratio', 'percent', '割合'];
+            const SKIP_COL_RE = /^(store|month|id$|tax|commission|last_updated)/;
+
+            const cards = [];
+            for (let i = 0; i < headers.length; i++) {
+                const header = String(headers[i] || '').trim();
+                if (!header) continue;
+                const hl = header.toLowerCase();
+                if (SKIP_COL_RE.test(hl)) continue;
+                if (SKIP_KEYWORDS.some(kw => hl.includes(kw.toLowerCase()))) continue;
+
+                let val = storeRow[i] ?? '-';
+                const isOrder = hl.includes('订单') || hl.includes('注文') || hl === 'orders' || hl.includes('order_count');
+                const isMoney = hl.includes('金额') || hl.includes('金額') || hl.includes('settle') ||
+                                hl.includes('结算') || hl.includes('決済') || hl.includes('amount');
+
+                if (isOrder) {
+                    val = Math.round(cleanNumberValue(val)).toLocaleString();
+                } else if (isMoney) {
+                    const n = cleanNumberValue(val);
+                    val = n ? '￥' + Math.round(n).toLocaleString() : '-';
+                } else {
+                    const n = cleanNumberValue(val);
+                    if (String(val).trim() && !isNaN(n) && n !== 0) val = n.toLocaleString();
+                }
+                cards.push({ label: header, value: val });
+            }
+
+            grid.innerHTML = cards.map(c => `
+                <div class="stat-card">
+                    <div class="stat-label">${c.label}</div>
+                    <div class="stat-value">${c.value}</div>
+                </div>
+            `).join('') || '<p>' + t('no-store-data') + '</p>';
+        }
+
+        async function loadSheetData(sheetId, gid) {
+            // Google Visualization API endpoint — supports CORS, no redirect
+            let csvText;
+            const urls = [
+                `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`,
+                `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`,
+            ];
+            for (const url of urls) {
+                try {
+                    const resp = await fetch(url);
+                    if (resp.ok) { csvText = await resp.text(); if (csvText && csvText.trim()) break; }
+                } catch (_) {}
+            }
+
+            if (!csvText || !csvText.trim()) throw new Error('无法访问表格');
+            const data = parseCSV(csvText);
+            if (!data || data.length === 0) throw new Error('数据为空');
+            processData(data);
+        }
+
+        if (storeName === '未选择门店') {
+            document.getElementById('dataSection').classList.add('hidden');
+            showMessage(t('msg-select-store'), 'info');
+        } else {
+            loadData();
+        }
+    </script>
+</body>
+</html>

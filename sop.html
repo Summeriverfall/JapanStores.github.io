@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="客服工作SOP - Customer Service SOP">
+    <title>客服工作SOP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gold: #C9A961;
+            --secondary-gold: #D4AF37;
+            --bg-cream: #FAF8F3;
+            --bg-white: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #6B6B6B;
+            --success: #1E8E4F;
+            --error: #DC3545;
+            --info: #0D6EFD;
+            --warning: #FFC107;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+            --shadow-medium: rgba(0, 0, 0, 0.08);
+            --shadow-heavy: rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.8;
+        }
+
+        .sop-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .sop-header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .sop-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .sop-subtitle {
+            color: var(--text-medium);
+            font-size: 1rem;
+        }
+
+        .language-switcher {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .lang-btn.active {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .sop-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--primary-gold);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title::before {
+            content: '📋';
+            font-size: 1.5rem;
+        }
+
+        .subsection {
+            margin-bottom: 2rem;
+        }
+
+        .subsection-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+            padding-left: 1rem;
+            border-left: 4px solid var(--primary-gold);
+        }
+
+        .subsection-title:first-child {
+            margin-top: 0;
+        }
+
+        .subsection-content {
+            margin-left: 1rem;
+        }
+
+        .rule-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .rule-list li {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-cream);
+            border-left: 3px solid var(--primary-gold);
+            border-radius: 6px;
+        }
+
+        .rule-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+            margin-right: 0.75rem;
+        }
+
+        .process-flow {
+            background: var(--bg-cream);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            border: 2px dashed var(--primary-gold);
+        }
+
+        .process-flow-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .process-steps {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .process-step {
+            padding: 0.5rem 1rem;
+            background: var(--primary-gold);
+            color: white;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .process-arrow {
+            color: var(--primary-gold);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .message-template {
+            background: #f8f9fa;
+            border-left: 4px solid var(--info);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .message-template strong {
+            color: var(--info);
+        }
+
+        .info-box {
+            background: rgba(13, 110, 253, 0.1);
+            border-left: 4px solid var(--info);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+        }
+
+        .success-box {
+            background: rgba(30, 142, 79, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+        }
+
+        .error-box {
+            background: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid var(--error);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+        }
+
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .checklist li {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            position: absolute;
+            left: 0;
+            color: var(--primary-gold);
+            font-size: 1.2rem;
+        }
+
+        .nested-list {
+            margin-left: 2rem;
+            margin-top: 0.5rem;
+        }
+
+        .nested-list li {
+            padding: 0.25rem 0;
+            list-style: decimal;
+        }
+
+        .highlight {
+            background: rgba(201, 169, 97, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary-gold);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .sop-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1.25rem 1.5rem;
+            }
+
+            .sop-title {
+                font-size: 1.5rem;
+            }
+
+            .sop-section {
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+            }
+
+            .subsection-title {
+                font-size: 1.1rem;
+            }
+
+            .process-steps {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .process-arrow {
+                transform: rotate(90deg);
+                margin: 0.25rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sop-container">
+        <!-- 头部 -->
+        <div class="sop-header">
+            <div class="header-left">
+                <h1 class="sop-title" data-lang="title">客服预约执行标准流程<span class="version-badge" data-lang="version">V1.0</span></h1>
+                <p class="sop-subtitle" data-lang="subtitle">Customer Service Booking Execution Standard Process</p>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="ja">日本語</button>
+            </div>
+        </div>
+
+        <!-- 第一部分：基本流程 -->
+        <div class="sop-section">
+            <h2 class="section-title" data-lang="part1-title">一、客服预约执行标准流程（V1.0） - 速查卡</h2>
+            
+            <div class="process-flow">
+                <div class="process-flow-title" data-lang="process-flow-title">执行顺序：</div>
+                <div class="process-steps">
+                    <span class="process-step" data-lang="step1">接住</span>
+                    <span class="process-arrow">→</span>
+                    <span class="process-step" data-lang="step2">判断</span>
+                    <span class="process-arrow">→</span>
+                    <span class="process-step" data-lang="step3">补齐</span>
+                    <span class="process-arrow">→</span>
+                    <span class="process-step" data-lang="step4">确认</span>
+                    <span class="process-arrow">→</span>
+                    <span class="process-step" data-lang="step5">给结果</span>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section1-title">1. 基本规则</h3>
+                <ul class="rule-list">
+                    <li data-lang="rule1">客人消息 2 分钟内回复</li>
+                    <li data-lang="rule2">信息不齐全时，一次性补齐，不拆分多轮询问</li>
+                    <li data-lang="rule3">门店确认前，不使用 booked / confirmed / reservation</li>
+                    <li data-lang="rule4">不向客人解释内部流程</li>
+                    <li data-lang="rule5">向门店只反馈最终结果</li>
+                </ul>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section2-title">2. 首轮回复（按场景选择）</h3>
+                
+                <div class="subsection-content">
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="section2-1-title">2.1 客人只发：Hi / Hello</h4>
+                    <div class="message-template" data-lang="message-hi">Hello 😊 Thank you for reaching out.
+How may we assist you today?</div>
+
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="section2-2-title">2.2 SPA类业务的信息要求</h4>
+                    <ul class="rule-list">
+                        <li data-lang="info1">门店</li>
+                        <li data-lang="info2">人数</li>
+                        <li data-lang="info3">日期与时间</li>
+                        <li data-lang="info4">项目</li>
+                        <li data-lang="info5">姓名</li>
+                    </ul>
+
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="section2-3-title">2.3 信息不足</h4>
+                    <div class="info-box" data-lang="section2-3-note">（客人发送的信息不完整时，根据客人已经提供的信息，和客人沟通补齐信息）</div>
+                    <div class="message-template" data-lang="message-incomplete">To help us check availability for you, could you please provide the following details?
+- Which spa you would like to visit（门店）
+- Preferred time（时间）
+- Massage course and duration（项目）
+- Number of guests（人数）
+- Name（名字）
+Once we have these details, we'll be happy to assist you further.</div>
+                    <div class="message-template" data-lang="message-name-only">如果只是缺少名字，且WhatsApp上面有显示
+May I confirm the booking name as 【WhatsApp上显示的名字】?</div>
+
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="section2-4-title">2.4 信息基本齐全</h4>
+                    <div class="message-template" data-lang="message-complete">Thank you for your message. We've received your request and are checking the details on our end.
+Please kindly give us a moment — we'll get back to you shortly.</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section3-title">3. 信息核对（仅此一条）</h3>
+                <div class="message-template" data-lang="message-verify">Just to make sure I've got this right — you'd like to book a 【项目】 at 【店名】 for 【人数 NUMBER】 on 【日期 DATE】, at/around 【时间 TIME】. The name is 【名字 GUEST NAME】. Please let me know if that sounds right.</div>
+                <div class="info-box" data-lang="section3-note">说明：
+- 仅用于信息核对
+- 不使用列表或字段格式</div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section4-title">4. 联系门店前检查</h3>
+                <ul class="checklist">
+                    <li data-lang="check1">信息已齐全</li>
+                    <li data-lang="check2">客人未对价格提出疑问</li>
+                </ul>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section5-title">5. 预约确认（仅在此处使用 confirmed）</h3>
+                <div class="message-template" data-lang="message-confirm">Your appointment has been confirmed. 
+
+SHOP: Shop Name
+Name: Guest Name
+Time: x/x，xx:xx AM/PM
+Number of Guests: Guest Number 
+Service: Course Name 
+Contact (WhatsApp): Number
+
+We look forward to welcoming you.</div>
+                <div class="success-box" data-lang="section5-rules">规则：
+- 发送即视为预约成立
+- 该信息同步发送给门店
+- 发送之前检查人数、日期、时间</div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section6-title">6. 确认完成后的操作</h3>
+                <div class="message-template" data-lang="message-after-confirm">I've shared your booking with the store manager. You may head to the shop directly.
+
+Please note the reservation will be held for 5 minutes only.If you're running late or need to change the time, kindly inform us in advance.
+
+Let me know if you need anything else!</div>
+                <div class="info-box" data-lang="section6-note">说明：发送已经通知门店经理信息，快捷回复"manager"
+- 门店客服群同步结果
+- Whats修改备注，添加标签
+- 日历记录
+- 预约时间>30分钟的，30分钟前、15分钟前，分别发送提醒信息（重要）
+- 预约时间<30分钟的，15分钟前，发送提醒信息（重要）</div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section7-title">7. 不可安排需调整</h3>
+                <div class="info-box" data-lang="section7-note">说明：
+- 门店当下时间不行，但给了其他时间
+- 询问客人是否接受其他时间，或改其他日期
+- 如果超过两轮沟通，则询问客人是否考虑其他门店</div>
+                <div class="message-template" data-lang="message-adjust">Thanks for waiting.
+Unfortunately, the requested time is not available.
+Would you like to:
+ • Try a different time： [门店给出的其他时间]
+ • Choose another date：[其他日期]
+ • Or check an alternative option nearby?</div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section8-title">8. 未回复消息，跟进</h3>
+                <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="section8-1-title">8.1 当日预约：</h4>
+                <div class="message-template" data-lang="message-followup-today-en">Hi 😊  Just a quick follow-up regarding your request earlier.  As this is for today, please let us know if you'd like us to continue checking availability for you.</div>
+                <div class="message-template" data-lang="message-followup-today-zh">中文版：
+您好～想跟进一下您刚才的咨询，今天的预约我们仍可以帮您继续查询，请问还需要吗？😊
+需要的话请告诉我们哦！</div>
+                
+                <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="section8-2-title">8.2 非当日预约：</h4>
+                <div class="message-template" data-lang="message-followup-non-today">Just following up to see if you had a chance to check my previous message.  Happy to assist whenever you're ready.</div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section9-title">9. 价格处理原则</h3>
+                <ul class="rule-list">
+                    <li data-lang="price-rule1">客人未询问价格：不主动说明</li>
+                    <li data-lang="price-rule2">客人询问价格：先说明价格，确认客人接受价格后，再联系门店</li>
+                    <li data-lang="price-rule3">不重复强调价格</li>
+                </ul>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="section10-title">10. 禁止事项（重点）</h3>
+                <ul class="rule-list">
+                    <li data-lang="prohibit1">不让客人多次确认</li>
+                    <li data-lang="prohibit2">不拆分信息为多轮询问</li>
+                    <li data-lang="prohibit3">不提前发送"类似确认单"的信息</li>
+                    <li data-lang="prohibit4">未获得最终确认前，不使用以下词汇：
+                        <span class="highlight">booked / booking confirmed / reserved</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 第二部分：执行细节 -->
+        <div class="sop-section">
+            <h2 class="section-title" data-lang="part2-title">二、执行细节、要求及结果对照</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail1-title">1. 首轮响应流程（所有客人通用）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail1-trigger">触发条件</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail1-trigger-item">客人发送任何消息（包含 hi / hello / 预约咨询 / availability）</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail1-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail1-req1">客服须在 2 分钟内完成首轮响应</li>
+                        <li data-lang="detail1-req2">首轮响应仅用于：确认已收到消息、稳定客人情绪</li>
+                        <li data-lang="detail1-req3">首轮响应不得：承诺任何预约结果、进入具体业务确认</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail1-result">执行结果</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail1-result-item1">客人明确知道：请求已被处理</li>
+                        <li data-lang="detail1-result-item2">客服获得继续沟通的时间窗口</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail2-title">2. 信息判断流程（是否信息齐全）</h3>
+                <div class="subsection-content" data-lang="detail2-content">在首轮响应后，客服应立即判断：是否具备所有联系门店的必要信息。
+SPA 预约判断所需信息包括：
+- 门店
+- 服务项目与时长
+- 日期与时间
+- 人数
+- 价格（视情况）</div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail3-title">3. 信息补全流程（信息不齐全时）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail3-trigger">触发条件</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail3-trigger-item">客人提供的信息不足以判断</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail3-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail3-req1">客服须一次性向客人补充所有缺失信息</li>
+                        <li data-lang="detail3-req2">不得将信息拆分为多轮询问</li>
+                        <li data-lang="detail3-req3">在信息补全完成前，不得联系门店</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail3-result">执行结果</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail3-result-item1">客人一次性补齐信息</li>
+                        <li data-lang="detail3-result-item2">客服可以进入门店确认阶段</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail4-title">4. 价格确认流程（根据情况判断，关键节点）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail4-trigger">触发条件</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail4-trigger-item">客人尚未明确表示接受价格</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail4-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail4-req1">客服需在联系门店前完成价格确认</li>
+                        <li data-lang="detail4-req2">若客人对价格存在犹豫：暂停后续流程、不联系门店</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail4-result">执行结果</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail4-result-item">仅在"高概率成交"情况下才占用门店资源</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail5-title">5. 内部确认流程（客人不可见）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail5-trigger">触发条件</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail5-trigger-item1">信息已齐全</li>
+                        <li data-lang="detail5-trigger-item2">价格已确认（视情况）</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail5-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail5-req1">客服整理完整预约信息</li>
+                        <li data-lang="detail5-req2">将信息发送到客服沟通群</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail5-result">执行结果</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail5-result-item">获得门店明确反馈：可安排 / 不可安排</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail6-title">6. 结果反馈流程（对客人）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail6-trigger">触发条件</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail6-trigger-item">已获得门店明确反馈</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail6-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail6-req1">客服只向客人反馈"结果"，不反馈过程</li>
+                        <li data-lang="detail6-req2">对客人仅呈现以下两种状态之一：可安排（最终确认）/ 需调整（不可安排或需更改条件）</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail6-result">执行结果</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail6-result-item1">客人明确当前状态</li>
+                        <li data-lang="detail6-result-item2">不产生"中间态"误解</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail7-title">7. 最终确认流程（可安排时）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail7-trigger">触发条件</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail7-trigger-item">门店确认可安排</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail7-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail7-req1">客服向客人发送最终确认信息</li>
+                        <li data-lang="detail7-req2">最终确认发送后，视为预约成立</li>
+                        <li data-lang="detail7-req3">最终确认信息，同步发送给门店沟通群（向客人发送确认预约信息后得到客人回复（点赞或感谢词语）后将此预约信息发送给门店）</li>
+                        <li data-lang="detail7-req4">完成备注、标签、日历修改</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail7-result">执行结果</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail7-result-item1">客服流程结束</li>
+                        <li data-lang="detail7-result-item2">开始前30分钟提醒</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="detail8-title">8. 异常与中断处理（跟进）</h3>
+                <div class="subsection-content">
+                    <p><strong data-lang="detail8-scenario">适用情况</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail8-scenario-item1">客人未回复</li>
+                        <li data-lang="detail8-scenario-item2">客人明确放弃</li>
+                        <li data-lang="detail8-scenario-item3">门店临时不可安排</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong data-lang="detail8-requirement">执行要求</strong></p>
+                    <ul class="nested-list">
+                        <li data-lang="detail8-req1">不强行推进流程</li>
+                        <li data-lang="detail8-req2">不发送确认信息</li>
+                        <li data-lang="detail8-req3">记录状态并结束本次流程</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第三部分：常见问题 -->
+        <div class="sop-section">
+            <h2 class="section-title" data-lang="part3-title">三、客户常见问题速查</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="faq1-title">接送机和包车</h3>
+                <div class="subsection-content">
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="faq1-1-title">1. 行李容纳</h4>
+                    
+                    <h5 style="font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem;" data-lang="faq1-1-1-title">1. 14座海狮</h5>
+                    <ul class="nested-list">
+                        <li data-lang="faq1-1-1-item1">乘客最大可乘13人</li>
+                        <li data-lang="faq1-1-1-item2">1～9人乘坐时24寸行李最大可装13个</li>
+                        <li data-lang="faq1-1-1-item3">10～11人乘坐时24寸行李最大可装7个</li>
+                        <li data-lang="faq1-1-1-item4">12～13人乘坐时24寸行李最大可装3个</li>
+                    </ul>
+
+                    <h5 style="font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem;" data-lang="faq1-1-2-title">2. 10座海狮</h5>
+                    <ul class="nested-list">
+                        <li data-lang="faq1-1-2-item1">乘客最大可乘9人</li>
+                        <li data-lang="faq1-1-2-item2">1～9人乘坐时24寸行李最大可装13个</li>
+                    </ul>
+
+                    <h5 style="font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem;" data-lang="faq1-1-3-title">3. 7座阿尔法</h5>
+                    <ul class="nested-list">
+                        <li data-lang="faq1-1-3-item1">乘客最大可乘6人</li>
+                        <li data-lang="faq1-1-3-item2">1～3人乘坐时24寸行李最大可装8个</li>
+                        <li data-lang="faq1-1-3-item3">4人乘坐时24寸行李最大可装5个</li>
+                        <li data-lang="faq1-1-3-item4">5～6人乘坐时24寸行李最大可装4个</li>
+                    </ul>
+
+                    <div class="info-box" data-lang="faq1-1-note">*以上均为24寸为主，如果有24寸以上的行李数量将会相对减少</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title" data-lang="faq2-title">Celestiquespa</h3>
+                <div class="subsection-content">
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="faq2-1-title">2. 可以吸烟吗？</h4>
+                    <ul class="nested-list">
+                        <li data-lang="faq2-1-item1">包间可以吸电子烟</li>
+                    </ul>
+
+                    <h4 class="subsection-title" style="font-size: 1.1rem; margin-top: 1rem;" data-lang="faq2-2-title">3. 按摩师是越南人吗？</h4>
+                    <ul class="nested-list">
+                        <li data-lang="faq2-2-item1">有越南按摩师，也有中国和日本按摩师</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 多语言数据
+        const translations = {
+            zh: {
+                title: "客服预约执行标准流程",
+                version: "V1.0",
+                subtitle: "Customer Service Booking Execution Standard Process",
+                "part1-title": "一、客服预约执行标准流程（V1.0） - 速查卡",
+                "process-flow-title": "执行顺序：",
+                "step1": "接住",
+                "step2": "判断",
+                "step3": "补齐",
+                "step4": "确认",
+                "step5": "给结果",
+                "section1-title": "1. 基本规则",
+                "rule1": "客人消息 2 分钟内回复",
+                "rule2": "信息不齐全时，一次性补齐，不拆分多轮询问",
+                "rule3": "门店确认前，不使用 booked / confirmed / reservation",
+                "rule4": "不向客人解释内部流程",
+                "rule5": "向门店只反馈最终结果",
+                "section2-title": "2. 首轮回复（按场景选择）",
+                "section2-1-title": "2.1 客人只发：Hi / Hello",
+                "message-hi": "Hello 😊 Thank you for reaching out.\nHow may we assist you today?",
+                "section2-2-title": "2.2 SPA类业务的信息要求",
+                "info1": "门店",
+                "info2": "人数",
+                "info3": "日期与时间",
+                "info4": "项目",
+                "info5": "姓名",
+                "section2-3-title": "2.3 信息不足",
+                "section2-3-note": "（客人发送的信息不完整时，根据客人已经提供的信息，和客人沟通补齐信息）",
+                "message-incomplete": "To help us check availability for you, could you please provide the following details?\n- Which spa you would like to visit（门店）\n- Preferred time（时间）\n- Massage course and duration（项目）\n- Number of guests（人数）\n- Name（名字）\nOnce we have these details, we'll be happy to assist you further.",
+                "message-name-only": "如果只是缺少名字，且WhatsApp上面有显示\nMay I confirm the booking name as 【WhatsApp上显示的名字】?",
+                "section2-4-title": "2.4 信息基本齐全",
+                "message-complete": "Thank you for your message. We've received your request and are checking the details on our end.\nPlease kindly give us a moment — we'll get back to you shortly.",
+                "section3-title": "3. 信息核对（仅此一条）",
+                "message-verify": "Just to make sure I've got this right — you'd like to book a 【项目】 at 【店名】 for 【人数 NUMBER】 on 【日期 DATE】, at/around 【时间 TIME】. The name is 【名字 GUEST NAME】. Please let me know if that sounds right.",
+                "section3-note": "说明：\n- 仅用于信息核对\n- 不使用列表或字段格式",
+                "section4-title": "4. 联系门店前检查",
+                "check1": "信息已齐全",
+                "check2": "客人未对价格提出疑问",
+                "section5-title": "5. 预约确认（仅在此处使用 confirmed）",
+                "message-confirm": "Your appointment has been confirmed. \n\nSHOP: Shop Name\nName: Guest Name\nTime: x/x，xx:xx AM/PM\nNumber of Guests: Guest Number \nService: Course Name \nContact (WhatsApp): Number\n\nWe look forward to welcoming you.",
+                "section5-rules": "规则：\n- 发送即视为预约成立\n- 该信息同步发送给门店\n- 发送之前检查人数、日期、时间",
+                "section6-title": "6. 确认完成后的操作",
+                "message-after-confirm": "I've shared your booking with the store manager. You may head to the shop directly.\n\nPlease note the reservation will be held for 5 minutes only.If you're running late or need to change the time, kindly inform us in advance.\n\nLet me know if you need anything else!",
+                "section6-note": "说明：发送已经通知门店经理信息，快捷回复\"manager\"\n- 门店客服群同步结果\n- Whats修改备注，添加标签\n- 日历记录\n- 预约时间>30分钟的，30分钟前、15分钟前，分别发送提醒信息（重要）\n- 预约时间<30分钟的，15分钟前，发送提醒信息（重要）",
+                "section7-title": "7. 不可安排需调整",
+                "section7-note": "说明：\n- 门店当下时间不行，但给了其他时间\n- 询问客人是否接受其他时间，或改其他日期\n- 如果超过两轮沟通，则询问客人是否考虑其他门店",
+                "message-adjust": "Thanks for waiting.\nUnfortunately, the requested time is not available.\nWould you like to:\n • Try a different time： [门店给出的其他时间]\n • Choose another date：[其他日期]\n • Or check an alternative option nearby?",
+                "section8-title": "8. 未回复消息，跟进",
+                "section8-1-title": "8.1 当日预约：",
+                "message-followup-today-en": "Hi 😊  Just a quick follow-up regarding your request earlier.  As this is for today, please let us know if you'd like us to continue checking availability for you.",
+                "message-followup-today-zh": "中文版：\n您好～想跟进一下您刚才的咨询，今天的预约我们仍可以帮您继续查询，请问还需要吗？😊\n需要的话请告诉我们哦！",
+                "section8-2-title": "8.2 非当日预约：",
+                "message-followup-non-today": "Just following up to see if you had a chance to check my previous message.  Happy to assist whenever you're ready.",
+                "section9-title": "9. 价格处理原则",
+                "price-rule1": "客人未询问价格：不主动说明",
+                "price-rule2": "客人询问价格：先说明价格，确认客人接受价格后，再联系门店",
+                "price-rule3": "不重复强调价格",
+                "section10-title": "10. 禁止事项（重点）",
+                "prohibit1": "不让客人多次确认",
+                "prohibit2": "不拆分信息为多轮询问",
+                "prohibit3": "不提前发送\"类似确认单\"的信息",
+                "prohibit4": "未获得最终确认前，不使用以下词汇：\n                        booked / booking confirmed / reserved",
+                "part2-title": "二、执行细节、要求及结果对照",
+                "detail1-title": "1. 首轮响应流程（所有客人通用）",
+                "detail1-trigger": "触发条件",
+                "detail1-trigger-item": "客人发送任何消息（包含 hi / hello / 预约咨询 / availability）",
+                "detail1-requirement": "执行要求",
+                "detail1-req1": "客服须在 2 分钟内完成首轮响应",
+                "detail1-req2": "首轮响应仅用于：确认已收到消息、稳定客人情绪",
+                "detail1-req3": "首轮响应不得：承诺任何预约结果、进入具体业务确认",
+                "detail1-result": "执行结果",
+                "detail1-result-item1": "客人明确知道：请求已被处理",
+                "detail1-result-item2": "客服获得继续沟通的时间窗口",
+                "detail2-title": "2. 信息判断流程（是否信息齐全）",
+                "detail2-content": "在首轮响应后，客服应立即判断：是否具备所有联系门店的必要信息。\nSPA 预约判断所需信息包括：\n- 门店\n- 服务项目与时长\n- 日期与时间\n- 人数\n- 价格（视情况）",
+                "detail3-title": "3. 信息补全流程（信息不齐全时）",
+                "detail3-trigger": "触发条件",
+                "detail3-trigger-item": "客人提供的信息不足以判断",
+                "detail3-requirement": "执行要求",
+                "detail3-req1": "客服须一次性向客人补充所有缺失信息",
+                "detail3-req2": "不得将信息拆分为多轮询问",
+                "detail3-req3": "在信息补全完成前，不得联系门店",
+                "detail3-result": "执行结果",
+                "detail3-result-item1": "客人一次性补齐信息",
+                "detail3-result-item2": "客服可以进入门店确认阶段",
+                "detail4-title": "4. 价格确认流程（根据情况判断，关键节点）",
+                "detail4-trigger": "触发条件",
+                "detail4-trigger-item": "客人尚未明确表示接受价格",
+                "detail4-requirement": "执行要求",
+                "detail4-req1": "客服需在联系门店前完成价格确认",
+                "detail4-req2": "若客人对价格存在犹豫：暂停后续流程、不联系门店",
+                "detail4-result": "执行结果",
+                "detail4-result-item": "仅在\"高概率成交\"情况下才占用门店资源",
+                "detail5-title": "5. 内部确认流程（客人不可见）",
+                "detail5-trigger": "触发条件",
+                "detail5-trigger-item1": "信息已齐全",
+                "detail5-trigger-item2": "价格已确认（视情况）",
+                "detail5-requirement": "执行要求",
+                "detail5-req1": "客服整理完整预约信息",
+                "detail5-req2": "将信息发送到客服沟通群",
+                "detail5-result": "执行结果",
+                "detail5-result-item": "获得门店明确反馈：可安排 / 不可安排",
+                "detail6-title": "6. 结果反馈流程（对客人）",
+                "detail6-trigger": "触发条件",
+                "detail6-trigger-item": "已获得门店明确反馈",
+                "detail6-requirement": "执行要求",
+                "detail6-req1": "客服只向客人反馈\"结果\"，不反馈过程",
+                "detail6-req2": "对客人仅呈现以下两种状态之一：可安排（最终确认）/ 需调整（不可安排或需更改条件）",
+                "detail6-result": "执行结果",
+                "detail6-result-item1": "客人明确当前状态",
+                "detail6-result-item2": "不产生\"中间态\"误解",
+                "detail7-title": "7. 最终确认流程（可安排时）",
+                "detail7-trigger": "触发条件",
+                "detail7-trigger-item": "门店确认可安排",
+                "detail7-requirement": "执行要求",
+                "detail7-req1": "客服向客人发送最终确认信息",
+                "detail7-req2": "最终确认发送后，视为预约成立",
+                "detail7-req3": "最终确认信息，同步发送给门店沟通群（向客人发送确认预约信息后得到客人回复（点赞或感谢词语）后将此预约信息发送给门店）",
+                "detail7-req4": "完成备注、标签、日历修改",
+                "detail7-result": "执行结果",
+                "detail7-result-item1": "客服流程结束",
+                "detail7-result-item2": "开始前30分钟提醒",
+                "detail8-title": "8. 异常与中断处理（跟进）",
+                "detail8-scenario": "适用情况",
+                "detail8-scenario-item1": "客人未回复",
+                "detail8-scenario-item2": "客人明确放弃",
+                "detail8-scenario-item3": "门店临时不可安排",
+                "detail8-requirement": "执行要求",
+                "detail8-req1": "不强行推进流程",
+                "detail8-req2": "不发送确认信息",
+                "detail8-req3": "记录状态并结束本次流程",
+                "part3-title": "三、客户常见问题速查",
+                "faq1-title": "接送机和包车",
+                "faq1-1-title": "1. 行李容纳",
+                "faq1-1-1-title": "1. 14座海狮",
+                "faq1-1-1-item1": "乘客最大可乘13人",
+                "faq1-1-1-item2": "1～9人乘坐时24寸行李最大可装13个",
+                "faq1-1-1-item3": "10～11人乘坐时24寸行李最大可装7个",
+                "faq1-1-1-item4": "12～13人乘坐时24寸行李最大可装3个",
+                "faq1-1-2-title": "2. 10座海狮",
+                "faq1-1-2-item1": "乘客最大可乘9人",
+                "faq1-1-2-item2": "1～9人乘坐时24寸行李最大可装13个",
+                "faq1-1-3-title": "3. 7座阿尔法",
+                "faq1-1-3-item1": "乘客最大可乘6人",
+                "faq1-1-3-item2": "1～3人乘坐时24寸行李最大可装8个",
+                "faq1-1-3-item3": "4人乘坐时24寸行李最大可装5个",
+                "faq1-1-3-item4": "5～6人乘坐时24寸行李最大可装4个",
+                "faq1-1-note": "*以上均为24寸为主，如果有24寸以上的行李数量将会相对减少",
+                "faq2-title": "Celestiquespa",
+                "faq2-1-title": "2. 可以吸烟吗？",
+                "faq2-1-item1": "包间可以吸电子烟",
+                "faq2-2-title": "3. 按摩师是越南人吗？",
+                "faq2-2-item1": "有越南按摩师，也有中国和日本按摩师"
+            },
+            en: {
+                title: "Customer Service Booking Execution Standard Process",
+                version: "V1.0",
+                subtitle: "Customer Service Booking Execution Standard Process",
+                "part1-title": "Part I: Customer Service Booking Execution Standard Process (V1.0) - Quick Reference",
+                "process-flow-title": "Execution Order:",
+                "step1": "Receive",
+                "step2": "Assess",
+                "step3": "Complete",
+                "step4": "Confirm",
+                "step5": "Deliver Result",
+                "section1-title": "1. Basic Rules",
+                "rule1": "Reply to customer messages within 2 minutes",
+                "rule2": "When information is incomplete, request all missing information at once, do not split into multiple rounds",
+                "rule3": "Do not use booked / confirmed / reservation before store confirmation",
+                "rule4": "Do not explain internal processes to customers",
+                "rule5": "Only provide final results to stores",
+                "section2-title": "2. First Response (Select by Scenario)",
+                "section2-1-title": "2.1 Customer Only Sends: Hi / Hello",
+                "message-hi": "Hello 😊 Thank you for reaching out.\nHow may we assist you today?",
+                "section2-2-title": "2.2 Information Required for SPA Services",
+                "info1": "Store",
+                "info2": "Number of guests",
+                "info3": "Date and time",
+                "info4": "Service",
+                "info5": "Name",
+                "section2-3-title": "2.3 Insufficient Information",
+                "section2-3-note": "(When customer's information is incomplete, communicate with customer to complete information based on what they have already provided)",
+                "message-incomplete": "To help us check availability for you, could you please provide the following details?\n- Which spa you would like to visit (Store)\n- Preferred time (Time)\n- Massage course and duration (Service)\n- Number of guests (Number of guests)\n- Name (Name)\nOnce we have these details, we'll be happy to assist you further.",
+                "message-name-only": "If only the name is missing and it's displayed on WhatsApp\nMay I confirm the booking name as [Name displayed on WhatsApp]?",
+                "section2-4-title": "2.4 Information Basically Complete",
+                "message-complete": "Thank you for your message. We've received your request and are checking the details on our end.\nPlease kindly give us a moment — we'll get back to you shortly.",
+                "section3-title": "3. Information Verification (Only This One)",
+                "message-verify": "Just to make sure I've got this right — you'd like to book a [Service] at [Store Name] for [Number NUMBER] on [Date DATE], at/around [Time TIME]. The name is [Guest Name GUEST NAME]. Please let me know if that sounds right.",
+                "section3-note": "Note:\n- Only for information verification\n- Do not use list or field format",
+                "section4-title": "4. Pre-Store Contact Checklist",
+                "check1": "Information is complete",
+                "check2": "Customer has not raised price questions",
+                "section5-title": "5. Booking Confirmation (Only Use 'confirmed' Here)",
+                "message-confirm": "Your appointment has been confirmed. \n\nSHOP: Shop Name\nName: Guest Name\nTime: x/x, xx:xx AM/PM\nNumber of Guests: Guest Number \nService: Course Name \nContact (WhatsApp): Number\n\nWe look forward to welcoming you.",
+                "section5-rules": "Rules:\n- Sending this message constitutes a confirmed booking\n- This information is simultaneously sent to the store\n- Check number of guests, date, and time before sending",
+                "section6-title": "6. Post-Confirmation Operations",
+                "message-after-confirm": "I've shared your booking with the store manager. You may head to the shop directly.\n\nPlease note the reservation will be held for 5 minutes only.If you're running late or need to change the time, kindly inform us in advance.\n\nLet me know if you need anything else!",
+                "section6-note": "Note: After sending notification to store manager, quick reply \"manager\"\n- Synchronize results in store customer service group\n- Modify WhatsApp notes and add tags\n- Calendar entry\n- For bookings >30 minutes: send reminder 30 minutes before and 15 minutes before (Important)\n- For bookings <30 minutes: send reminder 15 minutes before (Important)",
+                "section7-title": "7. Adjustment Required When Not Available",
+                "section7-note": "Note:\n- Store cannot accommodate requested time but offers alternative times\n- Ask customer if they accept alternative time or different date\n- If communication exceeds two rounds, ask customer if they would consider another store",
+                "message-adjust": "Thanks for waiting.\nUnfortunately, the requested time is not available.\nWould you like to:\n • Try a different time: [Other time provided by store]\n • Choose another date: [Other date]\n • Or check an alternative option nearby?",
+                "section8-title": "8. Follow-up for Unanswered Messages",
+                "section8-1-title": "8.1 Same-Day Booking:",
+                "message-followup-today-en": "Hi 😊  Just a quick follow-up regarding your request earlier.  As this is for today, please let us know if you'd like us to continue checking availability for you.",
+                "message-followup-today-zh": "Chinese Version:\n您好～想跟进一下您刚才的咨询，今天的预约我们仍可以帮您继续查询，请问还需要吗？😊\n需要的话请告诉我们哦！",
+                "section8-2-title": "8.2 Non-Same-Day Booking:",
+                "message-followup-non-today": "Just following up to see if you had a chance to check my previous message.  Happy to assist whenever you're ready.",
+                "section9-title": "9. Price Handling Principles",
+                "price-rule1": "If customer does not ask about price: do not proactively mention it",
+                "price-rule2": "If customer asks about price: explain price first, confirm customer accepts price, then contact store",
+                "price-rule3": "Do not repeatedly emphasize price",
+                "section10-title": "10. Prohibited Actions (Important)",
+                "prohibit1": "Do not ask customer to confirm multiple times",
+                "prohibit2": "Do not split information into multiple rounds of inquiries",
+                "prohibit3": "Do not send \"confirmation-like\" information in advance",
+                "prohibit4": "Before obtaining final confirmation, do not use the following terms:\n                        booked / booking confirmed / reserved",
+                "part2-title": "Part II: Execution Details, Requirements and Result Comparison",
+                "detail1-title": "1. First Response Process (Applicable to All Customers)",
+                "detail1-trigger": "Trigger Condition",
+                "detail1-trigger-item": "Customer sends any message (including hi / hello / booking inquiry / availability)",
+                "detail1-requirement": "Execution Requirements",
+                "detail1-req1": "Customer service must complete first response within 2 minutes",
+                "detail1-req2": "First response is only for: confirming message received, stabilizing customer mood",
+                "detail1-req3": "First response must not: promise any booking results, enter specific business confirmation",
+                "detail1-result": "Execution Result",
+                "detail1-result-item1": "Customer clearly knows: request has been processed",
+                "detail1-result-item2": "Customer service gains time window for continued communication",
+                "detail2-title": "2. Information Assessment Process (Whether Information is Complete)",
+                "detail2-content": "After first response, customer service should immediately assess: whether all necessary information to contact store is available.\nInformation required for SPA booking assessment includes:\n- Store\n- Service and duration\n- Date and time\n- Number of guests\n- Price (as applicable)",
+                "detail3-title": "3. Information Completion Process (When Information is Incomplete)",
+                "detail3-trigger": "Trigger Condition",
+                "detail3-trigger-item": "Information provided by customer is insufficient for assessment",
+                "detail3-requirement": "Execution Requirements",
+                "detail3-req1": "Customer service must request all missing information from customer at once",
+                "detail3-req2": "Do not split information into multiple rounds of inquiries",
+                "detail3-req3": "Do not contact store before information completion",
+                "detail3-result": "Execution Result",
+                "detail3-result-item1": "Customer completes all information at once",
+                "detail3-result-item2": "Customer service can proceed to store confirmation stage",
+                "detail4-title": "4. Price Confirmation Process (Judge by Situation, Critical Node)",
+                "detail4-trigger": "Trigger Condition",
+                "detail4-trigger-item": "Customer has not clearly indicated acceptance of price",
+                "detail4-requirement": "Execution Requirements",
+                "detail4-req1": "Customer service must complete price confirmation before contacting store",
+                "detail4-req2": "If customer hesitates about price: pause subsequent process, do not contact store",
+                "detail4-result": "Execution Result",
+                "detail4-result-item": "Only occupy store resources in \"high probability of closing\" situations",
+                "detail5-title": "5. Internal Confirmation Process (Not Visible to Customers)",
+                "detail5-trigger": "Trigger Condition",
+                "detail5-trigger-item1": "Information is complete",
+                "detail5-trigger-item2": "Price is confirmed (as applicable)",
+                "detail5-requirement": "Execution Requirements",
+                "detail5-req1": "Customer service organizes complete booking information",
+                "detail5-req2": "Send information to customer service communication group",
+                "detail5-result": "Execution Result",
+                "detail5-result-item": "Obtain clear feedback from store: Available / Not Available",
+                "detail6-title": "6. Result Feedback Process (To Customer)",
+                "detail6-trigger": "Trigger Condition",
+                "detail6-trigger-item": "Clear feedback from store has been obtained",
+                "detail6-requirement": "Execution Requirements",
+                "detail6-req1": "Customer service only provides \"result\" to customer, not the process",
+                "detail6-req2": "Present only one of two states to customer: Available (Final Confirmation) / Adjustment Required (Not Available or Conditions Need to be Changed)",
+                "detail6-result": "Execution Result",
+                "detail6-result-item1": "Customer clearly understands current status",
+                "detail6-result-item2": "No \"intermediate state\" misunderstandings",
+                "detail7-title": "7. Final Confirmation Process (When Available)",
+                "detail7-trigger": "Trigger Condition",
+                "detail7-trigger-item": "Store confirms availability",
+                "detail7-requirement": "Execution Requirements",
+                "detail7-req1": "Customer service sends final confirmation to customer",
+                "detail7-req2": "After final confirmation is sent, booking is considered established",
+                "detail7-req3": "Final confirmation information is simultaneously sent to store communication group (After sending confirmation to customer and receiving customer reply (like or thank you), send this booking information to store)",
+                "detail7-req4": "Complete notes, tags, calendar modifications",
+                "detail7-result": "Execution Result",
+                "detail7-result-item1": "Customer service process ends",
+                "detail7-result-item2": "Begin 30-minute reminder",
+                "detail8-title": "8. Exception and Interruption Handling (Follow-up)",
+                "detail8-scenario": "Applicable Situations",
+                "detail8-scenario-item1": "Customer does not reply",
+                "detail8-scenario-item2": "Customer explicitly abandons",
+                "detail8-scenario-item3": "Store temporarily unavailable",
+                "detail8-requirement": "Execution Requirements",
+                "detail8-req1": "Do not force process forward",
+                "detail8-req2": "Do not send confirmation",
+                "detail8-req3": "Record status and end this process",
+                "part3-title": "Part III: Customer Common Questions Quick Reference",
+                "faq1-title": "Airport Transfer and Private Car",
+                "faq1-1-title": "1. Luggage Capacity",
+                "faq1-1-1-title": "1. 14-Seat Hiace",
+                "faq1-1-1-item1": "Maximum 13 passengers",
+                "faq1-1-1-item2": "Maximum 13 pieces of 24-inch luggage when 1-9 passengers",
+                "faq1-1-1-item3": "Maximum 7 pieces of 24-inch luggage when 10-11 passengers",
+                "faq1-1-1-item4": "Maximum 3 pieces of 24-inch luggage when 12-13 passengers",
+                "faq1-1-2-title": "2. 10-Seat Hiace",
+                "faq1-1-2-item1": "Maximum 9 passengers",
+                "faq1-1-2-item2": "Maximum 13 pieces of 24-inch luggage when 1-9 passengers",
+                "faq1-1-3-title": "3. 7-Seat Alphard",
+                "faq1-1-3-item1": "Maximum 6 passengers",
+                "faq1-1-3-item2": "Maximum 8 pieces of 24-inch luggage when 1-3 passengers",
+                "faq1-1-3-item3": "Maximum 5 pieces of 24-inch luggage when 4 passengers",
+                "faq1-1-3-item4": "Maximum 4 pieces of 24-inch luggage when 5-6 passengers",
+                "faq1-1-note": "*Above are mainly for 24-inch luggage. If luggage is larger than 24 inches, the quantity will be relatively reduced",
+                "faq2-title": "Celestiquespa",
+                "faq2-1-title": "2. Can I smoke?",
+                "faq2-1-item1": "Private rooms allow e-cigarettes",
+                "faq2-2-title": "3. Are the masseuses Vietnamese?",
+                "faq2-2-item1": "There are Vietnamese masseuses, as well as Chinese and Japanese masseuses"
+            },
+            ja: {
+                title: "カスタマーサービス予約実行標準プロセス",
+                version: "V1.0",
+                subtitle: "Customer Service Booking Execution Standard Process",
+                "part1-title": "一、カスタマーサービス予約実行標準プロセス（V1.0）- クイックリファレンス",
+                "process-flow-title": "実行順序：",
+                "step1": "受け取る",
+                "step2": "判断",
+                "step3": "補完",
+                "step4": "確認",
+                "step5": "結果を提供",
+                "section1-title": "1. 基本ルール",
+                "rule1": "お客様のメッセージは2分以内に返信",
+                "rule2": "情報が不十分な場合、一度に全ての情報を補完し、複数回に分けて質問しない",
+                "rule3": "店舗確認前は、booked / confirmed / reservation を使用しない",
+                "rule4": "お客様に内部プロセスを説明しない",
+                "rule5": "店舗には最終結果のみをフィードバック",
+                "section2-title": "2. 初回返信（シナリオ別選択）",
+                "section2-1-title": "2.1 お客様が「Hi / Hello」のみ送信：",
+                "message-hi": "Hello 😊 Thank you for reaching out.\nHow may we assist you today?",
+                "section2-2-title": "2.2 SPAサービスの情報要件",
+                "info1": "店舗",
+                "info2": "人数",
+                "info3": "日付と時間",
+                "info4": "サービス",
+                "info5": "お名前",
+                "section2-3-title": "2.3 情報不足",
+                "section2-3-note": "（お客様が送信した情報が不完全な場合、お客様が既に提供した情報に基づいて、お客様とコミュニケーションを取り、情報を補完する）",
+                "message-incomplete": "To help us check availability for you, could you please provide the following details?\n- Which spa you would like to visit（店舗）\n- Preferred time（時間）\n- Massage course and duration（サービス）\n- Number of guests（人数）\n- Name（お名前）\nOnce we have these details, we'll be happy to assist you further.",
+                "message-name-only": "名前のみが不足しており、WhatsAppに表示されている場合\n予約名を【WhatsAppに表示されている名前】で確認させていただけますか？",
+                "section2-4-title": "2.4 情報が基本的に揃っている",
+                "message-complete": "Thank you for your message. We've received your request and are checking the details on our end.\nPlease kindly give us a moment — we'll get back to you shortly.",
+                "section3-title": "3. 情報確認（これのみ）",
+                "message-verify": "Just to make sure I've got this right — you'd like to book a 【サービス】 at 【店名】 for 【人数 NUMBER】 on 【日付 DATE】, at/around 【時間 TIME】. The name is 【お名前 GUEST NAME】. Please let me know if that sounds right.",
+                "section3-note": "説明：\n- 情報確認のみに使用\n- リストやフィールド形式を使用しない",
+                "section4-title": "4. 店舗連絡前のチェック",
+                "check1": "情報が揃っている",
+                "check2": "お客様が価格について質問していない",
+                "section5-title": "5. 予約確認（ここでのみ confirmed を使用）",
+                "message-confirm": "Your appointment has been confirmed. \n\nSHOP: Shop Name\nName: Guest Name\nTime: x/x，xx:xx AM/PM\nNumber of Guests: Guest Number \nService: Course Name \nContact (WhatsApp): Number\n\nWe look forward to welcoming you.",
+                "section5-rules": "ルール：\n- 送信した時点で予約成立とみなす\n- この情報を店舗に同時送信\n- 送信前に人数、日付、時間を確認",
+                "section6-title": "6. 確認完了後の操作",
+                "message-after-confirm": "I've shared your booking with the store manager. You may head to the shop directly.\n\nPlease note the reservation will be held for 5 minutes only.If you're running late or need to change the time, kindly inform us in advance.\n\nLet me know if you need anything else!",
+                "section6-note": "説明：店舗マネージャーに通知を送信後、クイックリプライ「manager」\n- 店舗カスタマーサービスグループで結果を同期\n- WhatsAppのメモを修正し、タグを追加\n- カレンダー記録\n- 予約時間>30分の場合：30分前、15分前にリマインダーを送信（重要）\n- 予約時間<30分の場合：15分前にリマインダーを送信（重要）",
+                "section7-title": "7. 対応不可で調整が必要",
+                "section7-note": "説明：\n- 店舗が希望時間に対応できないが、他の時間を提供している\n- お客様に他の時間を受け入れるか、他の日付に変更するか尋ねる\n- コミュニケーションが2ラウンドを超える場合、お客様に他の店舗を検討するか尋ねる",
+                "message-adjust": "Thanks for waiting.\nUnfortunately, the requested time is not available.\nWould you like to:\n • Try a different time： [店舗が提供した他の時間]\n • Choose another date：[他の日付]\n • Or check an alternative option nearby?",
+                "section8-title": "8. 未返信メッセージのフォローアップ",
+                "section8-1-title": "8.1 当日予約：",
+                "message-followup-today-en": "Hi 😊  Just a quick follow-up regarding your request earlier.  As this is for today, please let us know if you'd like us to continue checking availability for you.",
+                "message-followup-today-zh": "中国語版：\n您好～想跟进一下您刚才的咨询，今天的预约我们仍可以帮您继续查询，请问还需要吗？😊\n需要的话请告诉我们哦！",
+                "section8-2-title": "8.2 非当日予約：",
+                "message-followup-non-today": "Just following up to see if you had a chance to check my previous message.  Happy to assist whenever you're ready.",
+                "section9-title": "9. 価格処理原則",
+                "price-rule1": "お客様が価格を尋ねない場合：積極的に説明しない",
+                "price-rule2": "お客様が価格を尋ねた場合：まず価格を説明し、お客様が価格を受け入れることを確認してから店舗に連絡",
+                "price-rule3": "価格を繰り返し強調しない",
+                "section10-title": "10. 禁止事項（重要）",
+                "prohibit1": "お客様に複数回確認させない",
+                "prohibit2": "情報を複数回の質問に分割しない",
+                "prohibit3": "事前に「確認書のような」情報を送信しない",
+                "prohibit4": "最終確認を得る前に、以下の用語を使用しない：\n                        booked / booking confirmed / reserved",
+                "part2-title": "二、実行詳細、要件及び結果対照",
+                "detail1-title": "1. 初回応答プロセス（全お客様共通）",
+                "detail1-trigger": "トリガー条件",
+                "detail1-trigger-item": "お客様が任意のメッセージを送信（hi / hello / 予約相談 / availability を含む）",
+                "detail1-requirement": "実行要件",
+                "detail1-req1": "カスタマーサービスは2分以内に初回応答を完了する必要がある",
+                "detail1-req2": "初回応答は以下の目的のみ：メッセージ受信確認、お客様の気持ちを安定させる",
+                "detail1-req3": "初回応答では以下を行わない：予約結果の約束、具体的な業務確認への進入",
+                "detail1-result": "実行結果",
+                "detail1-result-item1": "お客様が明確に知る：リクエストが処理された",
+                "detail1-result-item2": "カスタマーサービスが継続的なコミュニケーションの時間的余裕を得る",
+                "detail2-title": "2. 情報判断プロセス（情報が揃っているか）",
+                "detail2-content": "初回応答後、カスタマーサービスは即座に判断する必要がある：店舗に連絡するために必要な全ての情報が揃っているか。\nSPA予約判断に必要な情報には以下が含まれる：\n- 店舗\n- サービスと時間\n- 日付と時間\n- 人数\n- 価格（該当する場合）",
+                "detail3-title": "3. 情報補完プロセス（情報が不十分な場合）",
+                "detail3-trigger": "トリガー条件",
+                "detail3-trigger-item": "お客様が提供した情報が判断に不十分",
+                "detail3-requirement": "実行要件",
+                "detail3-req1": "カスタマーサービスは一度に全ての不足情報をお客様に補完する必要がある",
+                "detail3-req2": "情報を複数回の質問に分割しない",
+                "detail3-req3": "情報補完が完了する前に店舗に連絡しない",
+                "detail3-result": "実行結果",
+                "detail3-result-item1": "お客様が一度に全ての情報を補完",
+                "detail3-result-item2": "カスタマーサービスが店舗確認段階に進むことができる",
+                "detail4-title": "4. 価格確認プロセス（状況に応じて判断、重要なポイント）",
+                "detail4-trigger": "トリガー条件",
+                "detail4-trigger-item": "お客様が価格を受け入れることを明確に示していない",
+                "detail4-requirement": "実行要件",
+                "detail4-req1": "カスタマーサービスは店舗に連絡する前に価格確認を完了する必要がある",
+                "detail4-req2": "お客様が価格について躊躇している場合：後続プロセスを一時停止、店舗に連絡しない",
+                "detail4-result": "実行結果",
+                "detail4-result-item": "「成約確率が高い」状況でのみ店舗リソースを占有",
+                "detail5-title": "5. 内部確認プロセス（お客様には見えない）",
+                "detail5-trigger": "トリガー条件",
+                "detail5-trigger-item1": "情報が揃っている",
+                "detail5-trigger-item2": "価格が確認されている（該当する場合）",
+                "detail5-requirement": "実行要件",
+                "detail5-req1": "カスタマーサービスが完全な予約情報を整理",
+                "detail5-req2": "情報をカスタマーサービスコミュニケーショングループに送信",
+                "detail5-result": "実行結果",
+                "detail5-result-item": "店舗から明確なフィードバックを得る：対応可能 / 対応不可",
+                "detail6-title": "6. 結果フィードバックプロセス（お客様へ）",
+                "detail6-trigger": "トリガー条件",
+                "detail6-trigger-item": "店舗から明確なフィードバックを得た",
+                "detail6-requirement": "実行要件",
+                "detail6-req1": "カスタマーサービスはお客様に「結果」のみをフィードバックし、プロセスはフィードバックしない",
+                "detail6-req2": "お客様には以下の2つの状態のいずれかのみを提示：対応可能（最終確認）/ 調整必要（対応不可または条件変更が必要）",
+                "detail6-result": "実行結果",
+                "detail6-result-item1": "お客様が現在の状態を明確に理解",
+                "detail6-result-item2": "「中間状態」の誤解が生じない",
+                "detail7-title": "7. 最終確認プロセス（対応可能な場合）",
+                "detail7-trigger": "トリガー条件",
+                "detail7-trigger-item": "店舗が対応可能であることを確認",
+                "detail7-requirement": "実行要件",
+                "detail7-req1": "カスタマーサービスがお客様に最終確認を送信",
+                "detail7-req2": "最終確認送信後、予約が成立したとみなす",
+                "detail7-req3": "最終確認情報を店舗コミュニケーショングループに同時送信（お客様に確認予約情報を送信し、お客様の返信（いいねや感謝の言葉）を得た後、この予約情報を店舗に送信）",
+                "detail7-req4": "メモ、タグ、カレンダー修正を完了",
+                "detail7-result": "実行結果",
+                "detail7-result-item1": "カスタマーサービスプロセス終了",
+                "detail7-result-item2": "30分前リマインダー開始",
+                "detail8-title": "8. 例外と中断処理（フォローアップ）",
+                "detail8-scenario": "適用状況",
+                "detail8-scenario-item1": "お客様が返信しない",
+                "detail8-scenario-item2": "お客様が明確に放棄",
+                "detail8-scenario-item3": "店舗が一時的に対応不可",
+                "detail8-requirement": "実行要件",
+                "detail8-req1": "プロセスを強制的に進めない",
+                "detail8-req2": "確認を送信しない",
+                "detail8-req3": "状態を記録し、このプロセスを終了",
+                "part3-title": "三、お客様のよくある質問クイックリファレンス",
+                "faq1-title": "空港送迎とチャーター車",
+                "faq1-1-title": "1. 荷物収納",
+                "faq1-1-1-title": "1. 14席ハイエース",
+                "faq1-1-1-item1": "最大13名の乗客",
+                "faq1-1-1-item2": "1～9名乗車時、24インチの荷物は最大13個",
+                "faq1-1-1-item3": "10～11名乗車時、24インチの荷物は最大7個",
+                "faq1-1-1-item4": "12～13名乗車時、24インチの荷物は最大3個",
+                "faq1-1-2-title": "2. 10席ハイエース",
+                "faq1-1-2-item1": "最大9名の乗客",
+                "faq1-1-2-item2": "1～9名乗車時、24インチの荷物は最大13個",
+                "faq1-1-3-title": "3. 7席アルファード",
+                "faq1-1-3-item1": "最大6名の乗客",
+                "faq1-1-3-item2": "1～3名乗車時、24インチの荷物は最大8個",
+                "faq1-1-3-item3": "4名乗車時、24インチの荷物は最大5個",
+                "faq1-1-3-item4": "5～6名乗車時、24インチの荷物は最大4個",
+                "faq1-1-note": "*以上は主に24インチを基準としています。24インチ以上の荷物がある場合、数量は相対的に減少します",
+                "faq2-title": "Celestiquespa",
+                "faq2-1-title": "2. 喫煙できますか？",
+                "faq2-1-item1": "個室では電子タバコを吸うことができます",
+                "faq2-2-title": "3. マッサージ師はベトナム人ですか？",
+                "faq2-2-item1": "ベトナム人のマッサージ師もいれば、中国人と日本人のマッサージ師もいます"
+            }
+        };
+
+        // 当前语言
+        let currentLang = 'zh';
+
+        // 初始化语言
+        function initLanguage() {
+            const savedLang = localStorage.getItem('sop-lang');
+            if (savedLang && translations[savedLang]) {
+                currentLang = savedLang;
+            }
+            updateLanguageButtons();
+            updateContent();
+        }
+
+        // 更新语言按钮状态
+        function updateLanguageButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if (btn.dataset.lang === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 更新页面内容
+        function updateContent() {
+            const t = translations[currentLang];
+            
+            // 更新所有带有 data-lang 属性的元素
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.dataset.lang;
+                if (t[key]) {
+                    if (element.tagName === 'SPAN' && element.classList.contains('version-badge')) {
+                        element.textContent = t[key];
+                    } else if (element.tagName === 'STRONG') {
+                        element.textContent = t[key];
+                    } else if (element.classList.contains('message-template') || element.classList.contains('info-box') || element.classList.contains('success-box') || element.classList.contains('warning-box') || element.classList.contains('error-box')) {
+                        // 对于这些元素，保留换行符（使用white-space: pre-wrap）
+                        element.textContent = t[key];
+                    } else if (element.classList.contains('subsection-content') && (key === 'detail2-content' || t[key].includes('\n'))) {
+                        // 特殊处理包含换行的内容
+                        element.innerHTML = t[key].replace(/\n/g, '<br>');
+                    } else {
+                        element.innerHTML = t[key];
+                    }
+                }
+            });
+        }
+
+        // 语言切换事件
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentLang = btn.dataset.lang;
+                localStorage.setItem('sop-lang', currentLang);
+                updateLanguageButtons();
+                updateContent();
+            });
+        });
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
+</body>
+</html>

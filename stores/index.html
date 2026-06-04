@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>门店数据门户</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-gold: #C9A961;
+            --secondary-gold: #D4AF37;
+            --bg-cream: #FAF8F3;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #6B6B6B;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-text-size-adjust: 100%;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem 3rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            color: var(--text-medium);
+            font-size: 0.95rem;
+        }
+        .stores-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .store-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            min-height: 52px;
+        }
+        .store-row:hover,
+        .store-row:active {
+            border-color: var(--primary-gold);
+            box-shadow: 0 4px 14px rgba(201, 169, 97, 0.18);
+        }
+        .store-name {
+            flex: 1;
+            min-width: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: left;
+            word-break: break-word;
+        }
+        .store-hint {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-gold);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-medium);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            transition: color 0.3s;
+        }
+        .back-link:hover { color: var(--primary-gold); }
+        .header-content { flex: 1; }
+        .language-switcher { display: flex; gap: 0.5rem; }
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .lang-btn:hover { background: var(--primary-gold); color: white; border-color: var(--primary-gold); }
+        .lang-btn.active { background: var(--primary-gold); color: white; border-color: var(--primary-gold); }
+
+        @media (max-width: 640px) {
+            .container { padding: 0.9rem 0.75rem 2.5rem; }
+            .back-link {
+                font-size: 0.85rem;
+                margin-bottom: 0.75rem;
+                line-height: 1.4;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.85rem;
+                padding: 1rem 1rem 1.1rem;
+                border-radius: 12px;
+                margin-bottom: 1.25rem;
+            }
+            .header h1 { font-size: 1.15rem; margin-bottom: 0.35rem; }
+            .header p { font-size: 0.82rem; line-height: 1.5; }
+            .language-switcher {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                gap: 0.45rem;
+                padding-top: 0.65rem;
+                border-top: 1px solid var(--card-border);
+            }
+            .lang-btn {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.78rem;
+                border-radius: 7px;
+                min-height: 36px;
+            }
+            .store-row {
+                padding: 0.75rem 0.85rem;
+                border-radius: 9px;
+                min-height: 48px;
+            }
+            .store-name { font-size: 0.92rem; }
+            .store-hint {
+                font-size: 0.72rem;
+                max-width: 42%;
+                white-space: normal;
+                text-align: right;
+                line-height: 1.3;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../dashboard.html" class="back-link" data-lang="back-dashboard">← 返回运营仪表盘</a>
+        <div class="header">
+            <div class="header-content">
+                <h1 data-lang="title">🏪 门店数据门户</h1>
+                <p data-lang="subtitle">选择门店查看过去 6 个月的订单情况、结算金额等运营数据</p>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="ja">日本語</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="zh">中文</button>
+            </div>
+        </div>
+        <div class="stores-list" id="storesGrid"></div>
+    </div>
+    <script src="stores.config.js"></script>
+    <script>
+        const translations = {
+            ja: { title: "🏪 店舗データポータル", subtitle: "店舗を選択して過去6ヶ月の注文状況・決済金額などを確認", "back-dashboard": "← 運営ダッシュボードに戻る", "view-report": "データレポートを見る →" },
+            en: { title: "🏪 Store Data Portal", subtitle: "Select a store to view order history, settlement amounts and more for the past 6 months", "back-dashboard": "← Back to Dashboard", "view-report": "View data report →" },
+            zh: { title: "🏪 门店数据门户", subtitle: "选择门店查看过去 6 个月的订单情况、结算金额等运营数据", "back-dashboard": "← 返回运营仪表盘", "view-report": "查看数据报表 →" }
+        };
+        let currentLang = localStorage.getItem('stores-lang') || 'ja';
+
+        function getStores() {
+            try {
+                const o = localStorage.getItem('stores_list_override');
+                if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length) return arr; }
+            } catch(e) {}
+            return STORES_LIST;
+        }
+
+        const isAdmin = sessionStorage.getItem('stores_admin') === '1';
+
+        function buildGrid() {
+            const hint = translations[currentLang]?.['view-report'] || 'データレポートを見る →';
+            document.getElementById('storesGrid').innerHTML = getStores().map(name => {
+                const href = isAdmin
+                    ? 'portal.html?store=' + encodeURIComponent(name)
+                    : 'login.html?store=' + encodeURIComponent(name);
+                return `<a href="${href}" class="store-row">
+                    <div class="store-name">${name}</div>
+                    <div class="store-hint">${hint}</div>
+                </a>`;
+            }).join('');
+        }
+
+        function updateContent() {
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const k = el.dataset.lang;
+                if (translations[currentLang]?.[k] && el.tagName !== 'BUTTON') el.textContent = translations[currentLang][k];
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === currentLang);
+            });
+            buildGrid();
+        }
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => { currentLang = btn.dataset.lang; localStorage.setItem('stores-lang', currentLang); updateContent(); });
+        });
+
+        updateContent();
+    </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>店舗ログイン</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --gold: #C9A961;
+            --gold2: #D4AF37;
+            --cream: #FAF8F3;
+            --card: #FFFFFF;
+            --border: #E8E5DF;
+            --dark: #2C2C2C;
+            --medium: #4A4A4A;
+            --light: #7A7A7A;
+            --error: #DC3545;
+        }
+        body {
+            font-family: 'Inter','Noto Sans SC','Noto Sans JP',sans-serif;
+            background: var(--cream);
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+        }
+        .lang-row { display: flex; justify-content: flex-end; gap: 0.4rem; margin-bottom: 1.5rem; }
+        .lang-btn {
+            padding: 0.3rem 0.7rem;
+            background: var(--cream);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--medium);
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .lang-btn:hover, .lang-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+        .logo { font-size: 2.2rem; text-align: center; margin-bottom: 0.5rem; }
+        .title { font-size: 1.35rem; font-weight: 700; text-align: center; margin-bottom: 0.25rem; }
+        .subtitle { font-size: 0.85rem; color: var(--light); text-align: center; margin-bottom: 2rem; }
+
+        /* pre-filled store badge */
+        .store-prefill {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(201,169,97,0.1);
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 8px;
+            padding: 0.6rem 0.9rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.9rem;
+        }
+        .store-prefill.visible { display: flex; }
+        .store-prefill-icon { font-size: 1.1rem; }
+        .store-prefill-name { font-weight: 600; color: var(--gold); }
+
+        .field { margin-bottom: 1.1rem; }
+        .field label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--medium); }
+        .field input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background: var(--card);
+        }
+        .field input:focus { outline: none; border-color: var(--gold); }
+        .field input:read-only { background: var(--cream); color: var(--medium); cursor: default; }
+
+        .hint {
+            font-size: 0.78rem;
+            color: var(--light);
+            margin-top: 0.3rem;
+        }
+
+        .error-msg {
+            display: none;
+            background: rgba(220,53,69,0.08);
+            border: 1px solid rgba(220,53,69,0.3);
+            border-radius: 8px;
+            padding: 0.65rem 0.9rem;
+            color: var(--error);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--gold);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0.25rem;
+        }
+        .btn:hover { background: var(--gold2); }
+        .divider { text-align: center; margin-top: 1.5rem; color: var(--light); font-size: 0.8rem; }
+
+        @media (max-width: 480px) {
+            body { padding: 1rem; align-items: flex-start; padding-top: 2rem; }
+            .card { padding: 1.75rem 1.25rem; border-radius: 16px; }
+            .logo { font-size: 1.8rem; }
+            .title { font-size: 1.15rem; }
+            .subtitle { font-size: 0.8rem; margin-bottom: 1.5rem; }
+            .field input { padding: 0.65rem 0.85rem; font-size: 0.9rem; }
+            .btn { padding: 0.8rem; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <!-- 语言切换 -->
+    <div class="lang-row">
+        <button class="lang-btn active" data-lang="ja">日本語</button>
+        <button class="lang-btn" data-lang="zh">中文</button>
+        <button class="lang-btn" data-lang="en">English</button>
+    </div>
+
+    <div class="logo">🏪</div>
+    <div class="title" id="titleEl">店舗管理中台</div>
+    <div class="subtitle" id="subtitleEl">ログインして店舗の管理画面へ</div>
+
+    <!-- ?store= 参数时显示预填门店名提示 -->
+    <div class="store-prefill" id="storePrefill">
+        <span class="store-prefill-icon">✅</span>
+        <span id="storePrefillName" class="store-prefill-name"></span>
+    </div>
+
+    <form id="loginForm" autocomplete="off">
+        <div class="field">
+            <label id="labelStore">店舗名</label>
+            <input type="text" id="storeInput" autocomplete="off" spellcheck="false">
+            <div class="hint" id="hintStore">例：Celestique Spa, starryflow</div>
+        </div>
+        <div class="field">
+            <label id="labelPwd">パスワード</label>
+            <input type="password" id="pwdInput" autocomplete="current-password">
+            <div class="hint" id="hintPwd">店舗名（小文字・スペースなし）＋ 2026</div>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+        <button type="submit" class="btn" id="btnLogin">ログイン</button>
+    </form>
+
+    <div class="divider" id="dividerEl"></div>
+</div>
+
+<script src="stores.config.js"></script>
+<script>
+    // 读取有效门店列表
+    function getStores() {
+        try {
+            const o = localStorage.getItem('stores_list_override');
+            if (o) { const arr = JSON.parse(o); if (Array.isArray(arr) && arr.length) return arr; }
+        } catch(e) {}
+        return STORES_LIST;
+    }
+
+    // 标准化：小写 + 去空格，用于匹配比较
+    const norm = s => String(s).toLowerCase().replace(/\s/g, '');
+
+    // 找到匹配的规范门店名
+    function findStore(input) {
+        const key = norm(input);
+        return getStores().find(s => norm(s) === key) || null;
+    }
+
+    // 验证：返回规范门店名 or null
+    function validate(storeInput, pwdInput) {
+        const store = findStore(storeInput);
+        if (!store) return null;
+        const expected = norm(store) + '2026';
+        if (norm(pwdInput) !== expected) return null;
+        return store;
+    }
+
+    // ─── i18n ────────────────────────────────────────────────────────────
+    const i18n = {
+        ja: {
+            title: '店舗管理中台',
+            subtitle: 'ログインして店舗の管理画面へ',
+            labelStore: '店舗名',
+            labelPwd: 'パスワード',
+            hintStore: '例：Celestique Spa, starryflow',
+            hintPwd: '店舗名（小文字・スペースなし）+ 2026',
+            btn: 'ログイン',
+            errStore: '店舗名が見つかりません。正確な店舗名を入力してください',
+            errPwd: 'パスワードが正しくありません',
+            prefillHint: 'の管理中台へログイン',
+            divider: '',
+        },
+        zh: {
+            title: '门店管理中台',
+            subtitle: '登录进入您的门店管理页面',
+            labelStore: '门店名称',
+            labelPwd: '密码',
+            hintStore: '例：Celestique Spa, starryflow',
+            hintPwd: '密码 = 门店名（小写去空格）+ 2026',
+            btn: '登录',
+            errStore: '未找到该门店，请确认门店名称是否正确',
+            errPwd: '密码错误，请重试',
+            prefillHint: '管理中台登录',
+            divider: '',
+        },
+        en: {
+            title: 'Store Management Hub',
+            subtitle: 'Sign in to access your store dashboard',
+            labelStore: 'Store Name',
+            labelPwd: 'Password',
+            hintStore: 'e.g. Celestique Spa, starryflow',
+            hintPwd: 'Password = store name (lowercase, no spaces) + 2026',
+            btn: 'Sign in',
+            errStore: 'Store not found. Please check the store name',
+            errPwd: 'Incorrect password. Please try again',
+            prefillHint: '— sign in to hub',
+            divider: '',
+        }
+    };
+
+    let lang = localStorage.getItem('stores-lang') || 'ja';
+    const tx = k => i18n[lang]?.[k] ?? i18n.zh[k] ?? k;
+
+    function applyLang() {
+        document.documentElement.lang = lang === 'en' ? 'en' : lang === 'zh' ? 'zh-CN' : 'ja';
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+        document.getElementById('titleEl').textContent    = tx('title');
+        document.getElementById('subtitleEl').textContent = tx('subtitle');
+        document.getElementById('labelStore').textContent = tx('labelStore');
+        document.getElementById('labelPwd').textContent   = tx('labelPwd');
+        document.getElementById('hintStore').textContent  = tx('hintStore');
+        document.getElementById('hintPwd').textContent    = tx('hintPwd');
+        document.getElementById('btnLogin').textContent   = tx('btn');
+        document.getElementById('dividerEl').textContent  = tx('divider');
+        document.title = tx('title');
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(b => {
+        b.addEventListener('click', () => {
+            lang = b.dataset.lang;
+            localStorage.setItem('stores-lang', lang);
+            applyLang();
+        });
+    });
+
+    // ─── 预填门店（从 ?store= 参数）──────────────────────────────────────
+    const urlParams  = new URLSearchParams(location.search);
+    const storeParam = decodeURIComponent(urlParams.get('store') || '').trim();
+
+    if (storeParam) {
+        // 将 store 名预填入输入框并锁定（readonly）
+        const storeInput = document.getElementById('storeInput');
+        storeInput.value    = storeParam;
+        storeInput.readOnly = true;
+        // 显示提示 badge
+        document.getElementById('storePrefillName').textContent = storeParam;
+        document.getElementById('storePrefill').classList.add('visible');
+        document.getElementById('hintStore').style.display = 'none';
+        // 自动聚焦到密码框
+        document.getElementById('pwdInput').focus();
+    }
+
+    // ─── 表单提交 ─────────────────────────────────────────────────────────
+    document.getElementById('loginForm').onsubmit = function(e) {
+        e.preventDefault();
+        const storeVal = document.getElementById('storeInput').value.trim();
+        const pwdVal   = document.getElementById('pwdInput').value;
+        const errEl    = document.getElementById('errorMsg');
+        errEl.style.display = 'none';
+
+        const store = validate(storeVal, pwdVal);
+
+        if (!findStore(storeVal)) {
+            errEl.textContent   = tx('errStore');
+            errEl.style.display = 'block';
+            return;
+        }
+        if (!store) {
+            errEl.textContent   = tx('errPwd');
+            errEl.style.display = 'block';
+            document.getElementById('pwdInput').select();
+            return;
+        }
+
+        // 登录成功
+        sessionStorage.setItem('store_auth_' + encodeURIComponent(store), '1');
+        location.replace('portal.html?store=' + encodeURIComponent(store));
+    };
+
+    // ─── 初始化 ───────────────────────────────────────────────────────────
+    applyLang();
+    if (!storeParam) document.getElementById('storeInput').focus();
+</script>
+</body>
+</html>

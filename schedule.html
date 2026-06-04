@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="客服排班表 - Customer Service Schedule">
+    <title>客服排班表</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-gold: #C9A961;
+            --secondary-gold: #D4AF37;
+            --bg-cream: #FAF8F3;
+            --bg-white: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --card-border: #E8E5DF;
+            --text-dark: #2C2C2C;
+            --text-medium: #4A4A4A;
+            --text-light: #6B6B6B;
+            --success: #1E8E4F;
+            --error: #DC3545;
+            --info: #0D6EFD;
+            --shadow-light: rgba(0, 0, 0, 0.04);
+            --shadow-medium: rgba(0, 0, 0, 0.08);
+            --shadow-heavy: rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .schedule-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .schedule-header {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .schedule-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .schedule-subtitle {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+        }
+
+        .language-switcher {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-medium);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .lang-btn.active {
+            background: var(--primary-gold);
+            color: white;
+            border-color: var(--primary-gold);
+        }
+
+        .schedule-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .staff-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.875rem;
+            margin-bottom: 0;
+        }
+
+        .staff-card {
+            background: var(--bg-cream);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .staff-card:hover {
+            box-shadow: 0 4px 12px var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+
+        .staff-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.375rem;
+        }
+
+        .staff-role {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            padding: 0.25rem 0.75rem;
+            background: rgba(201, 169, 97, 0.1);
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .schedule-table th {
+            background: var(--bg-cream);
+            font-weight: 600;
+            color: var(--text-dark);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .schedule-table tr:hover {
+            background: var(--bg-cream);
+        }
+
+        .month-header {
+            background: var(--primary-gold) !important;
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .time-slot {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(201, 169, 97, 0.15);
+            border-radius: 6px;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .staff-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--primary-gold);
+            color: white;
+            border-radius: 6px;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .note {
+            background: rgba(13, 110, 253, 0.1);
+            border-left: 4px solid var(--info);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .month-selector {
+            margin-bottom: 2rem;
+        }
+
+        .month-selector-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .month-selector-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .month-selector-label::before {
+            content: '📅';
+            font-size: 1.2rem;
+        }
+
+        .month-select-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+        }
+
+        .month-select {
+            width: 100%;
+            padding: 0.875rem 3rem 0.875rem 1.25rem;
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23C9A961' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 12px;
+            box-shadow: 0 2px 4px var(--shadow-light);
+        }
+
+        .month-select:hover {
+            border-color: var(--primary-gold);
+            box-shadow: 0 4px 12px rgba(201, 169, 97, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .month-select:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1), 0 4px 12px rgba(201, 169, 97, 0.2);
+        }
+
+        .month-select option {
+            padding: 0.75rem;
+            background: var(--card-bg);
+            color: var(--text-dark);
+        }
+
+        @media (max-width: 768px) {
+            .schedule-header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1rem 1.25rem;
+                margin-bottom: 1rem;
+            }
+
+            .schedule-title {
+                font-size: 1.5rem;
+            }
+
+            .schedule-subtitle {
+                font-size: 0.85rem;
+            }
+
+            .schedule-section {
+                padding: 1rem 1.25rem;
+            }
+
+            .section-title {
+                font-size: 1.2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .schedule-table {
+                font-size: 0.85rem;
+            }
+
+            .schedule-table th,
+            .schedule-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .staff-list {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .staff-card {
+                padding: 0.625rem 0.75rem;
+            }
+
+            .staff-name {
+                font-size: 0.95rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .staff-role {
+                font-size: 0.75rem;
+                padding: 0.15rem 0.5rem;
+            }
+
+            .month-selector-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+
+            .month-selector-label {
+                font-size: 1rem;
+            }
+
+            .month-select-wrapper {
+                min-width: 100%;
+                max-width: 100%;
+            }
+
+            .month-select {
+                padding: 0.75rem 2.5rem 0.75rem 1rem;
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .schedule-section {
+                padding: 0.875rem 1rem;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+                margin-bottom: 0.625rem;
+            }
+
+            .staff-list {
+                gap: 0.5rem;
+            }
+
+            .staff-card {
+                padding: 0.5rem 0.625rem;
+            }
+
+            .staff-name {
+                font-size: 0.9rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .staff-role {
+                font-size: 0.7rem;
+                padding: 0.125rem 0.45rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="schedule-container">
+        <!-- 头部 -->
+        <div class="schedule-header">
+            <div class="header-left">
+                <h1 class="schedule-title" data-lang="title">客服排班表</h1>
+                <p class="schedule-subtitle" data-lang="subtitle">Customer Service Schedule</p>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" data-lang="zh">中文</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="ja">日本語</button>
+            </div>
+        </div>
+
+        <!-- 人员信息 -->
+        <div class="schedule-section">
+            <h2 class="section-title" data-lang="staff-title">👥 人员信息</h2>
+            <div class="staff-list">
+                <div class="staff-card">
+                    <div class="staff-name" data-staff="liu">刘唐梦</div>
+                    <div class="staff-role" data-lang="role-junior">初级客服</div>
+                </div>
+                <div class="staff-card">
+                    <div class="staff-name" data-staff="xiang">向禹</div>
+                    <div class="staff-role" data-lang="role-senior">高级客服</div>
+                </div>
+                <div class="staff-card">
+                    <div class="staff-name" data-staff="ma-shuai">马帅</div>
+                    <div class="staff-role" data-lang="role-specialist">高级客服专员</div>
+                </div>
+                <div class="staff-card">
+                    <div class="staff-name" data-staff="ma-chaojie">马超杰</div>
+                    <div class="staff-role" data-lang="role-manager">主管</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 排班表 -->
+        <div class="schedule-section">
+            <h2 class="section-title" data-lang="schedule-title">📅 排班安排</h2>
+            
+            <!-- 月份选择器 -->
+            <div class="month-selector">
+                <div class="month-selector-wrapper">
+                    <span class="month-selector-label" data-lang="select-month">选择月份</span>
+                    <div class="month-select-wrapper">
+                        <select id="monthSelect" class="month-select"></select>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th data-lang="col-time">时间段</th>
+                        <th data-lang="col-staff">负责人员</th>
+                        <th data-lang="col-notes">备注</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleTableBody">
+                    <!-- 动态生成内容 -->
+                </tbody>
+            </table>
+            
+            <div class="note" data-lang="note">
+                <strong>说明：</strong>排班安排自2025年7月开始执行，9月后的安排持续至今。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 多语言数据
+        const translations = {
+            zh: {
+                title: "客服排班表",
+                subtitle: "Customer Service Schedule",
+                "staff-title": "👥 人员信息",
+                "schedule-title": "📅 排班安排",
+                "col-month": "月份",
+                "col-time": "时间段",
+                "col-staff": "负责人员",
+                "col-notes": "备注",
+                "role-junior": "初级客服",
+                "role-senior": "高级客服",
+                "role-specialist": "高级客服专员",
+                "role-manager": "主管",
+                "select-month": "选择月份：",
+                "jul-weekday-day": "工作日白天时段",
+                "jul-weekday-night": "工作日晚上时段",
+                "jul-weekend-day": "周末白天时段",
+                "jul-weekend-night": "周末晚上时段",
+                "aug-weekday-day": "工作日白天时段",
+                "aug-weekday-night": "工作日晚上时段（增加人员）",
+                "aug-weekend-day": "周末白天时段",
+                "aug-weekend-night": "周末晚上时段",
+                "sep-weekday-day": "工作日白天时段",
+                "sep-weekday-night": "工作日晚上时段",
+                "sep-weekend-day": "周末白天时段",
+                "sep-weekend-night": "周末晚上时段",
+                note: "<strong>说明：</strong>排班安排自2025年7月开始执行，9月后的安排持续至今。"
+            },
+            en: {
+                title: "Customer Service Schedule",
+                subtitle: "Customer Service Schedule",
+                "staff-title": "👥 Staff Information",
+                "schedule-title": "📅 Schedule",
+                "col-month": "Month",
+                "col-time": "Time Slot",
+                "col-staff": "Assigned Staff",
+                "col-notes": "Notes",
+                "role-junior": "Junior Customer Service",
+                "role-senior": "Senior Customer Service",
+                "role-specialist": "Senior Customer Service Specialist",
+                "role-manager": "Manager",
+                "jul-weekday-day": "Weekday daytime hours",
+                "jul-weekday-night": "Weekday evening hours",
+                "jul-weekend-day": "Weekend daytime hours",
+                "jul-weekend-night": "Weekend evening hours",
+                "aug-weekday-day": "Weekday daytime hours",
+                "aug-weekday-night": "Weekday evening hours (staff added)",
+                "aug-weekend-day": "Weekend daytime hours",
+                "aug-weekend-night": "Weekend evening hours",
+                "select-month": "Select Month:",
+                "sep-weekday-day": "Weekday daytime hours",
+                "sep-weekday-night": "Weekday evening hours",
+                "sep-weekend-day": "Weekend daytime hours",
+                "sep-weekend-night": "Weekend evening hours",
+                note: "<strong>Note:</strong> The schedule has been in effect since July 2025, and arrangements after September continue to the present."
+            },
+            ja: {
+                title: "カスタマーサービス勤務表",
+                subtitle: "Customer Service Schedule",
+                "staff-title": "👥 スタッフ情報",
+                "schedule-title": "📅 勤務スケジュール",
+                "col-month": "月",
+                "col-time": "時間帯",
+                "col-staff": "担当スタッフ",
+                "col-notes": "備考",
+                "role-junior": "初級カスタマーサービス",
+                "role-senior": "上級カスタマーサービス",
+                "role-specialist": "上級カスタマーサービス専門員",
+                "role-manager": "主管",
+                "jul-weekday-day": "平日昼間時間帯",
+                "jul-weekday-night": "平日夜間時間帯",
+                "jul-weekend-day": "週末昼間時間帯",
+                "jul-weekend-night": "週末夜間時間帯",
+                "aug-weekday-day": "平日昼間時間帯",
+                "aug-weekday-night": "平日夜間時間帯（スタッフ追加）",
+                "aug-weekend-day": "週末昼間時間帯",
+                "aug-weekend-night": "週末夜間時間帯",
+                "select-month": "月を選択：",
+                "sep-weekday-day": "平日昼間時間帯",
+                "sep-weekday-night": "平日夜間時間帯",
+                "sep-weekend-day": "週末昼間時間帯",
+                "sep-weekend-night": "週末夜間時間帯",
+                note: "<strong>説明：</strong>勤務スケジュールは2025年7月から実施されており、9月以降の配置は現在まで継続しています。"
+            }
+        };
+
+        // 当前语言
+        let currentLang = 'zh';
+        // 当前选中的月份
+        let currentMonth = null;
+
+        // 排班数据
+        const scheduleData = {
+            '2025-07': [
+                { time: 'weekday-day', staff: ['ma-shuai'], note: 'jul-weekday-day' },
+                { time: 'weekday-night', staff: ['xiang'], note: 'jul-weekday-night' },
+                { time: 'weekend-day', staff: ['ma-chaojie'], note: 'jul-weekend-day' },
+                { time: 'weekend-night', staff: ['ma-chaojie'], note: 'jul-weekend-night' }
+            ],
+            '2025-08': [
+                { time: 'weekday-day', staff: ['ma-shuai'], note: 'aug-weekday-day' },
+                { time: 'weekday-night', staff: ['xiang', 'liu'], note: 'aug-weekday-night' },
+                { time: 'weekend-day', staff: ['ma-chaojie'], note: 'aug-weekend-day' },
+                { time: 'weekend-night', staff: ['ma-chaojie'], note: 'aug-weekend-night' }
+            ]
+        };
+
+        // 生成从2025年7月到当前月份的所有月份
+        function generateMonthList() {
+            const months = [];
+            const startDate = new Date(2025, 6, 1); // 2025年7月
+            const today = new Date();
+            const currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            let date = new Date(startDate);
+            while (date <= currentDate) {
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const key = `${year}-${String(month).padStart(2, '0')}`;
+                months.push({
+                    key: key,
+                    year: year,
+                    month: month
+                });
+                date.setMonth(date.getMonth() + 1);
+            }
+            
+            return months;
+        }
+
+        // 获取月份显示名称
+        function getMonthDisplayName(year, month, lang) {
+            const monthNames = {
+                zh: ['', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                en: ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+                ja: ['', '1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+            };
+            
+            const names = monthNames[lang] || monthNames.zh;
+            if (lang === 'en') {
+                return `${names[month]} ${year}`;
+            } else {
+                return `${year}年${names[month]}`;
+            }
+        }
+
+        // 获取指定月份的排班数据（9月及以后使用9月的数据）
+        function getScheduleForMonth(monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            const monthDate = new Date(year, month - 1, 1);
+            const sepDate = new Date(2025, 8, 1); // 2025年9月
+            
+            if (monthDate >= sepDate) {
+                // 9月及以后使用9月的数据
+                return [
+                    { time: 'weekday-day', staff: ['ma-shuai'], note: 'sep-weekday-day' },
+                    { time: 'weekday-night', staff: ['xiang', 'liu'], note: 'sep-weekday-night' },
+                    { time: 'weekend-day', staff: ['xiang', 'liu'], note: 'sep-weekend-day' },
+                    { time: 'weekend-night', staff: ['xiang', 'liu'], note: 'sep-weekend-night' }
+                ];
+            } else {
+                return scheduleData[monthKey] || [];
+            }
+        }
+
+        // 初始化语言
+        function initLanguage() {
+            const savedLang = localStorage.getItem('schedule-lang');
+            if (savedLang && translations[savedLang]) {
+                currentLang = savedLang;
+            }
+            updateLanguageButtons();
+            initMonthSelector();
+            updateContent();
+        }
+
+        // 初始化月份选择器
+        function initMonthSelector() {
+            const months = generateMonthList();
+            const monthSelect = document.getElementById('monthSelect');
+            monthSelect.innerHTML = '';
+            
+            // 默认选择当前月份
+            if (!currentMonth && months.length > 0) {
+                currentMonth = months[months.length - 1].key;
+            }
+            
+            months.forEach(month => {
+                const option = document.createElement('option');
+                option.value = month.key;
+                option.textContent = getMonthDisplayName(month.year, month.month, currentLang);
+                if (month.key === currentMonth) {
+                    option.selected = true;
+                }
+                monthSelect.appendChild(option);
+            });
+            
+            // 添加change事件监听
+            monthSelect.addEventListener('change', (e) => {
+                currentMonth = e.target.value;
+                renderSchedule();
+                
+                // 平滑滚动到排班表
+                setTimeout(() => {
+                    const scheduleSection = document.querySelector('.schedule-table');
+                    if (scheduleSection) {
+                        scheduleSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 100);
+            });
+        }
+
+        // 更新月份选择器选项
+        function updateMonthSelect() {
+            const monthSelect = document.getElementById('monthSelect');
+            const options = monthSelect.querySelectorAll('option');
+            
+            options.forEach(option => {
+                const monthKey = option.value;
+                const [year, month] = monthKey.split('-').map(Number);
+                option.textContent = getMonthDisplayName(year, month, currentLang);
+                if (monthKey === currentMonth) {
+                    option.selected = true;
+                }
+            });
+        }
+
+        // 渲染排班表
+        function renderSchedule() {
+            if (!currentMonth) return;
+            
+            const schedule = getScheduleForMonth(currentMonth);
+            const tbody = document.getElementById('scheduleTableBody');
+            tbody.innerHTML = '';
+            
+            const t = translations[currentLang];
+            const staffNames = {
+                zh: { 'liu': '刘唐梦', 'xiang': '向禹', 'ma-shuai': '马帅', 'ma-chaojie': '马超杰' },
+                en: { 'liu': 'Liu Tangmeng', 'xiang': 'Xiang Yu', 'ma-shuai': 'Ma Shuai', 'ma-chaojie': 'Ma Chaojie' },
+                ja: { 'liu': 'Liu Tangmeng', 'xiang': 'Xiang Yu', 'ma-shuai': 'Ma Shuai', 'ma-chaojie': 'Ma Chaojie' }
+            };
+            const names = staffNames[currentLang];
+            
+            const timeSlotTranslations = {
+                zh: {
+                    'weekday-day': '工作日白天 09:00-18:00',
+                    'weekday-night': '工作日晚上 18:00-21:00',
+                    'weekend-day': '周末白天 09:00-18:00',
+                    'weekend-night': '周末晚上 18:00-21:00'
+                },
+                en: {
+                    'weekday-day': 'Weekday Day 09:00-18:00',
+                    'weekday-night': 'Weekday Night 18:00-21:00',
+                    'weekend-day': 'Weekend Day 09:00-18:00',
+                    'weekend-night': 'Weekend Night 18:00-21:00'
+                },
+                ja: {
+                    'weekday-day': '平日昼間 09:00-18:00',
+                    'weekday-night': '平日夜間 18:00-21:00',
+                    'weekend-day': '週末昼間 09:00-18:00',
+                    'weekend-night': '週末夜間 18:00-21:00'
+                }
+            };
+            const timeSlots = timeSlotTranslations[currentLang];
+            
+            schedule.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                // 时间段
+                const timeTd = document.createElement('td');
+                const span = document.createElement('span');
+                span.className = 'time-slot';
+                span.textContent = timeSlots[item.time] || item.time;
+                timeTd.appendChild(span);
+                tr.appendChild(timeTd);
+                
+                // 负责人员
+                const staffTd = document.createElement('td');
+                item.staff.forEach((staffKey, idx) => {
+                    const span = document.createElement('span');
+                    span.className = 'staff-tag';
+                    span.textContent = names[staffKey] || staffKey;
+                    staffTd.appendChild(span);
+                    if (idx < item.staff.length - 1) {
+                        staffTd.appendChild(document.createTextNode(' '));
+                    }
+                });
+                tr.appendChild(staffTd);
+                
+                // 备注
+                const noteTd = document.createElement('td');
+                noteTd.textContent = t[item.note] || item.note;
+                tr.appendChild(noteTd);
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 更新语言按钮状态
+        function updateLanguageButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if (btn.dataset.lang === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 更新页面内容
+        function updateContent() {
+            const t = translations[currentLang];
+            
+            // 更新所有带有 data-lang 属性的元素
+            document.querySelectorAll('[data-lang]').forEach(element => {
+                const key = element.dataset.lang;
+                if (t[key]) {
+                    if (element.tagName === 'TH' || element.tagName === 'TD') {
+                        element.textContent = t[key];
+                    } else {
+                        element.innerHTML = t[key];
+                    }
+                }
+            });
+
+            // 更新名字显示
+            updateStaffNames();
+            
+            // 更新月份选择器
+            updateMonthSelect();
+            
+            // 重新渲染排班表
+            renderSchedule();
+        }
+
+        // 更新名字显示
+        function updateStaffNames() {
+            const staffNames = {
+                zh: {
+                    'liu': '刘唐梦',
+                    'xiang': '向禹',
+                    'ma-shuai': '马帅',
+                    'ma-chaojie': '马超杰'
+                },
+                en: {
+                    'liu': 'Liu Tangmeng',
+                    'xiang': 'Xiang Yu',
+                    'ma-shuai': 'Ma Shuai',
+                    'ma-chaojie': 'Ma Chaojie'
+                },
+                ja: {
+                    'liu': 'Liu Tangmeng',
+                    'xiang': 'Xiang Yu',
+                    'ma-shuai': 'Ma Shuai',
+                    'ma-chaojie': 'Ma Chaojie'
+                }
+            };
+
+            const names = staffNames[currentLang];
+            
+            // 更新人员信息卡片中的名字
+            document.querySelectorAll('.staff-name[data-staff]').forEach(element => {
+                const staffKey = element.dataset.staff;
+                if (names[staffKey]) {
+                    element.textContent = names[staffKey];
+                }
+            });
+
+            // 更新排班表中的名字标签
+            document.querySelectorAll('.staff-tag[data-staff]').forEach(element => {
+                const staffKey = element.dataset.staff;
+                if (names[staffKey]) {
+                    element.textContent = names[staffKey];
+                }
+            });
+        }
+
+
+        // 语言切换事件
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentLang = btn.dataset.lang;
+                localStorage.setItem('schedule-lang', currentLang);
+                updateLanguageButtons();
+                updateContent();
+            });
+        });
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguage();
+        });
+    </script>
+</body>
+</html>
