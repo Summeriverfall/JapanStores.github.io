@@ -1136,11 +1136,12 @@
         const gvizUrl   = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`;
         const pubUrl    = `https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=csv&gid=${gid}`;
 
-        try { const t = await xhrGet(exportUrl); if (t.trim()) return t; } catch (_) {}
-        try { const r = await fetch(exportUrl, { mode: 'cors', credentials: 'include' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+        // 1) Try server proxy first (most reliable on Render)
         try { const r = await fetch(`/api/sheets?sheetId=${sheetId}&gid=${gid}`); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
+
+        // 2) Try direct Google (fast fail for blocked regions, skip if proxy worked)
         try { const r = await fetch(gvizUrl, { mode: 'cors', credentials: 'omit' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
-        try { const t = await xhrGet(gvizUrl); if (t.trim()) return t; } catch (_) {}
+        try { const r = await fetch(exportUrl, { mode: 'cors', credentials: 'include' }); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
         try { const r = await fetch(pubUrl); if (r.ok) { const t = await r.text(); if (t.trim()) return t; } } catch (_) {}
 
         throw new Error('ACCESS_DENIED');
