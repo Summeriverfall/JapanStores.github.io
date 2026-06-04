@@ -107,7 +107,7 @@ const server = http.createServer((req, res) => {
     return proxySheets(req, res, Object.fromEntries(u.searchParams));
   }
 
-  let filePath = path.join(ROOT, u.pathname === '/' ? 'stores/monthly-orders.html' : u.pathname.replace(/^\/+/, ''));
+  let filePath = path.join(ROOT, u.pathname === '/' ? 'index.html' : u.pathname.replace(/^\/+/, ''));
   serveFile(res, filePath);
 });
 
