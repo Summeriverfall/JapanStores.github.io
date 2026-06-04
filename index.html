@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JapanStores Admin</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: Inter, 'Noto Sans JP', 'Noto Sans SC', sans-serif; background: #FAF8F3; color: #2C2C2C; min-height: 100vh; }
+.container { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem; }
+h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem; }
+.sub { color: #7A7A7A; margin-bottom: 2rem; font-size: 0.95rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.card { background: #fff; border: 1px solid #E8E5DF; border-radius: 12px; padding: 1.5rem; transition: all 0.2s; text-decoration: none; color: inherit; display: block; }
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color:#C9A961; transform: translateY(-2px); }
+.card h3 { font-size: 1.05rem; margin-bottom: 0.4rem; }
+.card p { font-size: 0.85rem; color: #7A7A7A; line-height: 1.5; }
+.badge { display: inline-block; background:#C9A961; color:#fff; font-size:0.7rem; padding:2px 8px; border-radius:10px; margin-left:6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>JapanStores Admin</h1>
+  <p class="sub">Select a page to access.</p>
+  <div class="grid">
+    <a class="card" href="stores/monthly-orders.html">
+      <h3>Monthly Orders <span class="badge">月次注文</span></h3>
+      <p>View and analyze monthly order data from Google Sheets.</p>
+    </a>
+    <a class="card" href="stores/monthly-orders-pick.html">
+      <h3>Monthly Orders (Picker)</h3>
+      <p>Select store and month to view monthly orders.</p>
+    </a>
+    <a class="card" href="stores/yesterday-orders.html">
+      <h3>Yesterday's Orders</h3>
+      <p>View yesterday's order details.</p>
+    </a>
+    <a class="card" href="stores/portal.html">
+      <h3>Store Portal</h3>
+      <p>Single store data portal with access control.</p>
+    </a>
+    <a class="card" href="stores/index.html">
+      <h3>Store List</h3>
+      <p>Store entry list and navigation.</p>
+    </a>
+    <a class="card" href="dashboard.html">
+      <h3>Dashboard</h3>
+      <p>Operations data dashboard with charts.</p>
+    </a>
+    <a class="card" href="calendar-viewer.html">
+      <h3>Calendar Viewer</h3>
+      <p>Google Calendar event viewer.</p>
+    </a>
+    <a class="card" href="hub.html">
+      <h3>Hub</h3>
+      <p>Navigation hub for all tools.</p>
+    </a>
+  </div>
+</div>
+</body>
+</html>
