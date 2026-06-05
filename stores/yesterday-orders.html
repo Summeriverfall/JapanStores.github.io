@@ -624,11 +624,13 @@
 
         /* Review sub-row below checked orders (desktop) */
         .review-row td {
-            padding: 0.3rem 0.75rem 0.6rem;
-            font-size: 0.78rem; color: #4CAF50; font-weight: 500;
+            padding: 0.35rem 0.75rem 0.5rem;
+            font-size: 0.8rem; color: #4CAF50; font-weight: 500;
             border-bottom: 1px solid #F2EFE9; background: rgba(76, 175, 80, 0.04);
+            line-height: 1.5;
         }
         .review-row td .review-dot { color: #4CAF50; margin-right: 0.3rem; }
+        .review-row td .review-time { display: block; font-size: 0.74rem; color: var(--text-light); margin-top: 1px; }
 
         /* ── Checked mobile card ────────────────────────── */
         .order-card-chk {
@@ -644,9 +646,11 @@
 
         /* Review info inside checked mobile card */
         .review-info {
-            padding: 0.45rem 0.9rem; font-size: 0.8rem; color: #4CAF50; font-weight: 500;
+            padding: 0.45rem 0.9rem; font-size: 0.82rem; color: #4CAF50; font-weight: 500;
             border-top: 1px solid rgba(76, 175, 80, 0.2); background: rgba(76, 175, 80, 0.04);
+            line-height: 1.5;
         }
+        .review-info .review-time { display: block; font-size: 0.74rem; color: var(--text-light); margin-top: 1px; }
 
         /* ── Batch buttons in confirmation panel ────────── */
         .confirm-batch-row {
@@ -1403,7 +1407,7 @@
                 reviewTr.innerHTML = '<td colspan="' + colSpan + '">' +
                     '<span class="review-dot">✅</span> ' + tx('staff_done') + ' — ' +
                     timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
-                    '  <span style="color:var(--text-light);font-size:0.74rem;">' + timeFmtShort(item.time) + '</span>' +
+                    '<span class="review-time">' + timeFmtShort(item.time) + '</span>' +
                     '</td>';
                 tr.parentNode.insertBefore(reviewTr, tr.nextSibling);
             } else if (chk) {
@@ -1429,7 +1433,7 @@
                 info.className = 'review-info';
                 info.innerHTML = '✅ ' + tx('staff_done') + ' — ' +
                     timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
-                    '  <span style="color:var(--text-light);font-size:0.72rem;">' + timeFmtShort(item.time) + '</span>';
+                    '<span class="review-time">' + timeFmtShort(item.time) + '</span>';
                 card.appendChild(info);
             } else if (chk) {
                 chk.checked = false;
