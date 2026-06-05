@@ -472,8 +472,9 @@
             .table-card-title { font-size: 0.9rem; margin-bottom: 0.75rem; }
             .order-card { margin-bottom: 0.75rem; border-radius: 10px; }
 
-            /* 手机显示卡片，隐藏表格 */
+            /* 手机显示卡片，隐藏表格和复核条 */
             .desktop-table { display: none; }
+            #reviewBars { display: none; }
             .mobile-cards { display: block; }
         }
         @media (max-width: 400px) {
@@ -622,15 +623,21 @@
         .desktop-table tr.row-checked td { background: rgba(76, 175, 80, 0.06); }
         .desktop-table tr.row-checked:hover td { background: rgba(76, 175, 80, 0.13); }
 
-        /* Review sub-row below checked orders (desktop) */
-        .review-row td {
-            padding: 0.35rem 0.75rem 0.5rem;
-            font-size: 0.8rem; color: #4CAF50; font-weight: 500;
-            border-bottom: 1px solid #F2EFE9; background: rgba(76, 175, 80, 0.04);
-            line-height: 1.5;
+        /* Review info bars below desktop table (full container width) */
+        .review-bar {
+            padding: 0.4rem 0.85rem;
+            font-size: 0.82rem; color: #4CAF50; font-weight: 500;
+            background: rgba(76, 175, 80, 0.05);
+            border-bottom: 1px solid #F2EFE9;
+            border-radius: 4px;
+            margin-bottom: 2px;
         }
-        .review-row td .review-dot { color: #4CAF50; margin-right: 0.3rem; }
-        .review-row td .review-time { display: block; font-size: 0.74rem; color: var(--text-light); margin-top: 1px; }
+        .review-bar .review-num {
+            display: inline-block; min-width: 1.6rem;
+            color: var(--text-light); font-size: 0.74rem; margin-right: 0.35rem;
+        }
+        .review-bar .review-dot { color: #4CAF50; margin-right: 0.25rem; }
+        .review-bar .review-time { color: var(--text-light); font-size: 0.74rem; margin-left: 0.5rem; }
 
         /* ── Checked mobile card ────────────────────────── */
         .order-card-chk {
@@ -650,7 +657,7 @@
             border-top: 1px solid rgba(76, 175, 80, 0.2); background: rgba(76, 175, 80, 0.04);
             line-height: 1.5;
         }
-        .review-info .review-time { display: block; font-size: 0.74rem; color: var(--text-light); margin-top: 1px; }
+        .review-info .review-time { color: var(--text-light); font-size: 0.74rem; margin-left: 0.5rem; }
 
         /* ── Batch buttons in confirmation panel ────────── */
         .confirm-batch-row {
@@ -755,6 +762,8 @@
         </div>
         <!-- Desktop table -->
         <div id="tableDesktop"><div class="loading">⏳ データを読み込み中...</div></div>
+        <!-- Review info bars (desktop – full width, outside table) -->
+        <div id="reviewBars"></div>
         <!-- Mobile card list -->
         <div class="mobile-cards" id="tableMobile"></div>
     </div>
@@ -1383,38 +1392,42 @@
         var reviewedItems = items || {};
         var timeLabel = tx('reviewed_by') || 'Reviewer';
 
-        // Count columns in desktop table for review-row colspan
-        var theadRow = document.querySelector('.desktop-table thead tr');
-        var colSpan = theadRow ? theadRow.children.length : 1;
-
-        // ── Desktop rows ──
+        // ── Desktop: update checkboxes & row highlighting, collect reviewed ──
+        var reviewedList = [];
         document.querySelectorAll('.desktop-table tr[data-event-id]').forEach(function(tr) {
             var eid = tr.dataset.eventId;
             var item = reviewedItems[eid];
             var chk = tr.querySelector('.item-chk');
 
-            // Remove any existing review sub-row
-            var next = tr.nextElementSibling;
-            if (next && next.classList.contains('review-row')) {
-                next.remove();
-            }
-
             if (chk && item && item.reviewed) {
                 chk.checked = true;
                 tr.classList.add('row-checked');
-                var reviewTr = document.createElement('tr');
-                reviewTr.className = 'review-row';
-                reviewTr.innerHTML = '<td colspan="' + colSpan + '">' +
-                    '<span class="review-dot">✅</span> ' + tx('staff_done') + ' — ' +
-                    timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
-                    '<span class="review-time">' + timeFmtShort(item.time) + '</span>' +
-                    '</td>';
-                tr.parentNode.insertBefore(reviewTr, tr.nextSibling);
+                reviewedList.push({ eid: eid, item: item, tr: tr });
             } else if (chk) {
                 chk.checked = false;
                 tr.classList.remove('row-checked');
             }
         });
+
+        // Populate review bars OUTSIDE the table (full container width)
+        var barsDiv = document.getElementById('reviewBars');
+        if (barsDiv) {
+            if (reviewedList.length > 0) {
+                barsDiv.style.display = 'block';
+                barsDiv.innerHTML = reviewedList.map(function(entry, i) {
+                    var item = entry.item;
+                    return '<div class="review-bar">' +
+                        '<span class="review-num">#' + (i + 1) + '</span>' +
+                        '<span class="review-dot">✅</span>' + tx('staff_done') + ' — ' +
+                        timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
+                        '<span class="review-time">' + timeFmtShort(item.time) + '</span>' +
+                        '</div>';
+                }).join('');
+            } else {
+                barsDiv.innerHTML = '';
+                barsDiv.style.display = 'none';
+            }
+        }
 
         // ── Mobile cards ──
         document.querySelectorAll('.order-card[data-event-id]').forEach(function(card) {
@@ -1638,6 +1651,7 @@
             document.getElementById('storeSelectText').textContent = tx('select_store');
             document.getElementById('storeBadge').textContent = '—';
             document.getElementById('tableDesktop').innerHTML = '';
+            document.getElementById('reviewBars').innerHTML = '';
             document.getElementById('confirmPanel').style.display = 'none';
             return;
         }
@@ -1656,6 +1670,7 @@
                 ? `<div class="alert alert-warn">⚠️ ${tx('access_err')}</div>`
                 : `<div class="alert alert-error">❌ ${err.message}</div>`;
             document.getElementById('tableDesktop').innerHTML = '';
+            document.getElementById('reviewBars').innerHTML = '';
         }
         // Always load confirmation (even if no orders — confirming zero is valid)
         if (storeName) {
