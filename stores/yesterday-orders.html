@@ -666,6 +666,18 @@
     <!-- Summary stats -->
     <div class="stats-grid" id="statsGrid" style="display:none;"></div>
 
+    <!-- Table / Cards -->
+    <div class="table-card">
+        <div class="table-card-title">
+            <span id="tableTitle">📄 注文一覧</span>
+            <span class="record-count" id="recordCount"></span>
+        </div>
+        <!-- Desktop table -->
+        <div id="tableDesktop"><div class="loading">⏳ データを読み込み中...</div></div>
+        <!-- Mobile card list -->
+        <div class="mobile-cards" id="tableMobile"></div>
+    </div>
+
     <!-- Confirmation panel -->
     <div class="confirm-panel" id="confirmPanel" style="display:none;">
         <div class="confirm-panel-title">🔍 <span id="confirmPanelTitle">注文確認</span></div>
@@ -687,18 +699,6 @@
             <div class="confirm-action" id="storeAction"></div>
             <div class="confirm-done" id="storeDone" style="display:none;"></div>
         </div>
-    </div>
-
-    <!-- Table / Cards -->
-    <div class="table-card">
-        <div class="table-card-title">
-            <span id="tableTitle">📄 注文一覧</span>
-            <span class="record-count" id="recordCount"></span>
-        </div>
-        <!-- Desktop table -->
-        <div id="tableDesktop"><div class="loading">⏳ データを読み込み中...</div></div>
-        <!-- Mobile card list -->
-        <div class="mobile-cards" id="tableMobile"></div>
     </div>
 
     <div class="page-footer" id="pageFooter"></div>
