@@ -606,74 +606,16 @@
         /* ── Print ──────────────────────────────────────── */
         @media print {
             body { background: #fff; }
-            .btn-action, .lang-btn, .date-picker-row, .col-chk, .order-card-chk { display: none !important; }
+            .btn-action, .lang-btn, .date-picker-row { display: none !important; }
             .page-header, .table-card, .stat-card, .order-card { box-shadow: none; border-color: #ccc; }
             .container { padding: 0; }
             .mobile-cards { display: none !important; }
             .desktop-table { display: table !important; }
         }
 
-        /* ── Per-order checkbox column ──────────────────── */
-        .col-chk { width: 2.2rem; text-align: center; padding: 0.35rem 0.2rem !important; vertical-align: middle; }
-        .col-chk input[type="checkbox"] {
-            width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary-gold);
-            margin: 0; vertical-align: middle;
-        }
-        .desktop-table tr.row-checked td { background: rgba(76, 175, 80, 0.06); }
-        .desktop-table tr.row-checked:hover td { background: rgba(76, 175, 80, 0.13); }
-
-        /* Review sub-row below checked orders (desktop) */
-        .review-row td {
-            padding: 0.35rem 0.75rem 0.5rem;
-            font-size: 0.8rem; color: #4CAF50; font-weight: 500;
-            border-bottom: 1px solid #F2EFE9; background: rgba(76, 175, 80, 0.04);
-            white-space: nowrap;
-        }
-        .review-row td .review-dot { color: #4CAF50; margin-right: 0.3rem; }
-        .review-row td .review-time { color: var(--text-light); font-size: 0.74rem; margin-left: 0.5rem; }
-
-        /* ── Checked mobile card ────────────────────────── */
-        .order-card-chk {
-            flex-shrink: 0; margin-right: 2px; display: flex;
-            flex-direction: column; align-items: center;
-        }
-        .order-card-chk input[type="checkbox"] {
-            width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary-gold);
-            margin: 0; vertical-align: middle;
-        }
-        .order-card.card-checked { border-color: #4CAF50; background: rgba(76, 175, 80, 0.03); }
-        .order-card.card-checked .order-card-head { background: rgba(76, 175, 80, 0.07); }
-
-        /* Review info inside checked mobile card */
-        .review-info {
-            padding: 0.45rem 0.9rem; font-size: 0.82rem; color: #4CAF50; font-weight: 500;
-            border-top: 1px solid rgba(76, 175, 80, 0.2); background: rgba(76, 175, 80, 0.04);
-            line-height: 1.5;
-        }
-        .review-info .review-time { color: var(--text-light); font-size: 0.74rem; margin-left: 0.5rem; }
-
-        /* ── Batch buttons in confirmation panel ────────── */
-        .confirm-batch-row {
-            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.4rem;
-        }
-        .confirm-batch-btn {
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            padding: 0.4rem 0.7rem; border: 1.5px solid var(--card-border);
-            border-radius: 7px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
-            font-family: inherit; min-height: 34px; white-space: nowrap;
-            background: var(--bg-cream); color: var(--text-medium);
-            transition: all 0.15s;
-            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-        }
-        .confirm-batch-btn:hover { border-color: var(--primary-gold); color: var(--primary-gold); background: #fff; }
-        .confirm-batch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .confirm-progress {
-            font-size: 0.76rem; color: var(--text-light); margin-bottom: 0.5rem;
-        }
-        @media (max-width: 640px) {
-            .confirm-batch-row { gap: 0.35rem; }
-            .confirm-batch-btn { font-size: 0.74rem; padding: 0.35rem 0.55rem; min-height: 36px; }
-            .col-chk input[type="checkbox"] { width: 20px; height: 20px; }
+        /* ── Staff confirm button ───────────────────────── */
+        .confirm-name-row {
+            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
         }
     </style>
 </head>
@@ -945,7 +887,7 @@
             applyLang();
             if (window._loadedData) renderAll(window._loadedData);
             loadConfirmation().then(function(cd) {
-                window._currentStaffName = cd.staff_name || '';
+                window._currentStaffName = cd.staff_confirm ? cd.staff_confirm.name : '';
                 renderConfirmation(cd);
             });
         });
@@ -1040,7 +982,7 @@
                 history.replaceState(null, '', url.toString());
                 if (window._loadedData) renderAll(window._loadedData);
                 loadConfirmation().then(function(cd) {
-                    window._currentStaffName = cd.staff_name || '';
+                    window._currentStaffName = cd.staff_confirm ? cd.staff_confirm.name : '';
                     renderConfirmation(cd);
                 });
             });
@@ -1177,21 +1119,10 @@
         const headers  = data[0] || [];
         const storeIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'store_name');
         const dateIdx  = headers.findIndex(h => String(h).trim().toLowerCase() === 'start_time');
-        const eventIdIdx = headers.findIndex(h => String(h).trim().toLowerCase() === 'event_id');
-
         const rows = data.slice(1)
             .filter(r => r.some(c => String(c).trim()))
             .filter(r => storeIdx < 0 || matchStore(r[storeIdx]))
             .filter(r => dateIdx  < 0 || isSameDate(r[dateIdx], targetDate));
-
-        // Build event_id list for per-order confirmation tracking
-        window._rowEventIds = rows.map((r, i) => {
-            if (eventIdIdx >= 0) {
-                const eid = String(r[eventIdIdx] || '').trim();
-                if (eid) return eid;
-            }
-            return 'row_' + i;
-        });
 
         // Stats
         const statsGrid  = document.getElementById('statsGrid');
@@ -1217,7 +1148,6 @@
         const tableMobile  = document.getElementById('tableMobile');
 
         if (rows.length === 0) {
-            window._rowEventIds = [];
             tableDesktop.innerHTML = `<div class="no-data">📭 ${tx('no_data')}</div>`;
             tableMobile.innerHTML  = '';
             return;
@@ -1254,12 +1184,10 @@
             return fmtCell(c.key, r[c.i]);
         }
 
-        // ── Desktop table ──
-        const thead = `<thead><tr><th class="col-chk"><input type="checkbox" id="selectAllChk" title="Select All"></th><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
+        // ── Desktop table (no checkboxes – one-click confirm) ──
+        const thead = `<thead><tr><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
         const tbody = `<tbody>${rows.map((r,i) => {
-            const eid = window._rowEventIds[i];
-            return `<tr data-event-id="${eid}">
-                <td class="col-chk"><input type="checkbox" class="item-chk" data-event-id="${eid}"></td>
+            return `<tr>
                 <td class="col-num">${i+1}</td>${cols.map(c=>`<td>${getCell(c,r)}</td>`).join('')}</tr>`;
         }).join('')}</tbody>`;
         tableDesktop.innerHTML = `<table class="desktop-table">${thead}${tbody}</table>`;
@@ -1270,7 +1198,6 @@
         const bodyColFilter = c => c.key !== 'title' && c.key !== 'end_time';
 
         tableMobile.innerHTML = rows.map((r, i) => {
-            const eid = window._rowEventIds[i];
             const titleVal = titleIdx >= 0 ? getCell(cols[titleIdx], r) : '—';
             const timeStr  = endIdx   >= 0 ? getCell(cols[endIdx], r) : '';
 
@@ -1283,9 +1210,8 @@
                 </div>`;
             }).join('');
 
-            return `<div class="order-card" data-event-id="${eid}">
+            return `<div class="order-card">
                 <div class="order-card-head">
-                    <div class="order-card-chk"><input type="checkbox" class="item-chk" data-event-id="${eid}"></div>
                     <div class="order-card-num">${i+1}</div>
                     <div class="order-card-head-title">${titleVal}</div>
                     ${timeStr ? `<div class="order-card-time">${timeStr}</div>` : ''}
@@ -1355,7 +1281,7 @@
             const r = await fetch(`/api/confirm?date=${apiDate()}&store=${encodeURIComponent(storeName)}`);
             if (r.ok) return await r.json();
         } catch (_) {}
-        return { staff_name: null, items: {}, store_confirm: null };
+        return { staff_confirm: null, store_confirm: null };
     }
 
     async function submitConfirmation(role, options) {
@@ -1379,68 +1305,6 @@
             String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     }
 
-    function applyConfirmationToRows(items, staffName) {
-        var reviewedItems = items || {};
-        var timeLabel = tx('reviewed_by') || 'Reviewer';
-
-        var theadRow = document.querySelector('.desktop-table thead tr');
-        var colSpan = theadRow ? theadRow.children.length : 1;
-
-        // ── Desktop rows: insert sub-row below each checked order ──
-        document.querySelectorAll('.desktop-table tr[data-event-id]').forEach(function(tr) {
-            var eid = tr.dataset.eventId;
-            var item = reviewedItems[eid];
-            var chk = tr.querySelector('.item-chk');
-
-            // Remove any existing review sub-row
-            var next = tr.nextElementSibling;
-            if (next && next.classList.contains('review-row')) {
-                next.remove();
-            }
-
-            if (chk && item && item.reviewed) {
-                chk.checked = true;
-                tr.classList.add('row-checked');
-                var reviewTr = document.createElement('tr');
-                reviewTr.className = 'review-row';
-                reviewTr.innerHTML = '<td colspan="' + colSpan + '">' +
-                    '<span class="review-dot">✅</span>' + tx('staff_done') + ' — ' +
-                    timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
-                    '<span class="review-time">' + timeFmtShort(item.time) + '</span>' +
-                    '</td>';
-                tr.parentNode.insertBefore(reviewTr, tr.nextSibling);
-            } else if (chk) {
-                chk.checked = false;
-                tr.classList.remove('row-checked');
-            }
-        });
-
-        // ── Mobile cards ──
-        document.querySelectorAll('.order-card[data-event-id]').forEach(function(card) {
-            var eid = card.dataset.eventId;
-            var item = reviewedItems[eid];
-            var chk = card.querySelector('.item-chk');
-
-            // Remove any existing review-info
-            var existing = card.querySelector('.review-info');
-            if (existing) existing.remove();
-
-            if (chk && item && item.reviewed) {
-                chk.checked = true;
-                card.classList.add('card-checked');
-                var info = document.createElement('div');
-                info.className = 'review-info';
-                info.innerHTML = '✅ ' + tx('staff_done') + ' — ' +
-                    timeLabel + ': <strong>' + (staffName || '—') + '</strong>' +
-                    '<span class="review-time">' + timeFmtShort(item.time) + '</span>';
-                card.appendChild(info);
-            } else if (chk) {
-                chk.checked = false;
-                card.classList.remove('card-checked');
-            }
-        });
-    }
-
     function renderConfirmation(confirmData) {
         var panel = document.getElementById('confirmPanel');
         if (!storeName) { panel.style.display = 'none'; return; }
@@ -1450,12 +1314,9 @@
         document.getElementById('staffLabel').textContent = tx('staff_label');
         document.getElementById('storeLabel').textContent = tx('store_confirm_label');
 
-        var staffName = confirmData.staff_name || '';
-        var items = confirmData.items || {};
+        var staffConfirm = confirmData.staff_confirm;
         var storeConfirm = confirmData.store_confirm;
-        var totalItems = (window._rowEventIds || []).length;
-        var reviewedCount = Object.values(items).filter(function(it) { return it.reviewed; }).length;
-        var allReviewed = totalItems > 0 && reviewedCount >= totalItems;
+        var staffName = staffConfirm ? staffConfirm.name : '';
 
         window._currentStaffName = staffName;
 
@@ -1464,67 +1325,36 @@
         var staffDone = document.getElementById('staffDone');
         var staffDot = document.getElementById('staffDot');
 
-        staffAction.style.display = 'block';
-        staffDone.style.display = 'none';
-        staffDot.className = allReviewed && totalItems > 0 ? 'confirm-status-dot done' : 'confirm-status-dot pending';
+        if (staffConfirm) {
+            staffDot.className = 'confirm-status-dot done';
+            staffAction.style.display = 'none';
+            staffDone.style.display = 'block';
+            staffDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('staff_done') + '</span>'
+                + ' — ' + tx('reviewed_by') + ': <strong>' + staffConfirm.name + '</strong>'
+                + ' <span class="time">' + timeFmtShort(staffConfirm.time) + '</span>';
+        } else {
+            staffDot.className = 'confirm-status-dot pending';
+            staffDone.style.display = 'none';
+            staffAction.style.display = 'block';
+            staffAction.innerHTML =
+                '<div class="confirm-name-row">' +
+                '<input class="confirm-input" id="staffNameInput" placeholder="' + tx('staff_name_placeholder') + '" maxlength="30">' +
+                '<button class="confirm-btn staff" id="staffConfirmBtn">✅ ' + tx('staff_btn') + '</button>' +
+                '</div>';
 
-        staffAction.innerHTML =
-            '<div class="confirm-batch-row">' +
-            '<input class="confirm-input" id="staffNameInput" placeholder="' + tx('staff_name_placeholder') + '" maxlength="30" value="' + staffName.replace(/"/g, '&quot;') + '">' +
-            '<button class="confirm-batch-btn" id="selectAllBtn">☑ ' + tx('select_all') + '</button>' +
-            '<button class="confirm-batch-btn" id="deselectAllBtn">☐ ' + tx('deselect_all') + '</button>' +
-            '</div>' +
-            '<div class="confirm-progress" id="staffProgress">' + reviewedCount + ' / ' + totalItems + ' ' + tx('items_reviewed') + '</div>';
-
-        // Name input: auto-save on blur
-        var nameInput = document.getElementById('staffNameInput');
-        nameInput.addEventListener('blur', function() {
-            var newName = this.value.trim();
-            if (newName === staffName) return;
-            var savedName = newName || '—';
-            submitConfirmation('staff', { action: 'set_name', name: savedName }).then(function(result) {
-                window._currentStaffName = result.staff_name;
-                applyConfirmationToRows(result.items, result.staff_name);
-                // update progress
-                var rc = Object.values(result.items || {}).filter(function(it) { return it.reviewed; }).length;
-                var pg = document.getElementById('staffProgress');
-                if (pg) pg.textContent = rc + ' / ' + totalItems + ' ' + tx('items_reviewed');
-            }).catch(function(e) { alert('Error: ' + e.message); });
-        });
-
-        // Select All
-        document.getElementById('selectAllBtn').addEventListener('click', function() {
-            var name = document.getElementById('staffNameInput').value.trim();
-            if (!name) { alert(tx('enter_name_first')); return; }
-            var allIds = window._rowEventIds || [];
-            if (!allIds.length) return;
-            var btn = this; btn.disabled = true;
-            // Ensure name saved first
-            var p = name !== staffName
-                ? submitConfirmation('staff', { action: 'set_name', name: name })
-                : Promise.resolve(confirmData);
-            p.then(function() {
-                return submitConfirmation('staff', { action: 'set_all', reviewed: true, eventIds: allIds });
-            }).then(function(result) {
-                renderConfirmation(result);
-                applyConfirmationToRows(result.items, result.staff_name);
-            }).catch(function(e) {
-                alert('Error: ' + e.message);
-            }).finally(function() { btn.disabled = false; });
-        });
-
-        // Deselect All
-        document.getElementById('deselectAllBtn').addEventListener('click', function() {
-            var allIds = window._rowEventIds || [];
-            if (!allIds.length) return;
-            var btn = this; btn.disabled = true;
-            submitConfirmation('staff', { action: 'set_all', reviewed: false, eventIds: allIds }).then(function(result) {
-                renderConfirmation(result);
-                applyConfirmationToRows(result.items, result.staff_name);
-            }).catch(function(e) {
-                alert('Error: ' + e.message);
-            }).finally(function() { btn.disabled = false; });
-        });
+            document.getElementById('staffConfirmBtn').addEventListener('click', function() {
+                var name = document.getElementById('staffNameInput').value.trim();
+                if (!name) { alert(tx('enter_name_first')); return; }
+                var btn = this; btn.disabled = true; btn.textContent = '...';
+                submitConfirmation('staff', { name: name }).then(function(result) {
+                    renderConfirmation(result);
+                }).catch(function(e) {
+                    btn.disabled = false;
+                    btn.textContent = '✅ ' + tx('staff_btn');
+                    alert('Error: ' + e.message);
+                });
+            });
+        }
 
         // --- Store section ---
         var storeDot = document.getElementById('storeDot');
@@ -1542,7 +1372,7 @@
             storeDot.className = 'confirm-status-dot pending';
             storeDone.style.display = 'none';
             storeAction.style.display = 'block';
-            var canConfirm = allReviewed || totalItems === 0;
+            var canConfirm = !!staffConfirm;
             storeAction.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn"' +
                 (canConfirm ? '' : ' disabled') +
                 ' title="' + (canConfirm ? '' : tx('not_all_reviewed')) + '">✅ ' + tx('store_btn') + '</button>';
@@ -1559,46 +1389,7 @@
                 });
             }
         }
-
-        // Apply row highlighting
-        applyConfirmationToRows(items, staffName);
     }
-
-    // ─── Delegated checkbox listeners ─────────────────────────────────────────
-    document.addEventListener('change', function(e) {
-        var chk = e.target;
-        // Individual item checkbox
-        if (chk.classList.contains('item-chk')) {
-            var eventId = chk.dataset.eventId;
-            if (!eventId) return;
-            var nameInput = document.getElementById('staffNameInput');
-            var staffName = nameInput ? nameInput.value.trim() : '';
-            if (!staffName) {
-                chk.checked = !chk.checked;
-                alert(tx('enter_name_first'));
-                return;
-            }
-            chk.disabled = true;
-            var p = staffName !== (window._currentStaffName || '')
-                ? submitConfirmation('staff', { action: 'set_name', name: staffName })
-                : Promise.resolve(null);
-            p.then(function() {
-                return submitConfirmation('staff', { action: 'set_item', eventId: eventId, reviewed: chk.checked });
-            }).then(function(result) {
-                window._currentStaffName = result.staff_name;
-                renderConfirmation(result);
-                applyConfirmationToRows(result.items, result.staff_name);
-            }).catch(function(e) {
-                chk.checked = !chk.checked;
-                alert('Error: ' + e.message);
-            }).finally(function() { chk.disabled = false; });
-        }
-        // Header "Select All" checkbox — visual toggle only, no API calls
-        if (chk.id === 'selectAllChk') {
-            var checked = chk.checked;
-            document.querySelectorAll('.item-chk').forEach(function(c) { c.checked = checked; });
-        }
-    });
 
     // ─── Fetch & load ────────────────────────────────────────────────────────
     function xhrGet(url) {
@@ -1659,7 +1450,7 @@
         // Always load confirmation (even if no orders — confirming zero is valid)
         if (storeName) {
             const confirmData = await loadConfirmation();
-            window._currentStaffName = confirmData.staff_name || '';
+            window._currentStaffName = confirmData.staff_confirm ? confirmData.staff_confirm.name : '';
             renderConfirmation(confirmData);
         }
     }
@@ -1680,7 +1471,7 @@
             document.getElementById('stateMsg').innerHTML = '';
             renderAll(data);
             const confirmData = await loadConfirmation();
-            window._currentStaffName = confirmData.staff_name || '';
+            window._currentStaffName = confirmData.staff_confirm ? confirmData.staff_confirm.name : '';
             renderConfirmation(confirmData);
         } catch (err) {
             document.getElementById('stateMsg').innerHTML =
