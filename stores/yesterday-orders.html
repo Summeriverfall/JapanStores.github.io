@@ -556,7 +556,7 @@
         .confirm-status-dot {
             width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
         }
-        .confirm-status-dot.pending { background: #CCC; }
+        .confirm-status-dot.pending { background: #F0A030; }
         .confirm-status-dot.done { background: #4CAF50; }
         .confirm-action {
             display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
@@ -790,6 +790,7 @@
             items_reviewed: '件確認済み',
             enter_name_first: '先に名前を入力してください',
             not_all_reviewed: 'すべての注文が確認されていません',
+            wait_staff_first: '先にスタッフの確認が必要です',
             footer: d => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 生成`,
             access_err: 'データを読み込めません。Google Sheetを「リンクを知っている全員」→「閲覧者」に設定してください',
             row: '件', share: '共有', refresh: '更新', refresh_loading: '更新中...', print_label: '印刷',
@@ -820,6 +821,7 @@
             items_reviewed: '项已复核',
             enter_name_first: '请先输入姓名',
             not_all_reviewed: '尚有订单未复核',
+            wait_staff_first: '等待工作人员先复核',
             footer: d => `生成于 ${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
             access_err: '无法读取数据，请确认 Google Sheet 已设为「任何人可查看」',
             row: '条', share: '分享', refresh: '刷新', refresh_loading: '刷新中...', print_label: '打印',
@@ -850,6 +852,7 @@
             items_reviewed: 'items reviewed',
             enter_name_first: 'Please enter your name first',
             not_all_reviewed: 'Not all orders have been reviewed',
+            wait_staff_first: 'Waiting for staff review first',
             footer: d => `Generated ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
             access_err: 'Cannot load data. Share the Google Sheet as "Anyone with the link – Viewer"',
             row: ' orders', share: 'Share', refresh: 'Refresh', refresh_loading: 'Loading...', print_label: 'Print',
@@ -1373,10 +1376,8 @@
             storeDone.style.display = 'none';
             storeAction.style.display = 'block';
             var canConfirm = !!staffConfirm;
-            storeAction.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn"' +
-                (canConfirm ? '' : ' disabled') +
-                ' title="' + (canConfirm ? '' : tx('not_all_reviewed')) + '">✅ ' + tx('store_btn') + '</button>';
             if (canConfirm) {
+                storeAction.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn">✅ ' + tx('store_btn') + '</button>';
                 document.getElementById('storeConfirmBtn').addEventListener('click', function() {
                     var btn = this; btn.disabled = true; btn.textContent = '...';
                     submitConfirmation('store').then(function(result) {
@@ -1387,6 +1388,8 @@
                         alert('Error: ' + e.message);
                     });
                 });
+            } else {
+                storeAction.innerHTML = '<span style="color:#F0A030;font-size:0.82rem;font-weight:500;">⏳ ' + tx('wait_staff_first') + '</span>';
             }
         }
     }

@@ -6,6 +6,7 @@ const path = require('path');
 const PORT = process.env.PORT || 8765;
 const ROOT = __dirname;
 const CONFIRM_FILE = path.join(ROOT, 'confirmations.json');
+const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbzW9jjogYsczDC9CpMD7as9kAfwzBkOciQZzLJwRp4a_wJ4IMI4RdYu1b1mezIKW7TvZg/exec';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -51,6 +52,32 @@ function readConfirmations() {
 }
 function writeConfirmations(data) {
   fs.writeFileSync(CONFIRM_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+// Notify Google Sheets via Apps Script (fire-and-forget)
+function notifySheet(confirmData, cb) {
+  if (!GOOGLE_SCRIPT_URL) { if (cb) cb(null); return; }
+  const body = JSON.stringify(confirmData);
+  const u = new URL(GOOGLE_SCRIPT_URL);
+  const lib = u.protocol === 'https:' ? https : http;
+  const req = lib.request(u, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    rejectUnauthorized: false
+  }, (res) => {
+    let data = '';
+    res.on('data', c => data += c);
+    res.on('end', () => {
+      console.log('[sheet] Response:', res.statusCode, data);
+      if (cb) cb(null, data);
+    });
+  });
+  req.on('error', (err) => {
+    console.log('[sheet] Notify error:', err.message);
+    if (cb) cb(err);
+  });
+  req.write(body);
+  req.end();
 }
 
 // Auto-migrate old formats to new: { staff_confirm: {name, time}, store_confirm: {time} }
@@ -139,6 +166,7 @@ function handlePostConfirm(req, res, body) {
 
     writeConfirmations(data);
     console.log('[confirm] Saved:', date, store, role);
+    notifySheet({ date, store, role, name: name || '', time });
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({
       ok: true, date, store,
