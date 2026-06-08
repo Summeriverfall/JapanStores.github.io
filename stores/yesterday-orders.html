@@ -1301,13 +1301,6 @@
         return await r.json();
     }
 
-    function timeFmtShort(iso) {
-        if (!iso) return '';
-        var d = new Date(iso);
-        return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
-            String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-    }
-
     function renderConfirmation(confirmData) {
         var panel = document.getElementById('confirmPanel');
         if (!storeName) { panel.style.display = 'none'; return; }
@@ -1332,9 +1325,7 @@
             staffDot.className = 'confirm-status-dot done';
             staffAction.style.display = 'none';
             staffDone.style.display = 'block';
-            staffDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('staff_done') + '</span>'
-                + ' — ' + tx('reviewed_by') + ': <strong>' + staffConfirm.name + '</strong>'
-                + ' <span class="time">' + timeFmtShort(staffConfirm.time) + '</span>';
+            staffDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('staff_done') + '</span>';
         } else {
             staffDot.className = 'confirm-status-dot pending';
             staffDone.style.display = 'none';
@@ -1368,9 +1359,7 @@
             storeDot.className = 'confirm-status-dot done';
             storeAction.style.display = 'none';
             storeDone.style.display = 'block';
-            var d = new Date(storeConfirm.time);
-            var timeStr = d.getFullYear() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-            storeDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('store_done') + '</span> <span class="time">' + tx('confirmed_at') + ': ' + timeStr + '</span>';
+            storeDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('store_done') + '</span>';
         } else {
             storeDot.className = 'confirm-status-dot pending';
             storeDone.style.display = 'none';
