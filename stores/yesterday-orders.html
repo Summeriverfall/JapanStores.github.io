@@ -644,7 +644,7 @@
         /* ── Print ──────────────────────────────────────── */
         @media print {
             body { background: #fff; }
-            .btn-action, .lang-btn, .date-picker-row { display: none !important; }
+            .btn-action, .lang-btn, .date-picker-row, .error-cb-col, .error-cb-mobile, .error-bar { display: none !important; }
             .page-header, .table-card, .stat-card, .order-card { box-shadow: none; border-color: #ccc; }
             .container { padding: 0; }
             .mobile-cards { display: none !important; }
@@ -655,6 +655,23 @@
         .confirm-name-row {
             display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
         }
+
+        /* ── Error reporting ────────────────────────────── */
+        .error-cb-col { display: none; width: 2rem; text-align: center; }
+        .error-mode .error-cb-col { display: table-cell; }
+        .error-mode .error-cb-mobile { display: flex; }
+        .error-cb-mobile { display: none; align-items: center; gap: 0.5rem; }
+        .error-cb-mobile input { width: 18px; height: 18px; accent-color: #E53935; }
+        .error-bar {
+            display: none; margin-top: 0.75rem; padding: 0.75rem;
+            background: #FFF5F5; border: 1px solid #F5C6C6; border-radius: 10px;
+            align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;
+        }
+        .error-bar.show { display: flex; }
+        .error-bar-text { font-size: 0.85rem; font-weight: 600; color: #C62828; }
+        .error-bar-btns { display: flex; gap: 0.5rem; }
+        .btn-cancel { background: #EEE; color: #666; }
+        .btn-cancel:hover { background: #DDD; }
     </style>
 </head>
 <body>
@@ -714,6 +731,14 @@
         <div id="tableDesktop"><div class="loading">⏳ データを読み込み中...</div></div>
         <!-- Mobile card list -->
         <div class="mobile-cards" id="tableMobile"></div>
+        <!-- Error reporting bar -->
+        <div class="error-bar" id="errorBar">
+            <span class="error-bar-text" id="errorBarText"></span>
+            <div class="error-bar-btns">
+                <button class="confirm-btn btn-cancel" id="errorBarCancel"></button>
+                <button class="confirm-btn store" id="errorBarSubmit" style="background:#E53935;"></button>
+            </div>
+        </div>
     </div>
 
     <!-- Confirmation panel (single row, 3-stage) -->
@@ -737,6 +762,20 @@
             <div class="confirm-modal-btns">
                 <button class="btn-modal-cancel" id="modalCancel"></button>
                 <button class="btn-modal-confirm" id="modalConfirm"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Store confirmation modal -->
+    <div class="confirm-modal-overlay" id="storeModal" style="display:none;">
+        <div class="confirm-modal">
+            <div class="confirm-modal-title" id="storeModalTitle"></div>
+            <div class="confirm-modal-info">
+                <input class="confirm-input" id="storeModalName" style="width:100%;" placeholder="" maxlength="30">
+            </div>
+            <div class="confirm-modal-btns">
+                <button class="btn-modal-cancel" id="storeModalCancel"></button>
+                <button class="btn-modal-confirm" id="storeModalConfirm"></button>
             </div>
         </div>
     </div>
@@ -827,6 +866,15 @@
             modal_time_label: '確認日時',
             modal_confirm_btn: '確認する',
             modal_cancel_btn: 'キャンセル',
+            store_modal_title: '店舗確認',
+            store_modal_name_placeholder: '確認者名を入力',
+            store_modal_confirm: '確認完了',
+            error_btn: '注文エラー',
+            error_bar_text: 'エラーのある注文を選択してください',
+            error_bar_cancel: 'キャンセル',
+            error_bar_submit: 'フィードバック送信',
+            staff_cancel_btn: '確認取消',
+            staff_cancel_confirm: '確認をキャンセルしますか？再度確認が必要になります。',
             select_all: '全選択',
             deselect_all: '選択解除',
             items_reviewed: '件確認済み',
@@ -860,6 +908,15 @@
             modal_time_label: '复核时间',
             modal_confirm_btn: '确认提交',
             modal_cancel_btn: '取消',
+            store_modal_title: '店家确认',
+            store_modal_name_placeholder: '输入确认人姓名',
+            store_modal_confirm: '确认无误',
+            error_btn: '订单有误',
+            error_bar_text: '请勾选有误的订单，提交反馈',
+            error_bar_cancel: '取消',
+            error_bar_submit: '提交反馈',
+            staff_cancel_btn: '取消确认',
+            staff_cancel_confirm: '确定取消确认？取消后需重新复核。',
             select_all: '全选',
             deselect_all: '取消全选',
             items_reviewed: '项已复核',
@@ -893,6 +950,15 @@
             modal_time_label: 'Review Time',
             modal_confirm_btn: 'Submit',
             modal_cancel_btn: 'Cancel',
+            store_modal_title: 'Store Confirmation',
+            store_modal_name_placeholder: 'Enter confirmer name',
+            store_modal_confirm: 'Confirm',
+            error_btn: 'Report Error',
+            error_bar_text: 'Select orders with errors and submit',
+            error_bar_cancel: 'Cancel',
+            error_bar_submit: 'Submit Report',
+            staff_cancel_btn: 'Cancel Review',
+            staff_cancel_confirm: 'Cancel review? You will need to re-review.',
             select_all: 'Select All',
             deselect_all: 'Deselect All',
             items_reviewed: 'items reviewed',
@@ -1227,10 +1293,11 @@
             return fmtCell(c.key, r[c.i]);
         }
 
-        // ── Desktop table (no checkboxes – one-click confirm) ──
-        const thead = `<thead><tr><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
+        // ── Desktop table (with hidden error checkboxes) ──
+        const thead = `<thead><tr><th class="error-cb-col">✗</th><th style="width:2.2rem;text-align:center;">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>`;
         const tbody = `<tbody>${rows.map((r,i) => {
             return `<tr>
+                <td class="error-cb-col"><input type="checkbox" class="error-cb" data-idx="${i}"></td>
                 <td class="col-num">${i+1}</td>${cols.map(c=>`<td>${getCell(c,r)}</td>`).join('')}</tr>`;
         }).join('')}</tbody>`;
         tableDesktop.innerHTML = `<table class="desktop-table">${thead}${tbody}</table>`;
@@ -1255,6 +1322,7 @@
 
             return `<div class="order-card">
                 <div class="order-card-head">
+                    <div class="error-cb-mobile"><input type="checkbox" class="error-cb" data-idx="${i}"></div>
                     <div class="order-card-num">${i+1}</div>
                     <div class="order-card-head-title">${titleVal}</div>
                     ${timeStr ? `<div class="order-card-time">${timeStr}</div>` : ''}
@@ -1341,12 +1409,16 @@
         return await r.json();
     }
 
+    // ─── Confirmation UI ─────────────────────────────────────────────────
+    var _errorMode = false;
+
     function renderConfirmation(confirmData) {
         var panel = document.getElementById('confirmPanel');
         if (!storeName) { panel.style.display = 'none'; return; }
         panel.style.display = 'block';
 
         document.getElementById('confirmPanelTitle').textContent = tx('confirm_title');
+        exitErrorMode();
 
         var staffConfirm = confirmData.staff_confirm;
         var storeConfirm = confirmData.store_confirm;
@@ -1369,16 +1441,28 @@
             label.textContent = tx('store_pending_label');
             done.style.display = 'none';
             action.style.display = 'block';
-            action.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn">✅ ' + tx('store_btn') + '</button>';
-            document.getElementById('storeConfirmBtn').addEventListener('click', function() {
-                var btn = this; btn.disabled = true; btn.textContent = '...';
-                submitConfirmation('store').then(function(result) {
+            action.innerHTML =
+                '<button class="confirm-btn btn-cancel" id="staffCancelBtn">↩ ' + tx('staff_cancel_btn') + '</button>' +
+                '<button class="confirm-btn store" id="storeConfirmBtn" style="margin-left:0.4rem;">✅ ' + tx('store_btn') + '</button>' +
+                '<button class="confirm-btn btn-cancel" id="errorBtn" style="margin-left:0.4rem;">⚠ ' + tx('error_btn') + '</button>';
+
+            document.getElementById('staffCancelBtn').addEventListener('click', function() {
+                if (!confirm(tx('staff_cancel_confirm'))) return;
+                var name = staffConfirm.name || '';
+                submitConfirmation('staff_cancel', { name: name }).then(function(result) {
                     renderConfirmation(result);
-                }).catch(function(e) {
-                    btn.disabled = false;
-                    btn.textContent = '✅ ' + tx('store_btn');
-                    alert('Error: ' + e.message);
+                }).catch(function(e) { alert('Error: ' + e.message); });
+            });
+            document.getElementById('storeConfirmBtn').addEventListener('click', function() {
+                showStoreConfirmModal(function(name) {
+                    hideStoreModal();
+                    submitConfirmation('store', { name: name }).then(function(result) {
+                        renderConfirmation(result);
+                    }).catch(function(e) { alert('Error: ' + e.message); });
                 });
+            });
+            document.getElementById('errorBtn').addEventListener('click', function() {
+                enterErrorMode();
             });
         } else {
             // Stage 1: awaiting staff → red dot
@@ -1411,6 +1495,7 @@
         }
     }
 
+    // ─── Staff review modal ─────────────────────────────────────────────
     function showConfirmModal(name, onConfirm) {
         var now = new Date();
         var timeStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
@@ -1423,16 +1508,69 @@
         document.getElementById('modalCancel').textContent = tx('modal_cancel_btn');
 
         document.getElementById('confirmModal').style.display = 'flex';
-
         document.getElementById('modalConfirm').onclick = function() { onConfirm(); };
         document.getElementById('modalCancel').onclick = function() { hideConfirmModal(); };
         document.getElementById('confirmModal').onclick = function(e) {
             if (e.target === document.getElementById('confirmModal')) hideConfirmModal();
         };
     }
-
     function hideConfirmModal() {
         document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    // ─── Store confirmation modal ───────────────────────────────────────
+    function showStoreConfirmModal(onConfirm) {
+        document.getElementById('storeModalTitle').textContent = tx('store_modal_title');
+        document.getElementById('storeModalName').placeholder = tx('store_modal_name_placeholder');
+        document.getElementById('storeModalName').value = '';
+        document.getElementById('storeModalConfirm').textContent = tx('store_modal_confirm');
+        document.getElementById('storeModalCancel').textContent = tx('modal_cancel_btn');
+
+        document.getElementById('storeModal').style.display = 'flex';
+        document.getElementById('storeModalConfirm').onclick = function() {
+            var name = document.getElementById('storeModalName').value.trim();
+            if (!name) { alert(tx('enter_name_first')); return; }
+            onConfirm(name);
+        };
+        document.getElementById('storeModalCancel').onclick = function() { hideStoreModal(); };
+        document.getElementById('storeModal').onclick = function(e) {
+            if (e.target === document.getElementById('storeModal')) hideStoreModal();
+        };
+    }
+    function hideStoreModal() {
+        document.getElementById('storeModal').style.display = 'none';
+    }
+
+    // ─── Error reporting ────────────────────────────────────────────────
+    function enterErrorMode() {
+        _errorMode = true;
+        document.querySelector('.table-card').classList.add('error-mode');
+        document.getElementById('errorBar').classList.add('show');
+        document.getElementById('errorBarText').textContent = tx('error_bar_text');
+        document.getElementById('errorBarCancel').textContent = tx('error_bar_cancel');
+        document.getElementById('errorBarSubmit').textContent = tx('error_bar_submit');
+
+        document.getElementById('errorBarCancel').onclick = function() { exitErrorMode(); };
+        document.getElementById('errorBarSubmit').onclick = function() {
+            var cbs = document.querySelectorAll('.error-cb:checked');
+            var items = [];
+            cbs.forEach(function(cb) { items.push(parseInt(cb.dataset.idx) + 1); });
+            if (items.length === 0) { alert(tx('error_bar_text')); return; }
+            showStoreConfirmModal(function(name) {
+                hideStoreModal();
+                exitErrorMode();
+                submitConfirmation('store_error', { name: name, errorItems: items }).then(function(result) {
+                    renderConfirmation(result);
+                }).catch(function(e) { alert('Error: ' + e.message); });
+            });
+        };
+    }
+    function exitErrorMode() {
+        _errorMode = false;
+        document.querySelector('.table-card').classList.remove('error-mode');
+        document.getElementById('errorBar').classList.remove('show');
+        var cbs = document.querySelectorAll('.error-cb');
+        cbs.forEach(function(cb) { cb.checked = false; });
     }
 
     // ─── Fetch & load ────────────────────────────────────────────────────────

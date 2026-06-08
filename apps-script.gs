@@ -26,14 +26,23 @@ function doGet(e) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const { date, store, role, name, time } = data;
+    const { date, store, role, name, time, errorItems } = data;
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName('Confirmations');
     if (!sheet) {
       sheet = ss.insertSheet('Confirmations');
-      sheet.appendRow(['Date', 'Store', 'Staff Name', 'Staff Time', 'Store Time']);
-      sheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#F5F0E6');
+      sheet.appendRow(['Date', 'Store', 'Staff Name', 'Staff Time', 'Store Name', 'Store Time', 'Cancel History', 'Error Reports']);
+      sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#F5F0E6');
+    }
+
+    // Ensure all 8 columns exist (migrate old sheets)
+    const lastCol = sheet.getLastColumn();
+    if (lastCol < 8) {
+      if (lastCol < 6) { sheet.getRange(1, 6).setValue('Store Name'); }
+      if (lastCol < 7) { sheet.getRange(1, 7).setValue('Cancel History'); }
+      sheet.getRange(1, 8).setValue('Error Reports');
+      sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#F5F0E6');
     }
 
     // 查找已有行
@@ -50,14 +59,34 @@ function doPost(e) {
       if (targetRow > 0) {
         sheet.getRange(targetRow, 3).setValue(name);
         sheet.getRange(targetRow, 4).setValue(time);
+        // Clear cancel history when re-confirming
+        sheet.getRange(targetRow, 7).setValue('');
       } else {
-        sheet.appendRow([date, store, name, time, '']);
+        sheet.appendRow([date, store, name, time, '', '', '', '']);
+      }
+    } else if (role === 'staff_cancel') {
+      if (targetRow > 0) {
+        const cancelEntry = name + ' canceled at ' + time;
+        const existing = sheet.getRange(targetRow, 7).getValue() || '';
+        sheet.getRange(targetRow, 7).setValue(existing ? existing + ' | ' + cancelEntry : cancelEntry);
+        sheet.getRange(targetRow, 3).setValue('');
+        sheet.getRange(targetRow, 4).setValue('');
       }
     } else if (role === 'store') {
       if (targetRow > 0) {
-        sheet.getRange(targetRow, 5).setValue(time);
+        sheet.getRange(targetRow, 5).setValue(name);
+        sheet.getRange(targetRow, 6).setValue(time);
       } else {
-        sheet.appendRow([date, store, '', '', time]);
+        sheet.appendRow([date, store, '', '', name, time, '', '']);
+      }
+    } else if (role === 'store_error') {
+      const itemStr = (errorItems && errorItems.length > 0) ? 'items: ' + errorItems.join(', ') : '';
+      const errEntry = name + ' reported errors at ' + time + (itemStr ? ' (' + itemStr + ')' : '');
+      if (targetRow > 0) {
+        const existing = sheet.getRange(targetRow, 8).getValue() || '';
+        sheet.getRange(targetRow, 8).setValue(existing ? existing + ' | ' + errEntry : errEntry);
+      } else {
+        sheet.appendRow([date, store, '', '', '', '', '', errEntry]);
       }
     }
 

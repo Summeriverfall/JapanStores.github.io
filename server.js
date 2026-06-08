@@ -141,7 +141,7 @@ function handleGetConfirm(res, query) {
 
 function handlePostConfirm(req, res, body) {
   try {
-    const { date, store, role, name } = JSON.parse(body);
+    const { date, store, role, name, errorItems } = JSON.parse(body);
     if (!date || !store || !role) {
       res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: 'Missing date, store, or role' }));
@@ -155,23 +155,34 @@ function handlePostConfirm(req, res, body) {
 
     if (role === 'staff') {
       entry.staff_confirm = { name: name || 'unknown', time };
+      // Append to history
+      if (!entry.staff_history) entry.staff_history = [];
+      entry.staff_history.push({ action: 'confirm', name: name || 'unknown', time });
+    } else if (role === 'staff_cancel') {
+      entry.staff_confirm = null;
+      if (!entry.staff_history) entry.staff_history = [];
+      entry.staff_history.push({ action: 'cancel', name: name || 'unknown', time });
     } else if (role === 'store') {
       if (!entry.staff_confirm) {
         res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ error: 'Staff has not confirmed yet' }));
         return;
       }
-      entry.store_confirm = { time };
+      entry.store_confirm = { name: name || '', time };
+    } else if (role === 'store_error') {
+      if (!entry.store_errors) entry.store_errors = [];
+      entry.store_errors.push({ name: name || '', time, items: errorItems || [] });
     }
 
     writeConfirmations(data);
     console.log('[confirm] Saved:', date, store, role);
-    notifySheet({ date, store, role, name: name || '', time });
+    notifySheet({ date, store, role, name: name || '', time, errorItems: errorItems || [] });
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({
       ok: true, date, store,
       staff_confirm: entry.staff_confirm,
-      store_confirm: entry.store_confirm
+      store_confirm: entry.store_confirm || null,
+      store_errors: entry.store_errors || []
     }));
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
