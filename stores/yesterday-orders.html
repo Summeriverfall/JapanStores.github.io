@@ -556,7 +556,8 @@
         .confirm-status-dot {
             width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
         }
-        .confirm-status-dot.pending { background: #F0A030; }
+        .confirm-status-dot.staff-pending { background: #E53935; }
+        .confirm-status-dot.store-pending { background: #F0A030; }
         .confirm-status-dot.done { background: #4CAF50; }
         .confirm-action {
             display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
@@ -592,6 +593,43 @@
             .confirm-action { width: 100%; }
             .confirm-input { flex: 1; width: auto; min-width: 0; }
         }
+
+        /* ── Confirmation Modal ──────────────────────────── */
+        .confirm-modal-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.45);
+            display: flex; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .confirm-modal {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 1.5rem; width: 100%; max-width: 360px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .confirm-modal-title {
+            font-size: 1rem; font-weight: 700; margin-bottom: 1rem;
+            text-align: center;
+        }
+        .confirm-modal-info {
+            background: var(--bg-cream); border-radius: 10px;
+            padding: 1rem; margin-bottom: 1.25rem;
+            font-size: 0.88rem; line-height: 1.8;
+        }
+        .confirm-modal-info strong { color: var(--text-dark); }
+        .confirm-modal-info .info-label { color: var(--text-light); font-size: 0.78rem; }
+        .confirm-modal-btns {
+            display: flex; gap: 0.6rem;
+        }
+        .confirm-modal-btns button {
+            flex: 1; padding: 0.6rem; border: none; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; min-height: 42px;
+            transition: opacity 0.15s;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .confirm-modal-btns button:active { opacity: 0.7; }
+        .btn-modal-confirm { background: var(--primary-gold); color: #fff; }
+        .btn-modal-cancel { background: var(--bg-cream); color: var(--text-medium); border: 1px solid var(--card-border) !important; }
 
         /* ── State ──────────────────────────────────────── */
         #stateMsg { margin-bottom: 1.25rem; }
@@ -678,26 +716,28 @@
         <div class="mobile-cards" id="tableMobile"></div>
     </div>
 
-    <!-- Confirmation panel -->
+    <!-- Confirmation panel (single row, 3-stage) -->
     <div class="confirm-panel" id="confirmPanel" style="display:none;">
         <div class="confirm-panel-title">🔍 <span id="confirmPanelTitle">注文確認</span></div>
-        <!-- Staff row -->
-        <div class="confirm-row" id="staffConfirmRow">
+        <div class="confirm-row" id="confirmRow">
             <div class="confirm-label">
-                <span class="confirm-status-dot pending" id="staffDot"></span>
-                <span id="staffLabel">スタッフ確認</span>
+                <span class="confirm-status-dot staff-pending" id="confirmDot"></span>
+                <span id="confirmLabel"></span>
             </div>
-            <div class="confirm-action" id="staffAction"></div>
-            <div class="confirm-done" id="staffDone" style="display:none;"></div>
+            <div class="confirm-action" id="confirmAction"></div>
+            <div class="confirm-done" id="confirmDone" style="display:none;"></div>
         </div>
-        <!-- Store row -->
-        <div class="confirm-row" id="storeConfirmRow">
-            <div class="confirm-label">
-                <span class="confirm-status-dot pending" id="storeDot"></span>
-                <span id="storeLabel">店舗確認</span>
+    </div>
+
+    <!-- Staff confirm review modal -->
+    <div class="confirm-modal-overlay" id="confirmModal" style="display:none;">
+        <div class="confirm-modal">
+            <div class="confirm-modal-title" id="modalTitle"></div>
+            <div class="confirm-modal-info" id="modalInfo"></div>
+            <div class="confirm-modal-btns">
+                <button class="btn-modal-cancel" id="modalCancel"></button>
+                <button class="btn-modal-confirm" id="modalConfirm"></button>
             </div>
-            <div class="confirm-action" id="storeAction"></div>
-            <div class="confirm-done" id="storeDone" style="display:none;"></div>
         </div>
     </div>
 
@@ -776,15 +816,17 @@
             select_store: '店舗を選択',
             store_label: '店舗',
             confirm_title: '注文確認',
-            staff_label: 'スタッフ確認',
-            store_confirm_label: '店舗確認',
+            staff_pending_label: 'スタッフ確認待ち',
+            store_pending_label: '店舗確認待ち',
+            confirm_complete_label: '注文確認完了',
             staff_name_placeholder: '名前を入力',
-            staff_btn: '確認完了',
+            staff_btn: '確認',
             store_btn: '注文を確認',
-            staff_done: '確認済み',
-            store_done: '確認済み',
-            reviewed_by: '確認者',
-            confirmed_at: '確認日時',
+            modal_title: '確認内容',
+            modal_name_label: '確認者',
+            modal_time_label: '確認日時',
+            modal_confirm_btn: '確認する',
+            modal_cancel_btn: 'キャンセル',
             select_all: '全選択',
             deselect_all: '選択解除',
             items_reviewed: '件確認済み',
@@ -807,15 +849,17 @@
             select_store: '選択してください',
             store_label: '店舗',
             confirm_title: '订单核对确认',
-            staff_label: '工作人员复核',
-            store_confirm_label: '店家确认',
+            staff_pending_label: '待工作人员复核',
+            store_pending_label: '待店家确认',
+            confirm_complete_label: '订单核对完成',
             staff_name_placeholder: '输入姓名',
             staff_btn: '确认复核',
             store_btn: '确认订单无误',
-            staff_done: '已复核',
-            store_done: '已确认',
-            reviewed_by: '复核人',
-            confirmed_at: '确认时间',
+            modal_title: '确认复核信息',
+            modal_name_label: '复核人',
+            modal_time_label: '复核时间',
+            modal_confirm_btn: '确认提交',
+            modal_cancel_btn: '取消',
             select_all: '全选',
             deselect_all: '取消全选',
             items_reviewed: '项已复核',
@@ -838,15 +882,17 @@
             select_store: 'Select a store',
             store_label: 'Store',
             confirm_title: 'Order Verification',
-            staff_label: 'Staff Review',
-            store_confirm_label: 'Store Confirmation',
+            staff_pending_label: 'Awaiting Staff Review',
+            store_pending_label: 'Awaiting Store Confirmation',
+            confirm_complete_label: 'Verification Complete',
             staff_name_placeholder: 'Enter name',
             staff_btn: 'Confirm Review',
             store_btn: 'Confirm Orders',
-            staff_done: 'Reviewed',
-            store_done: 'Confirmed',
-            reviewed_by: 'Reviewed by',
-            confirmed_at: 'Confirmed at',
+            modal_title: 'Review Confirmation',
+            modal_name_label: 'Reviewer',
+            modal_time_label: 'Review Time',
+            modal_confirm_btn: 'Submit',
+            modal_cancel_btn: 'Cancel',
             select_all: 'Select All',
             deselect_all: 'Deselect All',
             items_reviewed: 'items reviewed',
@@ -889,10 +935,7 @@
             localStorage.setItem('stores-lang', lang);
             applyLang();
             if (window._loadedData) renderAll(window._loadedData);
-            loadConfirmation().then(function(cd) {
-                window._currentStaffName = cd.staff_confirm ? cd.staff_confirm.name : '';
-                renderConfirmation(cd);
-            });
+            loadConfirmation().then(function(cd) { renderConfirmation(cd); });
         });
     });
 
@@ -984,10 +1027,7 @@
                 url.searchParams.set('date', toDateStr(targetDate));
                 history.replaceState(null, '', url.toString());
                 if (window._loadedData) renderAll(window._loadedData);
-                loadConfirmation().then(function(cd) {
-                    window._currentStaffName = cd.staff_confirm ? cd.staff_confirm.name : '';
-                    renderConfirmation(cd);
-                });
+                loadConfirmation().then(function(cd) { renderConfirmation(cd); });
             });
             return el;
         }
@@ -1307,30 +1347,46 @@
         panel.style.display = 'block';
 
         document.getElementById('confirmPanelTitle').textContent = tx('confirm_title');
-        document.getElementById('staffLabel').textContent = tx('staff_label');
-        document.getElementById('storeLabel').textContent = tx('store_confirm_label');
 
         var staffConfirm = confirmData.staff_confirm;
         var storeConfirm = confirmData.store_confirm;
-        var staffName = staffConfirm ? staffConfirm.name : '';
 
-        window._currentStaffName = staffName;
+        var dot = document.getElementById('confirmDot');
+        var label = document.getElementById('confirmLabel');
+        var action = document.getElementById('confirmAction');
+        var done = document.getElementById('confirmDone');
 
-        // --- Staff section ---
-        var staffAction = document.getElementById('staffAction');
-        var staffDone = document.getElementById('staffDone');
-        var staffDot = document.getElementById('staffDot');
-
-        if (staffConfirm) {
-            staffDot.className = 'confirm-status-dot done';
-            staffAction.style.display = 'none';
-            staffDone.style.display = 'block';
-            staffDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('staff_done') + '</span>';
+        if (storeConfirm) {
+            // Stage 3: both confirmed → green dot
+            dot.className = 'confirm-status-dot done';
+            label.textContent = tx('confirm_complete_label');
+            action.style.display = 'none';
+            done.style.display = 'block';
+            done.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('confirm_complete_label') + '</span>';
+        } else if (staffConfirm) {
+            // Stage 2: staff done, awaiting store → yellow dot
+            dot.className = 'confirm-status-dot store-pending';
+            label.textContent = tx('store_pending_label');
+            done.style.display = 'none';
+            action.style.display = 'block';
+            action.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn">✅ ' + tx('store_btn') + '</button>';
+            document.getElementById('storeConfirmBtn').addEventListener('click', function() {
+                var btn = this; btn.disabled = true; btn.textContent = '...';
+                submitConfirmation('store').then(function(result) {
+                    renderConfirmation(result);
+                }).catch(function(e) {
+                    btn.disabled = false;
+                    btn.textContent = '✅ ' + tx('store_btn');
+                    alert('Error: ' + e.message);
+                });
+            });
         } else {
-            staffDot.className = 'confirm-status-dot pending';
-            staffDone.style.display = 'none';
-            staffAction.style.display = 'block';
-            staffAction.innerHTML =
+            // Stage 1: awaiting staff → red dot
+            dot.className = 'confirm-status-dot staff-pending';
+            label.textContent = tx('staff_pending_label');
+            done.style.display = 'none';
+            action.style.display = 'block';
+            action.innerHTML =
                 '<div class="confirm-name-row">' +
                 '<input class="confirm-input" id="staffNameInput" placeholder="' + tx('staff_name_placeholder') + '" maxlength="30">' +
                 '<button class="confirm-btn staff" id="staffConfirmBtn">✅ ' + tx('staff_btn') + '</button>' +
@@ -1339,48 +1395,44 @@
             document.getElementById('staffConfirmBtn').addEventListener('click', function() {
                 var name = document.getElementById('staffNameInput').value.trim();
                 if (!name) { alert(tx('enter_name_first')); return; }
-                var btn = this; btn.disabled = true; btn.textContent = '...';
-                submitConfirmation('staff', { name: name }).then(function(result) {
-                    renderConfirmation(result);
-                }).catch(function(e) {
-                    btn.disabled = false;
-                    btn.textContent = '✅ ' + tx('staff_btn');
-                    alert('Error: ' + e.message);
-                });
-            });
-        }
-
-        // --- Store section ---
-        var storeDot = document.getElementById('storeDot');
-        var storeAction = document.getElementById('storeAction');
-        var storeDone = document.getElementById('storeDone');
-
-        if (storeConfirm) {
-            storeDot.className = 'confirm-status-dot done';
-            storeAction.style.display = 'none';
-            storeDone.style.display = 'block';
-            storeDone.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('store_done') + '</span>';
-        } else {
-            storeDot.className = 'confirm-status-dot pending';
-            storeDone.style.display = 'none';
-            storeAction.style.display = 'block';
-            var canConfirm = !!staffConfirm;
-            if (canConfirm) {
-                storeAction.innerHTML = '<button class="confirm-btn store" id="storeConfirmBtn">✅ ' + tx('store_btn') + '</button>';
-                document.getElementById('storeConfirmBtn').addEventListener('click', function() {
-                    var btn = this; btn.disabled = true; btn.textContent = '...';
-                    submitConfirmation('store').then(function(result) {
+                showConfirmModal(name, function() {
+                    var btn = document.getElementById('staffConfirmBtn');
+                    btn.disabled = true; btn.textContent = '...';
+                    submitConfirmation('staff', { name: name }).then(function(result) {
+                        hideConfirmModal();
                         renderConfirmation(result);
                     }).catch(function(e) {
                         btn.disabled = false;
-                        btn.textContent = '✅ ' + tx('store_btn');
+                        btn.textContent = '✅ ' + tx('staff_btn');
                         alert('Error: ' + e.message);
                     });
                 });
-            } else {
-                storeAction.innerHTML = '<span style="color:#F0A030;font-size:0.82rem;font-weight:500;">⏳ ' + tx('wait_staff_first') + '</span>';
-            }
+            });
         }
+    }
+
+    function showConfirmModal(name, onConfirm) {
+        var now = new Date();
+        var timeStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+        document.getElementById('modalTitle').textContent = tx('modal_title');
+        document.getElementById('modalInfo').innerHTML =
+            '<div><span class="info-label">' + tx('modal_name_label') + '</span><br><strong>' + name + '</strong></div>' +
+            '<div style="margin-top:0.5rem;"><span class="info-label">' + tx('modal_time_label') + '</span><br><strong>' + timeStr + '</strong></div>';
+        document.getElementById('modalConfirm').textContent = tx('modal_confirm_btn');
+        document.getElementById('modalCancel').textContent = tx('modal_cancel_btn');
+
+        document.getElementById('confirmModal').style.display = 'flex';
+
+        document.getElementById('modalConfirm').onclick = function() { onConfirm(); };
+        document.getElementById('modalCancel').onclick = function() { hideConfirmModal(); };
+        document.getElementById('confirmModal').onclick = function(e) {
+            if (e.target === document.getElementById('confirmModal')) hideConfirmModal();
+        };
+    }
+
+    function hideConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
     }
 
     // ─── Fetch & load ────────────────────────────────────────────────────────
@@ -1442,7 +1494,6 @@
         // Always load confirmation (even if no orders — confirming zero is valid)
         if (storeName) {
             const confirmData = await loadConfirmation();
-            window._currentStaffName = confirmData.staff_confirm ? confirmData.staff_confirm.name : '';
             renderConfirmation(confirmData);
         }
     }
@@ -1463,7 +1514,6 @@
             document.getElementById('stateMsg').innerHTML = '';
             renderAll(data);
             const confirmData = await loadConfirmation();
-            window._currentStaffName = confirmData.staff_confirm ? confirmData.staff_confirm.name : '';
             renderConfirmation(confirmData);
         } catch (err) {
             document.getElementById('stateMsg').innerHTML =
