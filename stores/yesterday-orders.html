@@ -539,6 +539,7 @@
             background: var(--card-bg); border: 1px solid var(--card-border);
             border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem;
             box-shadow: 0 2px 8px var(--shadow);
+            position: relative;
         }
         .confirm-panel-title {
             font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;
@@ -580,13 +581,40 @@
         .confirm-btn:active { opacity: 0.7; }
         .confirm-btn:hover { opacity: 0.85; }
         .confirm-btn.staff { background: var(--primary-gold); color: #fff; }
-        .confirm-btn.store { background: var(--text-dark); color: #fff; }
+        .confirm-btn.store { background: #4CAF50; color: #fff; }
+        .confirm-btn.store-error { background: #E53935; color: #fff; }
         .confirm-btn:disabled { background: #CCC; color: #999; cursor: not-allowed; opacity: 1; }
         .confirm-done {
             font-size: 0.82rem; color: var(--text-medium); line-height: 1.45;
         }
         .confirm-done strong { color: var(--text-dark); }
         .confirm-done .time { color: var(--text-light); font-size: 0.76rem; }
+        /* ── More menu (staff cancel) ──────────────────── */
+        .confirm-more-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem;
+            width: 26px; height: 26px; border-radius: 50%;
+            border: none; background: #E0E0E0; color: #888;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1; padding: 0;
+            transition: background 0.15s, color 0.15s;
+        }
+        .confirm-more-btn:hover { background: #CCC; color: #555; }
+        .confirm-more-menu {
+            display: none; position: absolute; top: 2.2rem; right: 0.5rem;
+            background: #fff; border: 1px solid var(--card-border);
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 100; min-width: 160px; overflow: hidden;
+        }
+        .confirm-more-menu.show { display: block; }
+        .confirm-more-menu button {
+            display: block; width: 100%; padding: 0.6rem 1rem;
+            border: none; background: #fff; font-size: 0.82rem;
+            font-family: inherit; cursor: pointer; text-align: left;
+            color: var(--text-medium);
+            transition: background 0.12s;
+        }
+        .confirm-more-menu button:hover { background: #F5F5F5; color: var(--error); }
         @media (max-width: 640px) {
             .confirm-panel { padding: 1rem 0.9rem; border-radius: 12px; }
             .confirm-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
@@ -672,6 +700,11 @@
         .error-bar-btns { display: flex; gap: 0.5rem; }
         .btn-cancel { background: #EEE; color: #666; }
         .btn-cancel:hover { background: #DDD; }
+        /* ── Error-marked order rows ──────────────────── */
+        .col-num-error, .order-card-num-error {
+            background: #FFF9C4; color: #F57F17; font-weight: 700;
+        }
+        th.col-num-error { background: #FFEB3B; }
     </style>
 </head>
 <body>
@@ -911,7 +944,7 @@
             store_modal_title: '店家确认',
             store_modal_name_placeholder: '输入确认人姓名',
             store_modal_confirm: '确认无误',
-            error_btn: '订单有误',
+            error_btn: '提交反馈',
             error_bar_text: '请勾选有误的订单，提交反馈',
             error_bar_cancel: '取消',
             error_bar_submit: '提交反馈',
@@ -1435,6 +1468,9 @@
             action.style.display = 'none';
             done.style.display = 'block';
             done.innerHTML = '<span style="color:#4CAF50;font-weight:700;">✅ ' + tx('confirm_complete_label') + '</span>';
+            // Hide "..." button
+            var moreBtn3 = document.getElementById('confirmMoreBtn');
+            if (moreBtn3) moreBtn3.style.display = 'none';
         } else if (staffConfirm) {
             // Stage 2: staff done, awaiting store → yellow dot
             dot.className = 'confirm-status-dot store-pending';
@@ -1442,17 +1478,54 @@
             done.style.display = 'none';
             action.style.display = 'block';
             action.innerHTML =
-                '<button class="confirm-btn btn-cancel" id="staffCancelBtn">↩ ' + tx('staff_cancel_btn') + '</button>' +
-                '<button class="confirm-btn store" id="storeConfirmBtn" style="margin-left:0.4rem;">✅ ' + tx('store_btn') + '</button>' +
-                '<button class="confirm-btn btn-cancel" id="errorBtn" style="margin-left:0.4rem;">⚠ ' + tx('error_btn') + '</button>';
+                '<button class="confirm-btn store" id="storeConfirmBtn">✅ ' + tx('store_btn') + '</button>' +
+                '<button class="confirm-btn store-error" id="errorBtn" style="margin-left:0.5rem;">⚠ ' + tx('error_btn') + '</button>';
 
-            document.getElementById('staffCancelBtn').addEventListener('click', function() {
+            // "..." menu button for staff cancel (hidden from store's normal view)
+            var moreBtn = document.getElementById('confirmMoreBtn');
+            if (!moreBtn) {
+                moreBtn = document.createElement('button');
+                moreBtn.id = 'confirmMoreBtn';
+                moreBtn.className = 'confirm-more-btn';
+                moreBtn.textContent = '...';
+                panel.appendChild(moreBtn);
+            }
+            moreBtn.style.display = 'flex';
+
+            // More menu (staff cancel)
+            var moreMenu = document.getElementById('confirmMoreMenu');
+            if (!moreMenu) {
+                moreMenu = document.createElement('div');
+                moreMenu.id = 'confirmMoreMenu';
+                moreMenu.className = 'confirm-more-menu';
+                moreMenu.innerHTML = '<button id="staffCancelMenuBtn">↩ ' + tx('staff_cancel_btn') + '</button>';
+                moreBtn.appendChild(moreMenu);
+            }
+            moreMenu.classList.remove('show');
+
+            moreBtn.onclick = function(e) {
+                e.stopPropagation();
+                moreMenu.classList.toggle('show');
+            };
+            // Click outside to close (clean up old listener before adding new)
+            if (moreBtn._closeHandler) {
+                document.removeEventListener('click', moreBtn._closeHandler);
+            }
+            moreBtn._closeHandler = function(e) {
+                if (!moreBtn.contains(e.target)) { moreMenu.classList.remove('show'); }
+            };
+            document.addEventListener('click', moreBtn._closeHandler);
+
+            document.getElementById('staffCancelMenuBtn').onclick = function(e) {
+                e.stopPropagation();
+                moreMenu.classList.remove('show');
                 if (!confirm(tx('staff_cancel_confirm'))) return;
                 var name = staffConfirm.name || '';
                 submitConfirmation('staff_cancel', { name: name }).then(function(result) {
                     renderConfirmation(result);
                 }).catch(function(e) { alert('Error: ' + e.message); });
-            });
+            };
+
             document.getElementById('storeConfirmBtn').addEventListener('click', function() {
                 showStoreConfirmModal(function(name) {
                     hideStoreModal();
@@ -1466,6 +1539,11 @@
             });
         } else {
             // Stage 1: awaiting staff → red dot
+            // Hide "..." button when in stage 1
+            var moreBtn1 = document.getElementById('confirmMoreBtn');
+            if (moreBtn1) moreBtn1.style.display = 'none';
+            var moreMenu1 = document.getElementById('confirmMoreMenu');
+            if (moreMenu1) moreMenu1.classList.remove('show');
             dot.className = 'confirm-status-dot staff-pending';
             label.textContent = tx('staff_pending_label');
             done.style.display = 'none';
@@ -1493,6 +1571,52 @@
                 });
             });
         }
+        // Apply error marks to table after confirmation state is rendered
+        applyErrorMarks(confirmData);
+    }
+
+    // ─── Apply error marks ("?" with yellow highlight) ─────────────────
+    function applyErrorMarks(confirmData) {
+        // Collect all error item indices across all error submissions
+        var errorSet = new Set();
+        var storeErrors = confirmData.store_errors || [];
+        storeErrors.forEach(function(err) {
+            (err.items || []).forEach(function(item) {
+                errorSet.add(item); // 1-indexed item numbers
+            });
+        });
+
+        // Desktop table: update <th>#</th> header and <td class="col-num"> cells
+        var theadTh = document.querySelector('.desktop-table thead th:nth-child(2)');
+        var colNumCells = document.querySelectorAll('.desktop-table .col-num');
+
+        if (errorSet.size > 0) {
+            if (theadTh) { theadTh.textContent = '?'; theadTh.classList.add('col-num-error'); }
+            colNumCells.forEach(function(td, i) {
+                var itemNum = i + 1; // 1-indexed
+                if (errorSet.has(itemNum)) {
+                    td.textContent = '?';
+                    td.classList.add('col-num-error');
+                } else {
+                    td.classList.remove('col-num-error');
+                }
+            });
+        } else {
+            if (theadTh) { theadTh.textContent = '#'; theadTh.classList.remove('col-num-error'); }
+            colNumCells.forEach(function(td) { td.classList.remove('col-num-error'); });
+        }
+
+        // Mobile cards: update order-card-num
+        var cardNums = document.querySelectorAll('.order-card-num');
+        cardNums.forEach(function(div, i) {
+            var itemNum = i + 1;
+            if (errorSet.has(itemNum)) {
+                div.textContent = '?';
+                div.classList.add('order-card-num-error');
+            } else {
+                div.classList.remove('order-card-num-error');
+            }
+        });
     }
 
     // ─── Staff review modal ─────────────────────────────────────────────
@@ -1556,13 +1680,10 @@
             var items = [];
             cbs.forEach(function(cb) { items.push(parseInt(cb.dataset.idx) + 1); });
             if (items.length === 0) { alert(tx('error_bar_text')); return; }
-            showStoreConfirmModal(function(name) {
-                hideStoreModal();
-                exitErrorMode();
-                submitConfirmation('store_error', { name: name, errorItems: items }).then(function(result) {
-                    renderConfirmation(result);
-                }).catch(function(e) { alert('Error: ' + e.message); });
-            });
+            exitErrorMode();
+            submitConfirmation('store_error', { name: '', errorItems: items }).then(function(result) {
+                renderConfirmation(result);
+            }).catch(function(e) { alert('Error: ' + e.message); });
         };
     }
     function exitErrorMode() {
