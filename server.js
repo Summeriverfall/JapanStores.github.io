@@ -160,6 +160,7 @@ function handlePostConfirm(req, res, body) {
       entry.staff_history.push({ action: 'confirm', name: name || 'unknown', time });
     } else if (role === 'staff_cancel') {
       entry.staff_confirm = null;
+      entry.store_errors = null;  // clear error marks on cancel
       if (!entry.staff_history) entry.staff_history = [];
       entry.staff_history.push({ action: 'cancel', name: name || 'unknown', time });
     } else if (role === 'store') {
