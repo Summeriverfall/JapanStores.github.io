@@ -1527,12 +1527,9 @@
             };
 
             document.getElementById('storeConfirmBtn').addEventListener('click', function() {
-                showStoreConfirmModal(function(name) {
-                    hideStoreModal();
-                    submitConfirmation('store', { name: name }).then(function(result) {
-                        renderConfirmation(result);
-                    }).catch(function(e) { alert('Error: ' + e.message); });
-                });
+                submitConfirmation('store', { name: '' }).then(function(result) {
+                    renderConfirmation(result);
+                }).catch(function(e) { alert('Error: ' + e.message); });
             });
             document.getElementById('errorBtn').addEventListener('click', function() {
                 enterErrorMode();
