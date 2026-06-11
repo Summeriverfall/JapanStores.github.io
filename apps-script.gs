@@ -11,22 +11,88 @@ function doGet(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName('Confirmations');
     if (!sheet) {
-      return ContentService.createTextOutput(JSON.stringify({ ok: true, rows: 0 }))
+      return emptyResponse(e);
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return emptyResponse(e);
+    }
+
+    const result = {};
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const d = String(row[0] || '').trim();
+      const s = String(row[1] || '').trim();
+      if (!d || !s) continue;
+
+      if (!result[d]) result[d] = {};
+
+      const staffName = row[2];
+      const staffTime = row[3];
+      const storeName = row[4];
+      const storeTime = row[5];
+
+      let storeErrors = [];
+      try {
+        const raw = row[7];
+        if (raw && String(raw).trim()) {
+          storeErrors = JSON.parse(String(raw));
+        }
+      } catch (_) {}
+
+      result[d][s] = {
+        staff_confirm: staffName && staffTime ? { name: String(staffName), time: String(staffTime) } : null,
+        store_confirm: storeName && storeTime ? { name: String(storeName), time: String(storeTime) } : null,
+        store_errors: storeErrors
+      };
+    }
+
+    const params = e && e.parameter ? e.parameter : {};
+    const date = params.date || '';
+    const store = params.store || '';
+
+    if (date && store) {
+      const entry = (result[date] && result[date][store]) || { staff_confirm: null, store_confirm: null, store_errors: [] };
+      return ContentService.createTextOutput(JSON.stringify({
+        date, store,
+        staff_confirm: entry.staff_confirm,
+        store_confirm: entry.store_confirm,
+        store_errors: entry.store_errors
+      })).setMimeType(ContentService.MimeType.JSON);
+    } else if (date) {
+      return ContentService.createTextOutput(JSON.stringify(result[date] || {}))
         .setMimeType(ContentService.MimeType.JSON);
     }
-    const data = sheet.getDataRange().getValues();
-    return ContentService.createTextOutput(JSON.stringify({ ok: true, rows: data.length - 1 }))
+
+    return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: err.message }))
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
+function emptyResponse(e) {
+  const params = e && e.parameter ? e.parameter : {};
+  const date = params.date || '';
+  const store = params.store || '';
+  if (date && store) {
+    return ContentService.createTextOutput(JSON.stringify({
+      date, store,
+      staff_confirm: null,
+      store_confirm: null,
+      store_errors: []
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
-    const { date, store, role, name, time, errorItems } = data;
+    const body = JSON.parse(e.postData.contents);
+    const { date, store, role, name, time, errorItems } = body;
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName('Confirmations');
@@ -36,16 +102,15 @@ function doPost(e) {
       sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#F5F0E6');
     }
 
-    // Ensure all 8 columns exist (migrate old sheets)
     const lastCol = sheet.getLastColumn();
     if (lastCol < 8) {
-      if (lastCol < 6) { sheet.getRange(1, 6).setValue('Store Name'); }
-      if (lastCol < 7) { sheet.getRange(1, 7).setValue('Cancel History'); }
-      sheet.getRange(1, 8).setValue('Error Reports');
+      const headers = ['Date', 'Store', 'Staff Name', 'Staff Time', 'Store Name', 'Store Time', 'Cancel History', 'Error Reports'];
+      for (let c = lastCol; c < 8; c++) {
+        sheet.getRange(1, c + 1).setValue(headers[c]);
+      }
       sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#F5F0E6');
     }
 
-    // 查找已有行
     const rows = sheet.getDataRange().getValues();
     let targetRow = -1;
     for (let i = 1; i < rows.length; i++) {
@@ -55,15 +120,19 @@ function doPost(e) {
       }
     }
 
+    let staffName = '', staffTime = '', storeName = '', storeTime = '';
+    let storeErrors = [];
+
     if (role === 'staff') {
       if (targetRow > 0) {
         sheet.getRange(targetRow, 3).setValue(name);
         sheet.getRange(targetRow, 4).setValue(time);
-        // Clear cancel history when re-confirming
         sheet.getRange(targetRow, 7).setValue('');
       } else {
         sheet.appendRow([date, store, name, time, '', '', '', '']);
       }
+      staffName = name;
+      staffTime = time;
     } else if (role === 'staff_cancel') {
       if (targetRow > 0) {
         const cancelEntry = name + ' canceled at ' + time;
@@ -71,6 +140,7 @@ function doPost(e) {
         sheet.getRange(targetRow, 7).setValue(existing ? existing + ' | ' + cancelEntry : cancelEntry);
         sheet.getRange(targetRow, 3).setValue('');
         sheet.getRange(targetRow, 4).setValue('');
+        sheet.getRange(targetRow, 8).setValue('');
       }
     } else if (role === 'store') {
       if (targetRow > 0) {
@@ -79,19 +149,47 @@ function doPost(e) {
       } else {
         sheet.appendRow([date, store, '', '', name, time, '', '']);
       }
+      storeName = name;
+      storeTime = time;
     } else if (role === 'store_error') {
-      const itemStr = (errorItems && errorItems.length > 0) ? 'items: ' + errorItems.join(', ') : '';
-      const errEntry = name + ' reported errors at ' + time + (itemStr ? ' (' + itemStr + ')' : '');
+      const newErrors = [{ name: name || '', time, items: errorItems || [] }];
       if (targetRow > 0) {
         const existing = sheet.getRange(targetRow, 8).getValue() || '';
-        sheet.getRange(targetRow, 8).setValue(existing ? existing + ' | ' + errEntry : errEntry);
+        let existingErrors = [];
+        try {
+          if (existing && String(existing).trim()) {
+            existingErrors = JSON.parse(String(existing));
+          }
+        } catch (_) {}
+        storeErrors = existingErrors.concat(newErrors);
+        sheet.getRange(targetRow, 8).setValue(JSON.stringify(storeErrors));
       } else {
-        sheet.appendRow([date, store, '', '', '', '', '', errEntry]);
+        storeErrors = newErrors;
+        sheet.appendRow([date, store, '', '', '', '', '', JSON.stringify(storeErrors)]);
       }
     }
 
-    return ContentService.createTextOutput(JSON.stringify({ ok: true }))
-      .setMimeType(ContentService.MimeType.JSON);
+    // Read back current row state for response
+    if (targetRow > 0) {
+      const rowData = sheet.getRange(targetRow, 1, 1, 8).getValues()[0];
+      if (!staffName) staffName = String(rowData[2] || '');
+      if (!staffTime) staffTime = String(rowData[3] || '');
+      if (!storeName) storeName = String(rowData[4] || '');
+      if (!storeTime) storeTime = String(rowData[5] || '');
+      if (storeErrors.length === 0) {
+        try {
+          const raw = String(rowData[7] || '');
+          if (raw) storeErrors = JSON.parse(raw);
+        } catch (_) {}
+      }
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      ok: true, date, store,
+      staff_confirm: staffName && staffTime ? { name: staffName, time: staffTime } : null,
+      store_confirm: storeName && storeTime ? { name: storeName, time: storeTime } : null,
+      store_errors: storeErrors
+    })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: err.message }))
       .setMimeType(ContentService.MimeType.JSON);

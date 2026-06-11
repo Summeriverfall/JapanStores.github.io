@@ -5,7 +5,6 @@ const path = require('path');
 
 const PORT = process.env.PORT || 8765;
 const ROOT = __dirname;
-const CONFIRM_FILE = path.join(ROOT, 'confirmations.json');
 const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbzW9jjogYsczDC9CpMD7as9kAfwzBkOciQZzLJwRp4a_wJ4IMI4RdYu1b1mezIKW7TvZg/exec';
 
 const MIME = {
@@ -45,150 +44,76 @@ function fetchUrl(url, cb) {
   }).on('error', err => cb(err, null, 0));
 }
 
-// ─── Confirmation storage ──────────────────────────────────────────────
-function readConfirmations() {
-  try { return JSON.parse(fs.readFileSync(CONFIRM_FILE, 'utf8')); }
-  catch (_) { return {}; }
-}
-function writeConfirmations(data) {
-  fs.writeFileSync(CONFIRM_FILE, JSON.stringify(data, null, 2), 'utf8');
-}
+// ─── Confirmation storage (via Google Sheets Apps Script) ─────────────
 
-// Notify Google Sheets via Apps Script (fire-and-forget)
-function notifySheet(confirmData, cb) {
-  if (!GOOGLE_SCRIPT_URL) { if (cb) cb(null); return; }
-  const body = JSON.stringify(confirmData);
-  const u = new URL(GOOGLE_SCRIPT_URL);
+function postJson(url, body, cb) {
+  const u = new URL(url);
   const lib = u.protocol === 'https:' ? https : http;
+  const postData = JSON.stringify(body);
   const req = lib.request(u, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) },
     rejectUnauthorized: false
   }, (res) => {
     let data = '';
     res.on('data', c => data += c);
     res.on('end', () => {
-      console.log('[sheet] Response:', res.statusCode, data);
-      if (cb) cb(null, data);
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        fetchUrl(res.headers.location, (e, d) => cb(e, d));
+        return;
+      }
+      cb(null, data, res.statusCode);
     });
   });
-  req.on('error', (err) => {
-    console.log('[sheet] Notify error:', err.message);
-    if (cb) cb(err);
-  });
-  req.write(body);
+  req.on('error', err => cb(err, null, 0));
+  req.write(postData);
   req.end();
 }
 
-// Auto-migrate old formats to new: { staff_confirm: {name, time}, store_confirm: {time} }
-function migrateIfNeeded(data) {
-  let migrated = false;
-  for (const date of Object.keys(data)) {
-    for (const store of Object.keys(data[date])) {
-      const entry = data[date][store];
-      // v1 → v2: staff {name, time} → staff_name + items
-      if (entry.staff && !entry.staff_name) {
-        entry.staff_name = entry.staff.name || 'unknown';
-        entry.items = {};
-        delete entry.staff;
-        migrated = true;
-      }
-      if (entry.store && !entry.store_confirm) {
-        entry.store_confirm = entry.store;
-        delete entry.store;
-        migrated = true;
-      }
-      if (!entry.items) { entry.items = {}; migrated = true; }
-      // v2 → v3: per-item staff_name + items → staff_confirm
-      if ((entry.staff_name || entry.items) && !entry.staff_confirm) {
-        const lastItem = Object.values(entry.items || {}).sort(
-          (a, b) => new Date(b.time) - new Date(a.time)
-        )[0];
-        entry.staff_confirm = {
-          name: entry.staff_name || 'unknown',
-          time: lastItem ? lastItem.time : new Date().toISOString()
-        };
-        delete entry.staff_name;
-        delete entry.items;
-        migrated = true;
-      }
-    }
-  }
-  if (migrated) writeConfirmations(data);
-  return data;
-}
-
 function handleGetConfirm(res, query) {
-  const data = migrateIfNeeded(readConfirmations());
-  const date = query.date;
-  const store = query.store;
-  if (date && store) {
-    const entry = data[date]?.[store] || {};
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify({
-      date, store,
-      staff_confirm: entry.staff_confirm || null,
-      store_confirm: entry.store_confirm || null
-    }));
-  } else if (date) {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify(data[date] || {}));
-  } else {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify(data));
-  }
+  const qs = Object.entries(query).map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+  const sep = GOOGLE_SCRIPT_URL.includes('?') ? '&' : '?';
+  const url = GOOGLE_SCRIPT_URL + (qs ? sep + qs : '');
+  console.log('[confirm] GET proxy:', url);
+  fetchUrl(url, (err, data, statusCode) => {
+    if (err) {
+      res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Sheets unreachable: ' + err.message }));
+      return;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify(parsed));
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Invalid response from Sheets' }));
+    }
+  });
 }
 
 function handlePostConfirm(req, res, body) {
-  try {
-    const { date, store, role, name, errorItems } = JSON.parse(body);
-    if (!date || !store || !role) {
-      res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-      res.end(JSON.stringify({ error: 'Missing date, store, or role' }));
+  console.log('[confirm] POST proxy to Sheets');
+  postJson(GOOGLE_SCRIPT_URL, JSON.parse(body), (err, data, statusCode) => {
+    if (err) {
+      res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Sheets unreachable: ' + err.message }));
       return;
     }
-    const data = migrateIfNeeded(readConfirmations());
-    if (!data[date]) data[date] = {};
-    if (!data[date][store]) data[date][store] = {};
-    const entry = data[date][store];
-    const time = new Date().toISOString();
-
-    if (role === 'staff') {
-      entry.staff_confirm = { name: name || 'unknown', time };
-      // Append to history
-      if (!entry.staff_history) entry.staff_history = [];
-      entry.staff_history.push({ action: 'confirm', name: name || 'unknown', time });
-    } else if (role === 'staff_cancel') {
-      entry.staff_confirm = null;
-      entry.store_errors = null;  // clear error marks on cancel
-      if (!entry.staff_history) entry.staff_history = [];
-      entry.staff_history.push({ action: 'cancel', name: name || 'unknown', time });
-    } else if (role === 'store') {
-      if (!entry.staff_confirm) {
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.ok) {
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify(parsed));
+      } else {
         res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-        res.end(JSON.stringify({ error: 'Staff has not confirmed yet' }));
-        return;
+        res.end(JSON.stringify({ error: parsed.error || 'Sheets write failed' }));
       }
-      entry.store_confirm = { name: name || '', time };
-    } else if (role === 'store_error') {
-      if (!entry.store_errors) entry.store_errors = [];
-      entry.store_errors.push({ name: name || '', time, items: errorItems || [] });
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: 'Invalid response from Sheets' }));
     }
-
-    writeConfirmations(data);
-    console.log('[confirm] Saved:', date, store, role);
-    notifySheet({ date, store, role, name: name || '', time, errorItems: errorItems || [] });
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify({
-      ok: true, date, store,
-      staff_confirm: entry.staff_confirm,
-      store_confirm: entry.store_confirm || null,
-      store_errors: entry.store_errors || []
-    }));
-  } catch (e) {
-    res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify({ error: e.message }));
-  }
+  });
 }
 
 function proxySheets(req, res, query) {
