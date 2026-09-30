@@ -19,7 +19,7 @@
     <div>
       <div class="store-badge">天竺 広東倶楽部</div>
       <h1 id="pageTitle">本店シフト</h1>
-      <p id="subtitle">ホール / キッチンのみ。全社 CS 排班表ではありません。</p>
+      <p id="subtitle">マス目をタップして出勤／休を切替。今夜の出勤はホームに出ます。</p>
     </div>
     <div class="language-switcher">
       <button class="lang-btn" type="button" data-lang="ja">日本語</button>
@@ -29,6 +29,12 @@
   </header>
   <section class="data-section" style="overflow-x:auto;">
     <table class="shift-table" id="shiftTable"></table>
+    <div class="row" style="margin-top:1rem;">
+      <input id="newName" class="input-field" style="min-width:120px">
+      <input id="newRole" class="input-field" style="min-width:100px">
+      <input id="newHours" class="input-field" value="17–24" style="width:100px">
+      <button class="btn" type="button" id="btnAdd">追加</button>
+    </div>
   </section>
 </div>
 <script>
@@ -36,46 +42,61 @@
   if (!Tenjiku.requireAuth()) return;
   const lang = Tenjiku.getLang();
   const i18n = {
-    ja: {
-      back: '← 店舗データ', title: '本店シフト', sub: 'ホール / キッチンのみ。他店・全社 CS の表は使いません。',
-      days: ['', '月', '火', '水', '木', '金', '土', '日'],
-      rows: [
-        ['店長 李', '17–24', '17–24', '休', '17–24', '17–24', '17–24', '17–24'],
-        ['ホール 佐藤', '17–23', '17–23', '17–23', '休', '17–24', '17–24', '17–23'],
-        ['ホール 陳', '休', '17–24', '17–24', '17–24', '17–23', '17–24', '17–24'],
-        ['キッチン 王', '16–24', '16–24', '16–24', '16–24', '16–24', '16–24', '休']
-      ]
-    },
-    zh: {
-      back: '← 门店数据', title: '本店排班', sub: '只排本店厅面和厨房，不是全公司客服表。',
-      days: ['', '一', '二', '三', '四', '五', '六', '日'],
-      rows: [
-        ['店长 李', '17–24', '17–24', '休', '17–24', '17–24', '17–24', '17–24'],
-        ['厅面 佐藤', '17–23', '17–23', '17–23', '休', '17–24', '17–24', '17–23'],
-        ['厅面 陈', '休', '17–24', '17–24', '17–24', '17–23', '17–24', '17–24'],
-        ['厨房 王', '16–24', '16–24', '16–24', '16–24', '16–24', '16–24', '休']
-      ]
-    },
-    en: {
-      back: '← Store data', title: 'Shop shifts', sub: 'Floor and kitchen for this restaurant only.',
-      days: ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      rows: [
-        ['Manager Li', '17–24', '17–24', 'Off', '17–24', '17–24', '17–24', '17–24'],
-        ['Floor Sato', '17–23', '17–23', '17–23', 'Off', '17–24', '17–24', '17–23'],
-        ['Floor Chen', 'Off', '17–24', '17–24', '17–24', '17–23', '17–24', '17–24'],
-        ['Kitchen Wang', '16–24', '16–24', '16–24', '16–24', '16–24', '16–24', 'Off']
-      ]
-    }
+    ja: { back: '← 店舗データ', title: '本店シフト', sub: 'マス目をタップして出勤／休を切替。今夜の出勤はホームに出ます。', days: ['名前', '役割', '時間', '月', '火', '水', '木', '金', '土', '日'], off: '休', add: '追加', name: '名前', role: 'ホール' },
+    zh: { back: '← 门店数据', title: '本店排班', sub: '点格子切换出勤／休息。今晚谁上班会显示在首页。', days: ['姓名', '岗位', '时间', '一', '二', '三', '四', '五', '六', '日'], off: '休', add: '添加', name: '姓名', role: '厅面' },
+    en: { back: '← Store data', title: 'Shop shifts', sub: 'Tap a cell to toggle on / off. Tonight’s staff shows on home.', days: ['Name', 'Role', 'Hours', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], off: 'Off', add: 'Add', name: 'Name', role: 'Floor' }
   };
   const t = i18n[lang] || i18n.ja;
+  const E = Tenjiku.escapeHtml;
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
   document.getElementById('backLink').textContent = t.back;
   document.getElementById('pageTitle').textContent = t.title;
   document.getElementById('subtitle').textContent = t.sub;
-  const th = '<tr>' + t.days.map((d) => '<th>' + d + '</th>').join('') + '</tr>';
-  const tb = t.rows.map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('');
-  document.getElementById('shiftTable').innerHTML = th + tb;
+  document.getElementById('btnAdd').textContent = t.add;
+  document.getElementById('newName').placeholder = t.name;
+  document.getElementById('newRole').placeholder = t.role;
   Tenjiku.bindLangButtons();
+
+  const uiOrder = [1, 2, 3, 4, 5, 6, 0];
+  function paint() {
+    const rows = Tenjiku.loadShift();
+    let html = '<tr>' + t.days.map(function (d) { return '<th>' + d + '</th>'; }).join('') + '</tr>';
+    rows.forEach(function (s, ri) {
+      html += '<tr><td>' + E(s.name) + '</td><td>' + E(s.role) + '</td><td>' + E(s.hours || '') + '</td>';
+      uiOrder.forEach(function (di) {
+        const on = !!(s.days && s.days[di]);
+        html += '<td class="' + (on ? 'on-duty' : 'off-duty') + '" data-r="' + ri + '" data-d="' + di + '">' + (on ? E(s.hours || '○') : t.off) + '</td>';
+      });
+      html += '</tr>';
+    });
+    document.getElementById('shiftTable').innerHTML = html;
+    document.querySelectorAll('#shiftTable td[data-r]').forEach(function (td) {
+      td.addEventListener('click', function () {
+        const list = Tenjiku.loadShift();
+        const r = Number(td.dataset.r);
+        const d = Number(td.dataset.d);
+        if (!list[r].days) list[r].days = [0, 0, 0, 0, 0, 0, 0];
+        list[r].days[d] = list[r].days[d] ? 0 : 1;
+        Tenjiku.saveShift(list);
+        paint();
+      });
+    });
+  }
+  document.getElementById('btnAdd').addEventListener('click', function () {
+    const name = document.getElementById('newName').value.trim();
+    if (!name) return;
+    const list = Tenjiku.loadShift();
+    list.push({
+      name: name,
+      role: document.getElementById('newRole').value.trim() || t.role,
+      hours: document.getElementById('newHours').value.trim() || '17–24',
+      days: [0, 1, 1, 1, 1, 1, 1]
+    });
+    Tenjiku.saveShift(list);
+    document.getElementById('newName').value = '';
+    paint();
+  });
+  paint();
 })();
 </script>
 </body>

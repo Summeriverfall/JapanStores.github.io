@@ -18,8 +18,8 @@
   <header class="header">
     <div>
       <div class="store-badge" id="storeBadge">天竺 広東倶楽部</div>
-      <h1 id="pageTitle">店舗データ</h1>
-      <p id="subtitle">今月の実績と過去6ヶ月の推移をご確認ください</p>
+      <h1 id="pageTitle">今夜の台帳</h1>
+      <p id="subtitle">予約・フロア・会計は同じ一組です</p>
     </div>
     <div class="language-switcher">
       <button class="lang-btn" type="button" data-lang="ja">日本語</button>
@@ -29,59 +29,76 @@
     </div>
   </header>
 
+  <section class="data-section" id="tonightSection">
+    <h2 class="section-title">
+      <span id="tonightTitle">今夜の予約</span>
+      <span class="order-section-date" id="tonightDate"></span>
+      <span class="order-count-badge" id="tonightCount"></span>
+    </h2>
+    <div id="staffToday" class="staff-row"></div>
+    <div class="order-table-wrap" id="tonightContent"></div>
+  </section>
+
   <section class="data-section">
-    <h2 class="section-title" id="secQuick">クイックアクセス</h2>
+    <h2 class="section-title" id="floorMiniTitle">フロアいま</h2>
+    <div class="mini-floor" id="miniFloor"></div>
+  </section>
+
+  <section class="data-section">
+    <h2 class="section-title" id="secToday">今夜の数字</h2>
+    <div class="stats-grid stats-grid-6">
+      <div class="stat-card"><div class="stat-label" id="kCovers">組数</div><div class="stat-value" id="vCovers">0</div></div>
+      <div class="stat-card"><div class="stat-label" id="kGuests">人数</div><div class="stat-value" id="vGuests">0</div></div>
+      <div class="stat-card"><div class="stat-label" id="kSales">売上</div><div class="stat-value" id="vSales">¥0</div></div>
+      <div class="stat-card"><div class="stat-label" id="kTables">卓数</div><div class="stat-value" id="vTables">0</div></div>
+      <div class="stat-card"><div class="stat-label" id="kTurn">翻台</div><div class="stat-value" id="vTurn">0</div></div>
+      <div class="stat-card"><div class="stat-label" id="kAvg">客単価</div><div class="stat-value" id="vAvg">¥0</div></div>
+    </div>
+    <p class="kpi-note" id="kpiNote">翻台＝着席または会計済みの卓次 ÷ 卓数。ランチはありません。</p>
+  </section>
+
+  <section class="data-section">
+    <h2 class="section-title" id="secQuick">開台</h2>
     <div class="quick-links">
-      <button class="quick-link-card" type="button" id="todayOrderBtn">
-        <div class="quick-icon">📋</div>
-        <div class="quick-label" id="labToday">当日注文</div>
-        <div class="quick-date" id="todayDateLabel"></div>
-      </button>
-      <a class="quick-link-card" href="yesterday.html">
-        <div class="quick-icon">📄</div>
-        <div class="quick-label" id="labYest">前日注文明細</div>
-        <div class="quick-date" id="yesterdayDateLabel"></div>
-      </a>
-      <a class="quick-link-card" href="sop.html">
-        <div class="quick-icon">📘</div>
-        <div class="quick-label" id="labSop">CS SOP</div>
-        <div class="quick-date" id="labSopSub">作業手順書</div>
+      <a class="quick-link-card" href="floor.html">
+        <div class="quick-icon">🪑</div>
+        <div class="quick-label" id="labFloor">卓フロア</div>
+        <div class="quick-date" id="labFloorSub">空席 / 着席</div>
       </a>
       <a class="quick-link-card" href="calendar.html">
         <div class="quick-icon">📆</div>
         <div class="quick-label" id="labCal">店舗カレンダー</div>
-        <div class="quick-date" id="labCalSub">予約カレンダー</div>
+        <div class="quick-date" id="labCalSub">予約を入れる</div>
       </a>
-      <a class="quick-link-card" href="flow.html">
-        <div class="quick-icon">🔄</div>
-        <div class="quick-label" id="labFlow">予約フロー</div>
-        <div class="quick-date" id="labFlowSub">業務フロー図</div>
+      <a class="quick-link-card" href="checkout.html">
+        <div class="quick-icon">💴</div>
+        <div class="quick-label" id="labCheck">会計</div>
+        <div class="quick-date" id="labCheckSub">今夜の精算</div>
+      </a>
+      <a class="quick-link-card" href="yesterday.html">
+        <div class="quick-icon">📄</div>
+        <div class="quick-label" id="labYest">昨日の売上</div>
+        <div class="quick-date" id="yesterdayDateLabel"></div>
       </a>
       <a class="quick-link-card" href="schedule.html">
         <div class="quick-icon">👥</div>
         <div class="quick-label" id="labShift">シフト</div>
-        <div class="quick-date" id="labShiftSub">本店排班</div>
-      </a>
-      <a class="quick-link-card" href="floor.html">
-        <div class="quick-icon">🪑</div>
-        <div class="quick-label" id="labFloor">卓フロア</div>
-        <div class="quick-date" id="labFloorSub">空席 / 使用中</div>
-      </a>
-      <a class="quick-link-card" href="checkout.html">
-        <div class="quick-icon">💴</div>
-        <div class="quick-label" id="labCheck">会計ログ</div>
-        <div class="quick-date" id="labCheckSub">卓ごとの消費</div>
+        <div class="quick-date" id="labShiftSub">今夜の出勤</div>
       </a>
     </div>
-  </section>
-
-  <section class="data-section" id="todayOrdersSection">
-    <h2 class="section-title">
-      <span id="todayOrdersTitle">当日注文</span>
-      <span class="order-section-date" id="todayOrdersSectionDate"></span>
-      <span class="order-count-badge" id="todayOrdersCount"></span>
-    </h2>
-    <div class="order-table-wrap" id="todayOrdersContent"></div>
+    <p class="docs-label" id="docsLabel">資料</p>
+    <div class="quick-links docs">
+      <a class="quick-link-card" href="sop.html">
+        <div class="quick-icon">📘</div>
+        <div class="quick-label" id="labSop">手順書</div>
+        <div class="quick-date" id="labSopSub">接客手順</div>
+      </a>
+      <a class="quick-link-card" href="flow.html">
+        <div class="quick-icon">🔄</div>
+        <div class="quick-label" id="labFlow">業務フロー</div>
+        <div class="quick-date" id="labFlowSub">予約の流れ</div>
+      </a>
+    </div>
   </section>
 
   <div class="month-selector-row">
@@ -94,26 +111,11 @@
   <section class="data-section">
     <h2 class="section-title" id="secStats">今月の実績</h2>
     <div class="stats-grid stats-grid-5">
-      <div class="stat-card">
-        <div class="stat-label" id="kOrders">注文数</div>
-        <div class="stat-value" id="vOrders">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" id="kSales">売上金額</div>
-        <div class="stat-value" id="vSales">¥0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" id="kSettle">決算金額</div>
-        <div class="stat-value" id="vSettle">¥0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" id="kTables">卓数</div>
-        <div class="stat-value" id="vTables">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" id="kTurn">翻台率</div>
-        <div class="stat-value" id="vTurn">0%</div>
-      </div>
+      <div class="stat-card"><div class="stat-label" id="mCovers">組数</div><div class="stat-value" id="mvCovers">0</div></div>
+      <div class="stat-card"><div class="stat-label" id="mGuests">人数</div><div class="stat-value" id="mvGuests">0</div></div>
+      <div class="stat-card"><div class="stat-label" id="mSales">売上</div><div class="stat-value" id="mvSales">¥0</div></div>
+      <div class="stat-card"><div class="stat-label" id="mAvg">客単価</div><div class="stat-value" id="mvAvg">¥0</div></div>
+      <div class="stat-card"><div class="stat-label" id="mTurn">翻台</div><div class="stat-value" id="mvTurn">0</div></div>
     </div>
   </section>
 
@@ -128,117 +130,155 @@
   const lang = Tenjiku.getLang();
   const i18n = {
     ja: {
-      title: '店舗データ', sub: '今月の実績と過去6ヶ月の推移をご確認ください',
-      quick: 'クイックアクセス', today: '当日注文', yest: '前日注文明細',
-      sop: 'CS SOP', sopSub: '作業手順書', cal: '店舗カレンダー', calSub: '予約カレンダー',
-      flow: '予約フロー', flowSub: '業務フロー図', shift: 'シフト', shiftSub: '本店排班',
-      floor: '卓フロア', floorSub: '空席 / 使用中', check: '会計ログ', checkSub: '卓ごとの消費',
-      month: '月を選択', update: 'データを更新', now: '現在：', stats: '今月の実績',
-      trend: '過去6ヶ月の推移', orders: '注文数', sales: '売上金額', settle: '決算金額',
-      tables: '卓数', turn: '翻台率',
-      logout: 'ログアウト',
-      th: ['開始', '終了', '内容', '備考', '人数', '金額', '決算']
+      title: '今夜の台帳', sub: '予約・フロア・会計は同じ一組です。17:00 開店、ランチはありません。',
+      tonight: '今夜の予約', floorNow: 'フロアいま', today: '今夜の数字',
+      covers: '組数', guests: '人数', sales: '売上', tables: '卓数', turn: '翻台', avg: '客単価',
+      kpiNote: '翻台＝着席または会計済みの卓次 ÷ 卓数。ランチはありません。',
+      quick: '開台', floor: '卓フロア', floorSub: '空席 / 着席', cal: '店舗カレンダー', calSub: '予約を入れる',
+      check: '会計', checkSub: '今夜の精算', yest: '昨日の売上', shift: 'シフト', shiftSub: '今夜の出勤',
+      docs: '資料', sop: '手順書', sopSub: '接客手順', flow: '業務フロー', flowSub: '予約の流れ',
+      month: '月を選択', update: 'データを更新', now: '現在：', stats: '今月の実績', trend: '過去6ヶ月の推移',
+      logout: 'ログアウト', empty: '今夜の予約はありません',
+      st: { reserved: '予約', seated: '着席', paid: '会計済' },
+      th: ['開始', '終了', '卓', 'お名前', 'コース', '人数', '金額', '状態', '注意']
     },
     zh: {
-      title: '门店数据', sub: '查看本月实绩与过去 6 个月趋势',
-      quick: '快捷入口', today: '当日订单', yest: '前一日订单明细',
-      sop: 'CS SOP', sopSub: '作业手册', cal: '店铺日历', calSub: '预约日历',
-      flow: '预约流程', flowSub: '业务流程图', shift: '排班', shiftSub: '本店班次',
-      floor: '桌位', floorSub: '空桌 / 使用中', check: '结账记录', checkSub: '每桌消费',
-      month: '选择月份', update: '更新数据', now: '当前：', stats: '本月实绩',
-      trend: '过去 6 个月趋势', orders: '订单数', sales: '营业额', settle: '结算额',
-      tables: '桌数', turn: '翻台率',
-      logout: '退出',
-      th: ['开始', '结束', '内容', '备注', '人数', '金额', '结算']
+      title: '今晚台账', sub: '预约、桌位、结账是同一桌。17:00 开门，没有午市。',
+      tonight: '今晚预约', floorNow: '现在桌位', today: '今晚数字',
+      covers: '组数', guests: '人数', sales: '营业额', tables: '桌数', turn: '翻台', avg: '客单价',
+      kpiNote: '翻台＝已入座或已结账的桌次 ÷ 桌数。没有午市。',
+      quick: '开台', floor: '桌位', floorSub: '空桌 / 入座', cal: '店铺日历', calSub: '录入预约',
+      check: '结账', checkSub: '今晚结算', yest: '昨日营业额', shift: '排班', shiftSub: '今晚出勤',
+      docs: '资料', sop: '手册', sopSub: '接待步骤', flow: '业务流', flowSub: '预约流程',
+      month: '选择月份', update: '更新数据', now: '当前：', stats: '本月实绩', trend: '过去 6 个月趋势',
+      logout: '退出', empty: '今晚没有预约',
+      st: { reserved: '预约', seated: '入座', paid: '已结' },
+      th: ['开始', '结束', '桌', '姓名', '套餐', '人数', '金额', '状态', '注意']
     },
     en: {
-      title: 'Store data', sub: 'This month’s performance and 6-month trend',
-      quick: 'Quick access', today: "Today's orders", yest: "Yesterday's orders",
-      sop: 'CS SOP', sopSub: 'Procedures', cal: 'Store calendar', calSub: 'Bookings',
-      flow: 'Reservation flow', flowSub: 'Workflow', shift: 'Shifts', shiftSub: 'Staff schedule',
-      floor: 'Tables', floorSub: 'Free / seated', check: 'Checks', checkSub: 'Spend per table',
-      month: 'Select month', update: 'Refresh', now: 'Now: ', stats: "This month",
-      trend: 'Last 6 months', orders: 'Orders', sales: 'Sales', settle: 'Settlement',
-      tables: 'Tables', turn: 'Turnover',
-      logout: 'Log out',
-      th: ['Start', 'End', 'Title', 'Notes', 'People', 'Amount', 'Settle']
+      title: "Tonight's board", sub: 'Bookings, floor and checks share one party. Dinner from 17:00. No lunch.',
+      tonight: "Tonight's bookings", floorNow: 'Floor now', today: "Tonight's numbers",
+      covers: 'Parties', guests: 'Guests', sales: 'Sales', tables: 'Tables', turn: 'Turns', avg: 'Avg / guest',
+      kpiNote: 'Turns = seated or paid parties ÷ tables. No lunch service.',
+      quick: 'Service', floor: 'Floor', floorSub: 'Free / seated', cal: 'Calendar', calSub: 'Add a booking',
+      check: 'Checks', checkSub: "Tonight's close", yest: 'Yesterday', shift: 'Shifts', shiftSub: 'On duty',
+      docs: 'Docs', sop: 'SOP', sopSub: 'Front of house', flow: 'Flow', flowSub: 'Booking path',
+      month: 'Select month', update: 'Refresh', now: 'Now: ', stats: 'This month', trend: 'Last 6 months',
+      logout: 'Log out', empty: 'No bookings tonight',
+      st: { reserved: 'Reserved', seated: 'Seated', paid: 'Paid' },
+      th: ['Start', 'End', 'Table', 'Name', 'Course', 'Guests', 'Amount', 'Status', 'Note']
     }
   };
   const t = i18n[lang] || i18n.ja;
+  const E = Tenjiku.escapeHtml;
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
-  document.getElementById('pageTitle').textContent = Tenjiku.STORE_NAME + ' - ' + t.title;
+  document.getElementById('pageTitle').textContent = t.title;
   document.title = Tenjiku.STORE_NAME + ' - ' + t.title;
   document.getElementById('subtitle').textContent = t.sub;
+  document.getElementById('tonightTitle').textContent = t.tonight;
+  document.getElementById('floorMiniTitle').textContent = t.floorNow;
+  document.getElementById('secToday').textContent = t.today;
+  document.getElementById('kCovers').textContent = t.covers;
+  document.getElementById('kGuests').textContent = t.guests;
+  document.getElementById('kSales').textContent = t.sales;
+  document.getElementById('kTables').textContent = t.tables;
+  document.getElementById('kTurn').textContent = t.turn;
+  document.getElementById('kAvg').textContent = t.avg;
+  document.getElementById('kpiNote').textContent = t.kpiNote;
   document.getElementById('secQuick').textContent = t.quick;
-  document.getElementById('labToday').textContent = t.today;
-  document.getElementById('labYest').textContent = t.yest;
-  document.getElementById('labSop').textContent = t.sop;
-  document.getElementById('labSopSub').textContent = t.sopSub;
-  document.getElementById('labCal').textContent = t.cal;
-  document.getElementById('labCalSub').textContent = t.calSub;
-  document.getElementById('labFlow').textContent = t.flow;
-  document.getElementById('labFlowSub').textContent = t.flowSub;
-  document.getElementById('labShift').textContent = t.shift;
-  document.getElementById('labShiftSub').textContent = t.shiftSub;
   document.getElementById('labFloor').textContent = t.floor;
   document.getElementById('labFloorSub').textContent = t.floorSub;
+  document.getElementById('labCal').textContent = t.cal;
+  document.getElementById('labCalSub').textContent = t.calSub;
   document.getElementById('labCheck').textContent = t.check;
   document.getElementById('labCheckSub').textContent = t.checkSub;
+  document.getElementById('labYest').textContent = t.yest;
+  document.getElementById('labShift').textContent = t.shift;
+  document.getElementById('labShiftSub').textContent = t.shiftSub;
+  document.getElementById('docsLabel').textContent = t.docs;
+  document.getElementById('labSop').textContent = t.sop;
+  document.getElementById('labSopSub').textContent = t.sopSub;
+  document.getElementById('labFlow').textContent = t.flow;
+  document.getElementById('labFlowSub').textContent = t.flowSub;
   document.getElementById('labMonth').textContent = t.month;
   document.getElementById('updateMonthBtn').textContent = t.update;
   document.getElementById('secStats').textContent = t.stats;
   document.getElementById('secTrend').textContent = t.trend;
-  document.getElementById('kOrders').textContent = t.orders;
-  document.getElementById('kSales').textContent = t.sales;
-  document.getElementById('kSettle').textContent = t.settle;
-  document.getElementById('kTables').textContent = t.tables;
-  document.getElementById('kTurn').textContent = t.turn;
+  document.getElementById('mCovers').textContent = t.covers;
+  document.getElementById('mGuests').textContent = t.guests;
+  document.getElementById('mSales').textContent = t.sales;
+  document.getElementById('mAvg').textContent = t.avg;
+  document.getElementById('mTurn').textContent = t.turn;
   document.getElementById('btnLogout').textContent = t.logout;
-  document.getElementById('todayOrdersTitle').textContent = t.today;
 
   const today = Tenjiku.tokyoYmd(0);
   const yest = Tenjiku.tokyoYmd(-1);
-  document.getElementById('todayDateLabel').textContent = Tenjiku.jpDate(today);
+  document.getElementById('tonightDate').textContent = Tenjiku.jpDate(today);
   document.getElementById('yesterdayDateLabel').textContent = Tenjiku.jpDate(yest);
-  document.getElementById('todayOrdersSectionDate').textContent = Tenjiku.jpDate(today);
-  document.getElementById('todayOrdersCount').textContent = String(Tenjiku.TODAY_ORDERS.length);
+
+  const list = Tenjiku.bookingsOn(today);
+  document.getElementById('tonightCount').textContent = String(list.length);
+  document.getElementById('staffToday').innerHTML = Tenjiku.todayStaff().map(function (s) {
+    return '<span class="staff-chip">' + E(s.name) + ' · ' + E(s.role) + '</span>';
+  }).join('');
+
+  if (!list.length) {
+    document.getElementById('tonightContent').innerHTML = '<div class="empty">' + t.empty + '</div>';
+  } else {
+    document.getElementById('tonightContent').innerHTML =
+      '<table class="data-table"><thead><tr>' + t.th.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      list.map(function (b) {
+        const warn = b.allergy ? '<span class="warn">' + E(b.allergy) + '</span>' : E(b.note || '—');
+        return '<tr data-table="' + E(b.tableId) + '"><td>' + E(b.start) + '</td><td>' + E(b.end) + '</td><td>' + E(Tenjiku.tableName(b.tableId)) + '</td><td>' + E(b.name) + '</td><td>' + E(b.course) + '</td><td>' + b.people + '</td><td>' + Tenjiku.yen(b.amount) + '</td><td>' + E(t.st[b.status] || b.status) + '</td><td>' + warn + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    document.querySelectorAll('#tonightContent tr[data-table]').forEach(function (row) {
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', function () {
+        location.href = 'floor.html?table=' + encodeURIComponent(row.dataset.table);
+      });
+    });
+  }
+
+  document.getElementById('miniFloor').innerHTML = Tenjiku.loadTables().map(function (tb) {
+    const st = Tenjiku.tableStatus(tb.id, today);
+    const live = Tenjiku.liveOnTable(tb.id, today);
+    const tip = live ? live.name : tb.name;
+    return '<a class="mini-table ' + st + '" href="floor.html?table=' + encodeURIComponent(tb.id) + '" title="' + E(tip) + '">' + E(tb.name) + '</a>';
+  }).join('');
+
+  const kpi = Tenjiku.dayKpi(today);
+  document.getElementById('vCovers').textContent = String(kpi.parties);
+  document.getElementById('vGuests').textContent = String(kpi.bookedPeople);
+  document.getElementById('vSales').textContent = Tenjiku.yen(kpi.sales);
+  document.getElementById('vTables').textContent = String(kpi.tables);
+  document.getElementById('vTurn').textContent = String(kpi.turnover);
+  document.getElementById('vAvg').textContent = Tenjiku.yen(kpi.avg);
 
   const sel = document.getElementById('monthSelector');
-  Tenjiku.TREND.labels.forEach((m, i) => {
+  const months = Tenjiku.TREND.labels.slice();
+  const thisYm = today.slice(0, 7);
+  if (months.indexOf(thisYm) < 0) months.push(thisYm);
+  months.forEach(function (m) {
     const opt = document.createElement('option');
     opt.value = m;
-    opt.textContent = m.replace('-', '年') + '月';
-    if (i === Tenjiku.TREND.labels.length - 1) opt.selected = true;
+    opt.textContent = lang === 'en' ? m : m.replace('-', '年') + '月';
+    if (m === thisYm) opt.selected = true;
     sel.appendChild(opt);
   });
-  document.getElementById('currentMonthText').textContent = t.now + sel.value;
-
-  document.getElementById('vOrders').textContent = String(Tenjiku.MONTH_STATS.orders);
-  document.getElementById('vSales').textContent = Tenjiku.yen(Tenjiku.MONTH_STATS.sales);
-  document.getElementById('vSettle').textContent = Tenjiku.yen(Tenjiku.MONTH_STATS.settle);
-  const tableCount = Tenjiku.loadTables().length;
-  const turns = Tenjiku.TODAY_ORDERS.length + Tenjiku.loadLogs().length;
-  const turnRate = tableCount ? Math.round((turns / tableCount) * 1000) / 10 : 0;
-  document.getElementById('vTables').textContent = String(tableCount);
-  document.getElementById('vTurn').textContent = turnRate + '%';
-
-  document.getElementById('updateMonthBtn').addEventListener('click', () => {
+  function paintMonth() {
+    const mk = Tenjiku.monthKpi(sel.value);
     document.getElementById('currentMonthText').textContent = t.now + sel.value;
-  });
-
-  function renderTodayTable() {
-    const rows = Tenjiku.TODAY_ORDERS.map((r) =>
-      `<tr><td>${r.start}</td><td>${r.end}</td><td>${r.title}</td><td>${r.description}</td><td>${r.people}</td><td>${Tenjiku.yen(r.project)}</td><td>${Tenjiku.yen(r.settle)}</td></tr>`
-    ).join('');
-    document.getElementById('todayOrdersContent').innerHTML =
-      `<table class="data-table"><thead><tr>${t.th.map((h) => '<th>' + h + '</th>').join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+    document.getElementById('mvCovers').textContent = String(mk.parties);
+    document.getElementById('mvGuests').textContent = String(mk.people);
+    document.getElementById('mvSales').textContent = Tenjiku.yen(mk.sales);
+    document.getElementById('mvAvg').textContent = Tenjiku.yen(mk.avg);
+    document.getElementById('mvTurn').textContent = String(mk.turnover);
   }
-  renderTodayTable();
+  paintMonth();
+  document.getElementById('updateMonthBtn').addEventListener('click', paintMonth);
+  sel.addEventListener('change', paintMonth);
 
-  document.getElementById('todayOrderBtn').addEventListener('click', () => {
-    document.getElementById('todayOrdersSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-  document.getElementById('btnLogout').addEventListener('click', () => {
+  document.getElementById('btnLogout').addEventListener('click', function () {
     Tenjiku.logout();
     location.replace('index.html');
   });
@@ -250,25 +290,9 @@
     data: {
       labels: Tenjiku.TREND.labels,
       datasets: [
-        {
-          label: t.orders,
-          data: Tenjiku.TREND.orders,
-          borderColor: '#C9A961',
-          backgroundColor: 'rgba(201,169,97,.15)',
-          yAxisID: 'y',
-          tension: .35,
-          fill: false,
-        },
-        {
-          label: t.settle,
-          data: Tenjiku.TREND.settle,
-          borderColor: '#8a722e',
-          backgroundColor: 'rgba(138,114,46,.08)',
-          yAxisID: 'y1',
-          tension: .35,
-          fill: false,
-        },
-      ],
+        { label: t.covers, data: Tenjiku.TREND.parties, borderColor: '#C9A961', yAxisID: 'y', tension: .35, fill: false },
+        { label: t.sales, data: Tenjiku.TREND.sales, borderColor: '#8a722e', yAxisID: 'y1', tension: .35, fill: false }
+      ]
     },
     options: {
       responsive: true,
@@ -276,9 +300,9 @@
       plugins: { legend: { position: 'bottom' } },
       scales: {
         y: { position: 'left', grid: { color: '#eee' } },
-        y1: { position: 'right', grid: { drawOnChartArea: false } },
-      },
-    },
+        y1: { position: 'right', grid: { drawOnChartArea: false } }
+      }
+    }
   });
 })();
 </script>

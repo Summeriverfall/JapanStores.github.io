@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="author" content="カイプ株式会社 / reserveinjp">
-  <title>天竺 広東倶楽部 - 前日注文明細</title>
+  <title>天竺 広東倶楽部 - 昨日の売上</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   <header class="header">
     <div>
       <div class="store-badge">天竺 広東倶楽部</div>
-      <h1 id="pageTitle">前日注文明細</h1>
+      <h1 id="pageTitle">昨日の売上</h1>
       <p id="pageDate"></p>
     </div>
     <div class="language-switcher">
@@ -27,13 +27,15 @@
       <button class="lang-btn" type="button" data-lang="zh">中文</button>
     </div>
   </header>
-  <div class="stats-grid" style="margin-bottom:1.25rem;">
-    <div class="stat-card"><div class="stat-label" id="kCount">注文数</div><div class="stat-value" id="vCount">0</div></div>
+  <div class="stats-grid stats-grid-5" style="margin-bottom:1.25rem;">
+    <div class="stat-card"><div class="stat-label" id="kCount">組数</div><div class="stat-value" id="vCount">0</div></div>
+    <div class="stat-card"><div class="stat-label" id="kGuests">人数</div><div class="stat-value" id="vGuests">0</div></div>
     <div class="stat-card"><div class="stat-label" id="kSales">売上合計</div><div class="stat-value" id="vSales">¥0</div></div>
-    <div class="stat-card"><div class="stat-label" id="kSettle">決算合計</div><div class="stat-value" id="vSettle">¥0</div></div>
+    <div class="stat-card"><div class="stat-label" id="kAvg">客単価</div><div class="stat-value" id="vAvg">¥0</div></div>
+    <div class="stat-card"><div class="stat-label" id="kTurn">翻台</div><div class="stat-value" id="vTurn">0</div></div>
   </div>
   <section class="data-section">
-    <h2 class="section-title" id="listTitle">注文一覧</h2>
+    <h2 class="section-title" id="listTitle">会計一覧</h2>
     <div class="order-table-wrap" id="tableWrap"></div>
   </section>
 </div>
@@ -42,30 +44,35 @@
   if (!Tenjiku.requireAuth()) return;
   const lang = Tenjiku.getLang();
   const i18n = {
-    ja: { back: '← 店舗データ', title: '前日注文明細', count: '注文数', sales: '売上合計', settle: '決算合計', list: '注文一覧', th: ['#', '開始', '終了', '内容', '備考', '人数', '金額', '決算'] },
-    zh: { back: '← 门店数据', title: '前一日订单明细', count: '订单数', sales: '营业额合计', settle: '结算合计', list: '订单一览', th: ['#', '开始', '结束', '内容', '备注', '人数', '金额', '结算'] },
-    en: { back: '← Store data', title: "Yesterday's orders", count: 'Orders', sales: 'Sales', settle: 'Settlement', list: 'List', th: ['#', 'Start', 'End', 'Title', 'Notes', 'People', 'Amount', 'Settle'] }
+    ja: { back: '← 店舗データ', title: '昨日の売上', count: '組数', guests: '人数', sales: '売上合計', avg: '客単価', turn: '翻台', list: '会計一覧', th: ['#', '開始', '終了', '卓', 'お名前', 'コース', '人数', '金額', '支払'] },
+    zh: { back: '← 门店数据', title: '昨日营业额', count: '组数', guests: '人数', sales: '营业额合计', avg: '客单价', turn: '翻台', list: '结账一览', th: ['#', '开始', '结束', '桌', '姓名', '套餐', '人数', '金额', '支付'] },
+    en: { back: '← Store data', title: 'Yesterday', count: 'Parties', guests: 'Guests', sales: 'Sales', avg: 'Avg / guest', turn: 'Turns', list: 'Checks', th: ['#', 'Start', 'End', 'Table', 'Name', 'Course', 'Guests', 'Amount', 'Pay'] }
   };
   const t = i18n[lang] || i18n.ja;
+  const E = Tenjiku.escapeHtml;
   const ymd = Tenjiku.tokyoYmd(-1);
+  const kpi = Tenjiku.dayKpi(ymd);
+  const rows = Tenjiku.bookingsOn(ymd);
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
   document.getElementById('backLink').textContent = t.back;
   document.getElementById('pageTitle').textContent = t.title;
   document.getElementById('pageDate').textContent = Tenjiku.jpDate(ymd);
   document.getElementById('kCount').textContent = t.count;
+  document.getElementById('kGuests').textContent = t.guests;
   document.getElementById('kSales').textContent = t.sales;
-  document.getElementById('kSettle').textContent = t.settle;
+  document.getElementById('kAvg').textContent = t.avg;
+  document.getElementById('kTurn').textContent = t.turn;
   document.getElementById('listTitle').textContent = t.list;
-  const rows = Tenjiku.YESTERDAY_ORDERS;
-  const sales = rows.reduce((s, r) => s + r.project, 0);
-  const settle = rows.reduce((s, r) => s + r.settle, 0);
-  document.getElementById('vCount').textContent = String(rows.length);
-  document.getElementById('vSales').textContent = Tenjiku.yen(sales);
-  document.getElementById('vSettle').textContent = Tenjiku.yen(settle);
+  document.getElementById('vCount').textContent = String(kpi.parties);
+  document.getElementById('vGuests').textContent = String(kpi.people);
+  document.getElementById('vSales').textContent = Tenjiku.yen(kpi.sales);
+  document.getElementById('vAvg').textContent = Tenjiku.yen(kpi.avg);
+  document.getElementById('vTurn').textContent = String(kpi.turnover);
   document.getElementById('tableWrap').innerHTML =
-    `<table class="data-table"><thead><tr>${t.th.map((h) => '<th>' + h + '</th>').join('')}</tr></thead><tbody>${
-      rows.map((r, i) => `<tr><td>${i + 1}</td><td>${r.start}</td><td>${r.end}</td><td>${r.title}</td><td>${r.description}</td><td>${r.people}</td><td>${Tenjiku.yen(r.project)}</td><td>${Tenjiku.yen(r.settle)}</td></tr>`).join('')
-    }</tbody></table>`;
+    '<table class="data-table"><thead><tr>' + t.th.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    rows.map(function (r, i) {
+      return '<tr><td>' + (i + 1) + '</td><td>' + E(r.start) + '</td><td>' + E(r.end) + '</td><td>' + E(Tenjiku.tableName(r.tableId)) + '</td><td>' + E(r.name) + '</td><td>' + E(r.course) + '</td><td>' + r.people + '</td><td>' + Tenjiku.yen(r.amount) + '</td><td>' + E(r.payMethod || '—') + '</td></tr>';
+    }).join('') + '</tbody></table>';
   Tenjiku.bindLangButtons();
 })();
 </script>

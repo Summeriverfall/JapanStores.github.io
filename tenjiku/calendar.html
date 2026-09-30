@@ -19,7 +19,7 @@
     <div>
       <div class="store-badge">天竺 広東倶楽部</div>
       <h1 id="pageTitle">店舗カレンダー</h1>
-      <p id="subtitle">本店の予約のみ。他店のカレンダーは表示しません。</p>
+      <p id="subtitle">本店の予約のみ。フロアと同じ一組です。</p>
     </div>
     <div class="language-switcher">
       <button class="lang-btn" type="button" data-lang="ja">日本語</button>
@@ -27,6 +27,20 @@
       <button class="lang-btn" type="button" data-lang="zh">中文</button>
     </div>
   </header>
+  <section class="data-section">
+    <h2 class="section-title" id="addTitle">予約を入れる</h2>
+    <div class="cal-add">
+      <input id="fDate" type="date" class="input-field">
+      <input id="fStart" type="time" class="input-field" value="18:00">
+      <input id="fEnd" type="time" class="input-field" value="20:00">
+      <select id="fTable" class="input-field"></select>
+      <input id="fName" class="input-field" placeholder="">
+      <input id="fPeople" type="number" min="1" max="35" class="input-field" value="2">
+      <select id="fCourse" class="input-field"></select>
+      <input id="fAllergy" class="input-field" placeholder="">
+    </div>
+    <button class="btn" type="button" id="btnAdd">予約を入れる</button>
+  </section>
   <section class="data-section">
     <h2 class="section-title" id="monthTitle"></h2>
     <div id="cal"></div>
@@ -37,45 +51,75 @@
   if (!Tenjiku.requireAuth()) return;
   const lang = Tenjiku.getLang();
   const i18n = {
-    ja: { back: '← 店舗データ', title: '店舗カレンダー', sub: '本店の予約のみ。他店のカレンダーは表示しません。', dow: ['日','月','火','水','木','金','土'] },
-    zh: { back: '← 门店数据', title: '店铺日历', sub: '只显示本店预约，不会出现其他店。', dow: ['日','一','二','三','四','五','六'] },
-    en: { back: '← Store data', title: 'Store calendar', sub: 'This restaurant only. No other shops.', dow: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] }
+    ja: { back: '← 店舗データ', title: '店舗カレンダー', sub: '本店の予約のみ。フロアと同じ一組です。', add: '予約を入れる', name: 'お名前', allergy: 'アレルギー', dow: ['日','月','火','水','木','金','土'] },
+    zh: { back: '← 门店数据', title: '店铺日历', sub: '只显示本店预约，和桌位是同一桌。', add: '录入预约', name: '姓名', allergy: '过敏', dow: ['日','一','二','三','四','五','六'] },
+    en: { back: '← Store data', title: 'Store calendar', sub: 'This restaurant only. Same party as the floor.', add: 'Add booking', name: 'Name', allergy: 'Allergy', dow: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] }
   };
   const t = i18n[lang] || i18n.ja;
+  const E = Tenjiku.escapeHtml;
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
   document.getElementById('backLink').textContent = t.back;
   document.getElementById('pageTitle').textContent = t.title;
   document.getElementById('subtitle').textContent = t.sub;
+  document.getElementById('addTitle').textContent = t.add;
+  document.getElementById('btnAdd').textContent = t.add;
+  document.getElementById('fName').placeholder = t.name;
+  document.getElementById('fAllergy').placeholder = t.allergy;
   Tenjiku.bindLangButtons();
 
   const today = Tenjiku.tokyoYmd(0);
-  const [ty, tm] = today.split('-').map(Number);
-  const events = {};
-  function add(ymd, text) {
-    if (!events[ymd]) events[ymd] = [];
-    events[ymd].push(text);
-  }
-  Tenjiku.TODAY_ORDERS.forEach((o) => add(today, o.start + ' ' + o.title));
-  const yest = Tenjiku.tokyoYmd(-1);
-  Tenjiku.YESTERDAY_ORDERS.forEach((o) => add(yest, o.start + ' ' + o.title));
-  add(ty + '-' + String(tm).padStart(2,'0') + '-06', '18:00 2人 点心コース');
-  add(ty + '-' + String(tm).padStart(2,'0') + '-12', '19:00 6人 宴会');
-  add(ty + '-' + String(tm).padStart(2,'0') + '-20', '18:30 4人 会社接待');
+  document.getElementById('fDate').value = today;
+  document.getElementById('fTable').innerHTML = Tenjiku.loadTables().map(function (tb) {
+    return '<option value="' + E(tb.id) + '">' + E(tb.name) + ' (' + tb.seats + ')</option>';
+  }).join('');
+  document.getElementById('fCourse').innerHTML = Tenjiku.COURSES.map(function (c) {
+    return '<option value="' + E(c) + '">' + E(c) + '</option>';
+  }).join('');
 
-  document.getElementById('monthTitle').textContent = ty + (lang === 'en' ? '-' : '年') + tm + (lang === 'en' ? '' : '月');
-
-  const first = new Date(ty, tm - 1, 1);
-  const startDow = first.getDay();
-  const daysInMonth = new Date(ty, tm, 0).getDate();
-  const cells = [];
-  t.dow.forEach((d) => cells.push('<div class="cal-dow">' + d + '</div>'));
-  for (let i = 0; i < startDow; i++) cells.push('<div class="cal-cell out"></div>');
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ymd = ty + '-' + String(tm).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const ev = (events[ymd] || []).map((x) => '<div class="cal-ev">' + x + '</div>').join('');
-    cells.push('<div class="cal-cell' + (ymd === today ? ' today' : '') + '"><div class="cal-num">' + d + '</div>' + ev + '</div>');
+  function paint() {
+    const [ty, tm] = today.split('-').map(Number);
+    document.getElementById('monthTitle').textContent = lang === 'en' ? (ty + '-' + String(tm).padStart(2, '0')) : (ty + '年' + tm + '月');
+    const events = {};
+    Tenjiku.loadBookings().forEach(function (b) {
+      if (b.status === 'cancelled') return;
+      if (!events[b.date]) events[b.date] = [];
+      events[b.date].push(b.start + ' ' + Tenjiku.tableName(b.tableId) + ' ' + b.name + ' ' + b.people);
+    });
+    const first = new Date(ty, tm - 1, 1);
+    const startDow = first.getDay();
+    const daysInMonth = new Date(ty, tm, 0).getDate();
+    const cells = [];
+    t.dow.forEach(function (d) { cells.push('<div class="cal-dow">' + d + '</div>'); });
+    for (let i = 0; i < startDow; i++) cells.push('<div class="cal-cell out"></div>');
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ymd = ty + '-' + String(tm).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      const ev = (events[ymd] || []).map(function (x) { return '<div class="cal-ev">' + E(x) + '</div>'; }).join('');
+      cells.push('<div class="cal-cell' + (ymd === today ? ' today' : '') + '" data-day="' + ymd + '"><div class="cal-num">' + d + '</div>' + ev + '</div>');
+    }
+    document.getElementById('cal').innerHTML = '<div class="cal-grid">' + cells.join('') + '</div>';
+    document.querySelectorAll('.cal-cell[data-day]').forEach(function (c) {
+      c.addEventListener('click', function () { document.getElementById('fDate').value = c.dataset.day; });
+    });
   }
-  document.getElementById('cal').innerHTML = '<div class="cal-grid">' + cells.join('') + '</div>';
+  document.getElementById('btnAdd').addEventListener('click', function () {
+    const name = document.getElementById('fName').value.trim();
+    if (!name) return;
+    Tenjiku.upsertBooking({
+      date: document.getElementById('fDate').value,
+      start: document.getElementById('fStart').value,
+      end: document.getElementById('fEnd').value,
+      tableId: document.getElementById('fTable').value,
+      name: name,
+      people: Number(document.getElementById('fPeople').value) || 2,
+      course: document.getElementById('fCourse').value,
+      allergy: document.getElementById('fAllergy').value.trim(),
+      status: 'reserved'
+    });
+    document.getElementById('fName').value = '';
+    document.getElementById('fAllergy').value = '';
+    paint();
+  });
+  paint();
 })();
 </script>
 </body>

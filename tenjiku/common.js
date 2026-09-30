@@ -1,5 +1,5 @@
 /**
- * 天竺 広東倶楽部 — 单店后台共用
+ * 天竺 広東倶楽部 — 预约贯通フロア / 当日 / 日历 / 会计
  */
 (function (global) {
   const STORE_ID = 'tenjiku-kanton';
@@ -8,9 +8,13 @@
   const AUTH_KEY = STORE_ID + '_auth';
   const LANG_KEY = STORE_ID + '_lang';
   const KEY_TABLES = STORE_ID + '_tables';
-  const KEY_LOGS = STORE_ID + '_logs_';
+  const KEY_BOOK = STORE_ID + '_bookings_v3';
+  const KEY_SHIFT = STORE_ID + '_shift_v1';
+  const VER_KEY = STORE_ID + '_data_ver';
+  const DATA_VER = '4';
   const MAP = 'https://maps.app.goo.gl/UBGXEeJifYKAGybHA';
   const TAGS = ['宴会', '常連', '初来', '会社', '記念日', 'VIP', 'アレルギー'];
+  const PAYS = ['現金', 'カード', '会社請求'];
 
   function tokyoYmd(offsetDays) {
     const d = new Date();
@@ -25,6 +29,14 @@
     return g('year') + '-' + g('month') + '-' + g('day');
   }
 
+  function tokyoWeekday() {
+    const w = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Tokyo',
+      weekday: 'short',
+    }).format(new Date());
+    return { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }[w] ?? 0;
+  }
+
   function jpDate(ymd) {
     const [y, m, d] = String(ymd).split('-');
     return y + '年' + Number(m) + '月' + Number(d) + '日';
@@ -34,28 +46,27 @@
     return '¥' + Number(n || 0).toLocaleString('ja-JP');
   }
 
+  function uid() {
+    return 'b' + Date.now() + Math.floor(Math.random() * 99);
+  }
+
   function getLang() {
     return localStorage.getItem(LANG_KEY) || 'ja';
   }
-
   function setLang(lang) {
     localStorage.setItem(LANG_KEY, lang);
   }
-
   function isAuthed() {
     return sessionStorage.getItem(AUTH_KEY) === '1';
   }
-
   function login(pwd) {
     if (String(pwd || '').trim() !== PASS) return false;
     sessionStorage.setItem(AUTH_KEY, '1');
     return true;
   }
-
   function logout() {
     sessionStorage.removeItem(AUTH_KEY);
   }
-
   function requireAuth() {
     if (!isAuthed()) {
       location.replace('index.html');
@@ -64,120 +75,239 @@
     return true;
   }
 
-  const TODAY_ORDERS = [
-    {
-      start: '18:00',
-      end: '20:00',
-      title: '2人，点心コース 12800',
-      description: 'Chen · +81 90-1111-2222',
-      people: 2,
-      project: 12800,
-      settle: 1280,
-    },
-    {
-      start: '19:00',
-      end: '21:30',
-      title: '4人，宴会コース 24600',
-      description: '田中 · 誕生日',
-      people: 4,
-      project: 24600,
-      settle: 2460,
-    },
-    {
-      start: '19:30',
-      end: '21:00',
-      title: '3人，会社接待 19600',
-      description: '山田商事',
-      people: 3,
-      project: 19600,
-      settle: 1960,
-    },
-  ];
-
-  const YESTERDAY_ORDERS = [
-    {
-      start: '17:30',
-      end: '19:30',
-      title: '2人，ランチコース 9800',
-      description: 'Imogen · +81 80-3333-4444',
-      people: 2,
-      project: 9800,
-      settle: 980,
-    },
-    {
-      start: '18:30',
-      end: '20:30',
-      title: '5人，宴会 32800',
-      description: '京都観光団体',
-      people: 5,
-      project: 32800,
-      settle: 3280,
-    },
-    {
-      start: '19:00',
-      end: '21:00',
-      title: '2人，記念日 15800',
-      description: '佐藤',
-      people: 2,
-      project: 15800,
-      settle: 1580,
-    },
-  ];
-
-  const MONTH_STATS = {
-    orders: 42,
-    sales: 1280400,
-    settle: 128040,
-  };
-
-  const TREND = {
-    labels: ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'],
-    orders: [28, 31, 36, 40, 38, 42],
-    settle: [98000, 110000, 125000, 140000, 132000, 148000],
-  };
-
   function defaultTables() {
     return [
-      { id: 't1', name: '1', seats: 2, status: 'busy', guests: 2, spend: 12800, tags: ['常連'], note: '' },
-      { id: 't2', name: '2', seats: 2, status: 'free', guests: 0, spend: 0, tags: [], note: '' },
-      { id: 't3', name: '3', seats: 4, status: 'busy', guests: 4, spend: 24600, tags: ['宴会'], note: '誕生日ケーキ' },
-      { id: 't4', name: '4', seats: 4, status: 'free', guests: 0, spend: 0, tags: [], note: '' },
-      { id: 't5', name: '5', seats: 4, status: 'reserved', guests: 3, spend: 0, tags: ['会社'], note: '19:30 予約' },
-      { id: 't6', name: '6', seats: 6, status: 'free', guests: 0, spend: 0, tags: [], note: '' },
-      { id: 't7', name: '7', seats: 6, status: 'free', guests: 0, spend: 0, tags: [], note: '' },
-      { id: 't8', name: '8', seats: 8, status: 'free', guests: 0, spend: 0, tags: [], note: '' },
+      { id: 't1', name: '1', seats: 2 },
+      { id: 't2', name: '2', seats: 2 },
+      { id: 't3', name: '3', seats: 4 },
+      { id: 't4', name: '4', seats: 4 },
+      { id: 't5', name: '5', seats: 4 },
+      { id: 't6', name: '6', seats: 6 },
+      { id: 't7', name: '7', seats: 6 },
+      { id: 't8', name: '8', seats: 8 },
     ];
   }
 
   function loadTables() {
     try {
       const raw = JSON.parse(localStorage.getItem(KEY_TABLES) || 'null');
-      if (Array.isArray(raw) && raw.length) return raw;
+      if (Array.isArray(raw) && raw.length) {
+        return raw.map((t) => ({ id: t.id, name: t.name, seats: t.seats }));
+      }
     } catch (e) {}
     const seed = defaultTables();
     saveTables(seed);
     return seed;
   }
-
   function saveTables(list) {
     localStorage.setItem(KEY_TABLES, JSON.stringify(list));
   }
 
-  function loadLogs(ymd) {
+  const COURSES = ['点心コース', '宴会コース', '接待コース', '記念日コース', 'アラカルト'];
+
+  function defaultShift() {
+    return [
+      { name: '李', role: '店長', hours: '17–24', days: [0, 1, 1, 0, 1, 1, 1] },
+      { name: '佐藤', role: 'ホール', hours: '17–23', days: [1, 1, 1, 1, 0, 1, 1] },
+      { name: '陳', role: 'ホール', hours: '17–24', days: [0, 1, 1, 1, 1, 1, 1] },
+      { name: '王', role: 'キッチン', hours: '16–24', days: [1, 1, 1, 1, 1, 1, 0] },
+    ];
+  }
+  function loadShift() {
     try {
-      return JSON.parse(localStorage.getItem(KEY_LOGS + (ymd || tokyoYmd(0))) || '[]');
-    } catch (e) {
-      return [];
+      const raw = JSON.parse(localStorage.getItem(KEY_SHIFT) || 'null');
+      if (Array.isArray(raw) && raw.length) {
+        return raw.map((s) => ({
+          name: s.name,
+          role: s.role,
+          hours: s.hours || '17–24',
+          days: Array.isArray(s.days) ? s.days : [0, 1, 1, 1, 1, 1, 1],
+        }));
+      }
+    } catch (e) {}
+    const seed = defaultShift();
+    saveShift(seed);
+    return seed;
+  }
+  function saveShift(list) {
+    localStorage.setItem(KEY_SHIFT, JSON.stringify(list));
+  }
+  function todayStaff() {
+    const wd = tokyoWeekday();
+    return loadShift().filter((s) => s.days && s.days[wd]);
+  }
+  function tableById(id) {
+    return loadTables().find((t) => t.id === id) || null;
+  }
+  function tableName(id) {
+    const tb = tableById(id);
+    return tb ? tb.name : String(id || '').replace(/^t/, '');
+  }
+
+  function seedBookings() {
+    const today = tokyoYmd(0);
+    const yest = tokyoYmd(-1);
+    return [
+      {
+        id: 'b-today-1', date: today, start: '18:00', end: '20:00',
+        people: 2, tableId: 't1', name: 'Chen', phone: '+81 90-1111-2222',
+        course: '点心コース', amount: 12800, tags: ['常連'], allergy: '',
+        note: '', status: 'seated', payMethod: '',
+      },
+      {
+        id: 'b-today-2', date: today, start: '19:00', end: '21:30',
+        people: 4, tableId: 't3', name: '田中', phone: '',
+        course: '宴会コース', amount: 24600, tags: ['宴会', '記念日'], allergy: '',
+        note: '誕生日ケーキ', status: 'seated', payMethod: '',
+      },
+      {
+        id: 'b-today-3', date: today, start: '19:30', end: '21:00',
+        people: 3, tableId: 't5', name: '山田商事', phone: '',
+        course: '接待コース', amount: 19600, tags: ['会社'], allergy: 'えび',
+        note: '', status: 'reserved', payMethod: '',
+      },
+      {
+        id: 'b-yest-1', date: yest, start: '18:00', end: '20:00',
+        people: 2, tableId: 't2', name: 'Imogen', phone: '+81 80-3333-4444',
+        course: '点心コース', amount: 9800, tags: ['初来'], allergy: '',
+        note: '', status: 'paid', payMethod: 'カード',
+      },
+      {
+        id: 'b-yest-2', date: yest, start: '18:30', end: '21:00',
+        people: 5, tableId: 't8', name: '京都観光団体', phone: '',
+        course: '宴会コース', amount: 32800, tags: ['宴会'], allergy: '',
+        note: '', status: 'paid', payMethod: '会社請求',
+      },
+      {
+        id: 'b-yest-3', date: yest, start: '19:00', end: '21:00',
+        people: 2, tableId: 't4', name: '佐藤', phone: '',
+        course: '記念日コース', amount: 15800, tags: ['記念日'], allergy: '',
+        note: '', status: 'paid', payMethod: '現金',
+      },
+      {
+        id: 'b-ago-1', date: tokyoYmd(-3), start: '18:00', end: '20:30',
+        people: 4, tableId: 't6', name: '林', phone: '',
+        course: '宴会コース', amount: 28600, tags: ['宴会'], allergy: '',
+        note: '', status: 'paid', payMethod: 'カード',
+      },
+      {
+        id: 'b-ago-2', date: tokyoYmd(-5), start: '19:00', end: '21:00',
+        people: 2, tableId: 't1', name: '高橋', phone: '',
+        course: '点心コース', amount: 11200, tags: ['常連'], allergy: '',
+        note: '', status: 'paid', payMethod: '現金',
+      },
+    ];
+  }
+
+  function loadBookings() {
+    if (localStorage.getItem(VER_KEY) !== DATA_VER) {
+      localStorage.setItem(VER_KEY, DATA_VER);
+      const seed = seedBookings();
+      saveBookings(seed);
+      return seed;
     }
+    try {
+      const raw = JSON.parse(localStorage.getItem(KEY_BOOK) || 'null');
+      if (Array.isArray(raw)) return raw;
+    } catch (e) {}
+    const seed = seedBookings();
+    saveBookings(seed);
+    return seed;
+  }
+  function saveBookings(list) {
+    localStorage.setItem(KEY_BOOK, JSON.stringify(list));
+  }
+  function upsertBooking(patch) {
+    const list = loadBookings();
+    const id = patch.id || uid();
+    const i = list.findIndex((b) => b.id === id);
+    const next = Object.assign(
+      {
+        id, date: tokyoYmd(0), start: '18:00', end: '20:00', people: 2,
+        tableId: '', name: '', phone: '', course: '', amount: 0, tags: [],
+        allergy: '', note: '', status: 'reserved', payMethod: '',
+      },
+      i >= 0 ? list[i] : {},
+      patch,
+      { id }
+    );
+    if (i >= 0) list[i] = next;
+    else list.push(next);
+    saveBookings(list);
+    return next;
+  }
+  function bookingsOn(ymd) {
+    return loadBookings()
+      .filter((b) => b.date === ymd && b.status !== 'cancelled')
+      .sort((a, b) => String(a.start).localeCompare(String(b.start)));
+  }
+  function liveOnTable(tableId, ymd) {
+    ymd = ymd || tokyoYmd(0);
+    const rows = bookingsOn(ymd).filter(
+      (b) => b.tableId === tableId && (b.status === 'seated' || b.status === 'reserved')
+    );
+    return rows.find((b) => b.status === 'seated') || rows[0] || null;
+  }
+  function tableStatus(tableId, ymd) {
+    const b = liveOnTable(tableId, ymd);
+    if (!b) return 'free';
+    return b.status === 'seated' ? 'busy' : 'reserved';
+  }
+  function kpiFromRows(rows) {
+    const open = rows.filter((b) => b.status === 'seated' || b.status === 'paid');
+    const turns = open.length;
+    const people = open.reduce((s, b) => s + (Number(b.people) || 0), 0);
+    const bookedPeople = rows.reduce((s, b) => s + (Number(b.people) || 0), 0);
+    const sales = open.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+    const tables = loadTables().length;
+    const turnover = tables ? Math.round((turns / tables) * 10) / 10 : 0;
+    const avg = people ? Math.round(sales / people) : 0;
+    return {
+      parties: rows.length,
+      turns,
+      people,
+      bookedPeople,
+      sales,
+      tables,
+      turnover,
+      avg,
+    };
+  }
+  function dayKpi(ymd) {
+    return kpiFromRows(bookingsOn(ymd || tokyoYmd(0)));
+  }
+  function monthKpi(ym) {
+    ym = ym || String(tokyoYmd(0)).slice(0, 7);
+    const rows = loadBookings().filter(
+      (b) => String(b.date).slice(0, 7) === ym && b.status !== 'cancelled'
+    );
+    return kpiFromRows(rows);
+  }
+  function payBooking(id, payMethod) {
+    return upsertBooking({ id, status: 'paid', payMethod: payMethod || '現金' });
+  }
+  function cancelBooking(id) {
+    return upsertBooking({ id, status: 'cancelled' });
+  }
+  function walkIn(tableId, patch) {
+    return upsertBooking(Object.assign({
+      tableId,
+      date: tokyoYmd(0),
+      start: '18:00',
+      end: '20:00',
+      status: 'seated',
+    }, patch || {}));
   }
 
-  function saveLogs(list, ymd) {
-    localStorage.setItem(KEY_LOGS + (ymd || tokyoYmd(0)), JSON.stringify(list));
-  }
+  const TREND = {
+    labels: ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'],
+    parties: [28, 31, 36, 40, 38, 42],
+    sales: [980000, 1100000, 1250000, 1400000, 1320000, 1480000],
+  };
 
-  function bindLangButtons(root) {
+  function bindLangButtons() {
     const lang = getLang();
-    (root || document).querySelectorAll('.lang-btn').forEach((b) => {
+    document.querySelectorAll('.lang-btn').forEach((b) => {
       b.classList.toggle('active', b.dataset.lang === lang);
       b.addEventListener('click', () => {
         setLang(b.dataset.lang);
@@ -186,19 +316,26 @@
     });
   }
 
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
   global.Tenjiku = {
     STORE_ID,
     STORE_NAME,
     PASS,
     MAP,
     TAGS,
-    TODAY_ORDERS,
-    YESTERDAY_ORDERS,
-    MONTH_STATS,
+    PAYS,
+    COURSES,
     TREND,
     tokyoYmd,
+    tokyoWeekday,
     jpDate,
     yen,
+    uid,
     getLang,
     setLang,
     isAuthed,
@@ -207,8 +344,23 @@
     requireAuth,
     loadTables,
     saveTables,
-    loadLogs,
-    saveLogs,
+    loadShift,
+    saveShift,
+    todayStaff,
+    tableById,
+    tableName,
+    loadBookings,
+    saveBookings,
+    upsertBooking,
+    bookingsOn,
+    liveOnTable,
+    tableStatus,
+    dayKpi,
+    monthKpi,
+    payBooking,
+    cancelBooking,
+    walkIn,
     bindLangButtons,
+    escapeHtml,
   };
 })(window);

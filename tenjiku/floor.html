@@ -19,7 +19,7 @@
     <div>
       <div class="store-badge">天竺 広東倶楽部</div>
       <h1 id="pageTitle">卓フロア</h1>
-      <p id="subtitle">空席・使用中・予約。タップして消費とタグを記録</p>
+      <p id="subtitle">予約と同じ一組。タップして着席・会計</p>
     </div>
     <div class="language-switcher">
       <button class="lang-btn" type="button" data-lang="ja">日本語</button>
@@ -39,15 +39,23 @@
   <h2 id="drawerTitle">卓</h2>
   <p class="muted" id="drawerSeats"></p>
   <div class="row" id="statusRow"></div>
+  <label id="labName">お名前</label>
+  <input id="guestName" type="text">
   <label id="labGuests">人数</label>
   <input id="guests" type="number" min="0" max="35">
-  <label id="labSpend">本日この卓の消費</label>
+  <label id="labCourse">コース</label>
+  <select id="course" class="input-field" style="width:100%"></select>
+  <label id="labAllergy">アレルギー</label>
+  <input id="allergy" type="text">
+  <label id="labSpend">この卓の消費</label>
   <div class="spend-now" id="spendNow">¥0</div>
   <label id="labAdd">金額を追加</label>
   <div class="row">
     <input id="addYen" type="number" min="0" step="100" placeholder="3000">
     <button class="btn" type="button" id="btnAddYen" style="width:auto;white-space:nowrap">追加</button>
   </div>
+  <label id="labPay">支払</label>
+  <select id="payMethod" class="input-field" style="width:100%"></select>
   <label id="labTags">タグ</label>
   <div class="row" id="tagRow"></div>
   <label id="labNote">メモ</label>
@@ -62,29 +70,44 @@
   if (!Tenjiku.requireAuth()) return;
   const lang = Tenjiku.getLang();
   const i18n = {
-    ja: { back: '← 店舗データ', title: '卓フロア', sub: '空席・使用中・予約。タップして消費とタグを記録', floor: 'フロア', setup: '卓設定', free: '空席', busy: '使用中', reserved: '予約', guests: '人数', spend: '本日この卓の消費', add: '金額を追加', addBtn: '追加', tags: 'タグ', note: 'メモ', save: '保存', clear: '会計して空ける', seats: '席', addTable: '卓を追加', name: '卓名', table: '卓' },
-    zh: { back: '← 门店数据', title: '桌位', sub: '空桌 / 使用中 / 预约。点进去记消费和标签', floor: '桌位', setup: '桌位设置', free: '空桌', busy: '使用中', reserved: '预约', guests: '人数', spend: '本日此桌消费', add: '追加金额', addBtn: '追加', tags: '标签', note: '备注', save: '保存', clear: '结账并空桌', seats: '座', addTable: '加一张桌', name: '桌名', table: '桌' },
-    en: { back: '← Store data', title: 'Tables', sub: 'Free / seated / reserved. Tap to log spend and tags', floor: 'Floor', setup: 'Setup', free: 'Free', busy: 'Seated', reserved: 'Reserved', guests: 'Guests', spend: "Today's spend", add: 'Add amount', addBtn: 'Add', tags: 'Tags', note: 'Note', save: 'Save', clear: 'Check out', seats: ' seats', addTable: 'Add table', name: 'Name', table: 'T' }
+    ja: { back: '← 店舗データ', title: '卓フロア', sub: '予約と同じ一組。タップして着席・会計', floor: 'フロア', setup: '卓設定', free: '空席', busy: '着席', reserved: '予約', name: 'お名前', guests: '人数', course: 'コース', allergy: 'アレルギー', spend: 'この卓の消費', add: '金額を追加', addBtn: '追加', pay: '支払', tags: 'タグ', note: 'メモ', save: '保存', clear: '会計して空ける', seats: '席', addTable: '卓を追加', tname: '卓名', table: '卓' },
+    zh: { back: '← 门店数据', title: '桌位', sub: '和预约是同一桌。点进去入座、结账', floor: '桌位', setup: '桌位设置', free: '空桌', busy: '入座', reserved: '预约', name: '姓名', guests: '人数', course: '套餐', allergy: '过敏', spend: '此桌消费', add: '追加金额', addBtn: '追加', pay: '支付', tags: '标签', note: '备注', save: '保存', clear: '结账并空桌', seats: '座', addTable: '加一张桌', tname: '桌名', table: '桌' },
+    en: { back: '← Store data', title: 'Floor', sub: 'Same party as the booking. Tap to seat or close', floor: 'Floor', setup: 'Setup', free: 'Free', busy: 'Seated', reserved: 'Reserved', name: 'Name', guests: 'Guests', course: 'Course', allergy: 'Allergy', spend: 'Spend', add: 'Add amount', addBtn: 'Add', pay: 'Pay', tags: 'Tags', note: 'Note', save: 'Save', clear: 'Check out', seats: ' seats', addTable: 'Add table', tname: 'Name', table: 'T' }
   };
   const t = i18n[lang] || i18n.ja;
+  const E = Tenjiku.escapeHtml;
+  const today = Tenjiku.tokyoYmd(0);
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
   document.getElementById('backLink').textContent = t.back;
   document.getElementById('pageTitle').textContent = t.title;
   document.getElementById('subtitle').textContent = t.sub;
   document.getElementById('tabFloor').textContent = t.floor;
   document.getElementById('tabSetup').textContent = t.setup;
+  document.getElementById('labName').textContent = t.name;
   document.getElementById('labGuests').textContent = t.guests;
+  document.getElementById('labCourse').textContent = t.course;
+  document.getElementById('labAllergy').textContent = t.allergy;
   document.getElementById('labSpend').textContent = t.spend;
   document.getElementById('labAdd').textContent = t.add;
   document.getElementById('btnAddYen').textContent = t.addBtn;
+  document.getElementById('labPay').textContent = t.pay;
   document.getElementById('labTags').textContent = t.tags;
   document.getElementById('labNote').textContent = t.note;
   document.getElementById('btnSave').textContent = t.save;
   document.getElementById('btnClear').textContent = t.clear;
+  document.getElementById('course').innerHTML = Tenjiku.COURSES.map(function (c) {
+    return '<option value="' + E(c) + '">' + E(c) + '</option>';
+  }).join('');
+  document.getElementById('payMethod').innerHTML = Tenjiku.PAYS.map(function (p) {
+    return '<option value="' + E(p) + '">' + E(p) + '</option>';
+  }).join('');
   Tenjiku.bindLangButtons();
 
   let view = 'floor';
   let openId = null;
+  let openBookId = null;
+  let tagSet = [];
+
   function statusLabel(s) {
     if (s === 'busy') return t.busy;
     if (s === 'reserved') return t.reserved;
@@ -93,51 +116,70 @@
   function tableLabel(name) {
     return lang === 'zh' ? t.table + ' ' + name : name + ' ' + t.table;
   }
-  function patch(id, extra) {
-    const list = Tenjiku.loadTables().map((x) => x.id === id ? Object.assign({}, x, extra) : x);
-    Tenjiku.saveTables(list);
-    render();
-  }
   function getTable(id) {
-    return Tenjiku.loadTables().find((x) => x.id === id);
+    return Tenjiku.loadTables().find(function (x) { return x.id === id; });
+  }
+  function formPatch() {
+    return {
+      name: document.getElementById('guestName').value.trim(),
+      people: Number(document.getElementById('guests').value) || 0,
+      course: document.getElementById('course').value,
+      allergy: document.getElementById('allergy').value.trim(),
+      note: document.getElementById('note').value,
+      tags: tagSet.slice(),
+      tableId: openId,
+      date: today
+    };
+  }
+  function ensureBooking(status) {
+    const patch = formPatch();
+    patch.status = status;
+    if (openBookId) patch.id = openBookId;
+    const next = Tenjiku.upsertBooking(patch);
+    openBookId = next.id;
+    return next;
   }
   function renderFloor() {
     const el = document.getElementById('viewFloor');
-    el.innerHTML = Tenjiku.loadTables().map((tb) => `
-      <article class="table-card ${tb.status}" data-id="${tb.id}">
-        <div class="t-head"><span class="t-name">${tableLabel(tb.name)}</span><span class="pill ${tb.status}">${statusLabel(tb.status)}</span></div>
-        <div class="muted">${tb.seats}${t.seats}</div>
-        <div class="muted">${tb.status === 'free' ? '—' : (tb.guests || 0)}</div>
-        <div class="tags">${(tb.tags || []).map((g) => '<span class="tag">' + g + '</span>').join('')}</div>
-        <div class="t-spend">${Tenjiku.yen(tb.spend)}</div>
-      </article>`).join('');
-    el.querySelectorAll('.table-card').forEach((c) => c.addEventListener('click', () => openDrawer(c.dataset.id)));
+    el.innerHTML = Tenjiku.loadTables().map(function (tb) {
+      const st = Tenjiku.tableStatus(tb.id, today);
+      const live = Tenjiku.liveOnTable(tb.id, today);
+      const tags = ((live && live.tags) || []).map(function (g) { return '<span class="tag">' + E(g) + '</span>'; }).join('');
+      const allergy = live && live.allergy ? '<div class="warn">' + E(live.allergy) + '</div>' : '';
+      return '<article class="table-card ' + st + '" data-id="' + E(tb.id) + '">'
+        + '<div class="t-head"><span class="t-name">' + E(tableLabel(tb.name)) + '</span><span class="pill ' + st + '">' + statusLabel(st) + '</span></div>'
+        + '<div class="muted">' + tb.seats + t.seats + '</div>'
+        + '<div>' + (live ? E(live.name) + ' · ' + live.people : '—') + '</div>'
+        + allergy
+        + '<div class="tags">' + tags + '</div>'
+        + '<div class="t-spend">' + Tenjiku.yen(live ? live.amount : 0) + '</div></article>';
+    }).join('');
+    el.querySelectorAll('.table-card').forEach(function (c) {
+      c.addEventListener('click', function () { openDrawer(c.dataset.id); });
+    });
   }
   function renderSetup() {
     const tables = Tenjiku.loadTables();
     const el = document.getElementById('viewSetup');
-    el.innerHTML = tables.map((tb) => `
-      <div class="log-card"><div><b>${tableLabel(tb.name)}</b><div class="muted">${tb.seats}${t.seats}</div></div>
-      <button class="btn btn-ghost" type="button" data-del="${tb.id}">✕</button></div>
-    `).join('') + `
-      <div class="log-card" style="flex-wrap:wrap">
-        <input id="newName" placeholder="${t.name}" class="input-field" style="flex:1;min-width:90px">
-        <input id="newSeats" type="number" min="1" value="4" class="input-field" style="width:90px">
-        <button class="btn" type="button" id="btnAddTable" style="width:auto">${t.addTable}</button>
-      </div>`;
-    el.querySelectorAll('[data-del]').forEach((b) => {
-      b.addEventListener('click', () => {
-        Tenjiku.saveTables(Tenjiku.loadTables().filter((x) => x.id !== b.dataset.del));
+    el.innerHTML = tables.map(function (tb) {
+      return '<div class="log-card"><div><b>' + E(tableLabel(tb.name)) + '</b><div class="muted">' + tb.seats + t.seats + '</div></div>'
+        + '<button class="btn btn-ghost" type="button" data-del="' + E(tb.id) + '">✕</button></div>';
+    }).join('') + '<div class="log-card" style="flex-wrap:wrap">'
+      + '<input id="newName" placeholder="' + E(t.tname) + '" class="input-field" style="flex:1;min-width:90px">'
+      + '<input id="newSeats" type="number" min="1" value="4" class="input-field" style="width:90px">'
+      + '<button class="btn" type="button" id="btnAddTable" style="width:auto">' + t.addTable + '</button></div>';
+    el.querySelectorAll('[data-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        Tenjiku.saveTables(Tenjiku.loadTables().filter(function (x) { return x.id !== b.dataset.del; }));
         render();
       });
     });
-    el.querySelector('#btnAddTable').addEventListener('click', () => {
+    el.querySelector('#btnAddTable').addEventListener('click', function () {
       const list = Tenjiku.loadTables();
       list.push({
         id: 't' + Date.now(),
         name: (document.getElementById('newName').value || String(list.length + 1)).trim(),
-        seats: Number(document.getElementById('newSeats').value) || 4,
-        status: 'free', guests: 0, spend: 0, tags: [], note: ''
+        seats: Number(document.getElementById('newSeats').value) || 4
       });
       Tenjiku.saveTables(list);
       render();
@@ -146,7 +188,7 @@
   function render() {
     document.getElementById('viewFloor').hidden = view !== 'floor';
     document.getElementById('viewSetup').hidden = view !== 'setup';
-    document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+    document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.dataset.view === view); });
     if (view === 'floor') renderFloor();
     else renderSetup();
   }
@@ -154,66 +196,91 @@
     openId = id;
     const tb = getTable(id);
     if (!tb) return;
+    const live = Tenjiku.liveOnTable(id, today);
+    openBookId = live ? live.id : null;
+    tagSet = ((live && live.tags) || []).slice();
+    const st = Tenjiku.tableStatus(id, today);
     document.getElementById('drawerTitle').textContent = tableLabel(tb.name);
-    document.getElementById('drawerSeats').textContent = tb.seats + t.seats;
-    document.getElementById('guests').value = tb.guests || 0;
-    document.getElementById('spendNow').textContent = Tenjiku.yen(tb.spend);
+    document.getElementById('drawerSeats').textContent = tb.seats + t.seats + (live && live.start ? ' · ' + live.start : '');
+    document.getElementById('guestName').value = live ? live.name : '';
+    document.getElementById('guests').value = live ? live.people : 2;
+    document.getElementById('course').value = (live && live.course) || Tenjiku.COURSES[0];
+    document.getElementById('allergy').value = live ? live.allergy : '';
+    document.getElementById('spendNow').textContent = Tenjiku.yen(live ? live.amount : 0);
     document.getElementById('addYen').value = '';
-    document.getElementById('note').value = tb.note || '';
-    document.getElementById('statusRow').innerHTML = ['free', 'busy', 'reserved'].map((s) =>
-      `<button class="status-btn ${s}${tb.status === s ? ' on' : ''}" type="button" data-st="${s}">${statusLabel(s)}</button>`
-    ).join('');
-    document.getElementById('tagRow').innerHTML = Tenjiku.TAGS.map((g) =>
-      `<button class="chip${(tb.tags || []).includes(g) ? ' on' : ''}" type="button" data-tag="${g}">${g}</button>`
-    ).join('');
+    document.getElementById('note').value = live ? live.note : '';
+    document.getElementById('payMethod').value = (live && live.payMethod) || Tenjiku.PAYS[0];
+    document.getElementById('statusRow').innerHTML = ['free', 'busy', 'reserved'].map(function (s) {
+      return '<button class="status-btn ' + s + (st === s ? ' on' : '') + '" type="button" data-st="' + s + '">' + statusLabel(s) + '</button>';
+    }).join('');
+    document.getElementById('tagRow').innerHTML = Tenjiku.TAGS.map(function (g) {
+      return '<button class="chip' + (tagSet.indexOf(g) >= 0 ? ' on' : '') + '" type="button" data-tag="' + E(g) + '">' + E(g) + '</button>';
+    }).join('');
     document.getElementById('mask').hidden = false;
     document.getElementById('drawer').hidden = false;
-    document.getElementById('statusRow').querySelectorAll('.status-btn').forEach((b) => {
-      b.addEventListener('click', () => { patch(id, { status: b.dataset.st }); openDrawer(id); });
+    document.getElementById('statusRow').querySelectorAll('.status-btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.dataset.st === 'free') {
+          if (openBookId) Tenjiku.cancelBooking(openBookId);
+          openBookId = null;
+        } else {
+          ensureBooking(b.dataset.st === 'busy' ? 'seated' : 'reserved');
+        }
+        renderFloor();
+        openDrawer(id);
+      });
     });
-    document.getElementById('tagRow').querySelectorAll('.chip').forEach((b) => {
-      b.addEventListener('click', () => {
-        const cur = getTable(id);
-        const set = new Set(cur.tags || []);
-        if (set.has(b.dataset.tag)) set.delete(b.dataset.tag); else set.add(b.dataset.tag);
-        patch(id, { tags: [...set] });
+    document.getElementById('tagRow').querySelectorAll('.chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        const g = b.dataset.tag;
+        const i = tagSet.indexOf(g);
+        if (i >= 0) tagSet.splice(i, 1); else tagSet.push(g);
+        if (openBookId) ensureBooking((Tenjiku.liveOnTable(openId, today) || {}).status || 'reserved');
         openDrawer(id);
       });
     });
   }
   function closeDrawer() {
     openId = null;
+    openBookId = null;
     document.getElementById('mask').hidden = true;
     document.getElementById('drawer').hidden = true;
+    renderFloor();
   }
-  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { view = b.dataset.view; render(); }));
+  document.querySelectorAll('.tab').forEach(function (b) {
+    b.addEventListener('click', function () { view = b.dataset.view; render(); });
+  });
   document.getElementById('mask').addEventListener('click', closeDrawer);
-  document.getElementById('btnAddYen').addEventListener('click', () => {
+  document.getElementById('btnAddYen').addEventListener('click', function () {
     if (!openId) return;
     const n = Number(document.getElementById('addYen').value) || 0;
     if (n <= 0) return;
-    const tb = getTable(openId);
-    patch(openId, { spend: (Number(tb.spend) || 0) + n, status: tb.status === 'free' ? 'busy' : tb.status });
+    const live = Tenjiku.liveOnTable(openId, today);
+    const next = ensureBooking(live && live.status === 'reserved' ? 'reserved' : 'seated');
+    Tenjiku.upsertBooking({ id: next.id, amount: (Number(next.amount) || 0) + n, status: next.status === 'reserved' ? 'seated' : next.status });
     document.getElementById('addYen').value = '';
     openDrawer(openId);
+    renderFloor();
   });
-  document.getElementById('btnSave').addEventListener('click', () => {
+  document.getElementById('btnSave').addEventListener('click', function () {
     if (!openId) return;
-    patch(openId, { guests: Number(document.getElementById('guests').value) || 0, note: document.getElementById('note').value });
+    const live = Tenjiku.liveOnTable(openId, today);
+    ensureBooking(live ? live.status : 'reserved');
     closeDrawer();
   });
-  document.getElementById('btnClear').addEventListener('click', () => {
+  document.getElementById('btnClear').addEventListener('click', function () {
     if (!openId) return;
-    const tb = getTable(openId);
-    if (Number(tb.spend) > 0) {
-      const logs = Tenjiku.loadLogs();
-      logs.push({ name: tb.name, spend: tb.spend, guests: tb.guests, tags: tb.tags || [], at: Date.now() });
-      Tenjiku.saveLogs(logs);
+    const live = Tenjiku.liveOnTable(openId, today);
+    if (live) Tenjiku.payBooking(live.id, document.getElementById('payMethod').value);
+    else {
+      const next = ensureBooking('seated');
+      Tenjiku.payBooking(next.id, document.getElementById('payMethod').value);
     }
-    patch(openId, { status: 'free', guests: 0, spend: 0, tags: [], note: '' });
     closeDrawer();
   });
   render();
+  const q = new URLSearchParams(location.search).get('table');
+  if (q) openDrawer(q);
 })();
 </script>
 </body>

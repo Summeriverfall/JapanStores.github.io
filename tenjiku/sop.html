@@ -39,39 +39,39 @@
       html: `<div class="sop-block"><h3>1. 予約受付</h3><ul>
         <li>人数・日時・コース・アレルギーを確認する</li>
         <li>卓フロアで空席を確認してから確定する</li>
-        <li>確定後、カレンダーと当日注文に残す</li></ul></div>
+        <li>確定後、同じ一組をカレンダー・フロア・会計に残す</li></ul></div>
         <div class="sop-block"><h3>2. 来店</h3><ul>
-        <li>17:00 開店。名を確認し卓へ案内</li>
-        <li>卓カードを「使用中」にし、人数とタグ（宴会・常連など）を付ける</li></ul></div>
+        <li>17:00 開店。名を確認し卓へ案内（ランチなし）</li>
+        <li>予約を「着席」にし、人数とタグ（宴会・常連など）を付ける</li></ul></div>
         <div class="sop-block"><h3>3. 会計</h3><ul>
-        <li>卓の消費を入力し「会計して空ける」</li>
-        <li>会計ログで当日合計を確認する</li></ul></div>`
+        <li>卓の消費を入力し「会計して空ける」（現金 / カード / 会社請求）</li>
+        <li>会計ページで今夜の合計を確認する</li></ul></div>`
     },
     zh: {
       back: '← 门店数据', title: '本店 SOP', sub: '只写本店接待和预约流程，不是按摩店手册。',
       html: `<div class="sop-block"><h3>1. 接预约</h3><ul>
         <li>确认人数、时间、套餐、过敏</li>
         <li>先看桌位有没有空，再确认</li>
-        <li>确认后写入日历和当日订单</li></ul></div>
+        <li>确认后写入同一桌：日历、桌位、结账</li></ul></div>
         <div class="sop-block"><h3>2. 到店</h3><ul>
-        <li>17:00 开门。对名字带到桌</li>
-        <li>桌卡改成「使用中」，记下人数和标签</li></ul></div>
+        <li>17:00 开门（没有午市）。对名字带到桌</li>
+        <li>预约改成「入座」，记下人数和标签</li></ul></div>
         <div class="sop-block"><h3>3. 结账</h3><ul>
-        <li>录入此桌消费，点「结账并空桌」</li>
-        <li>在结账记录里核对当日合计</li></ul></div>`
+        <li>录入此桌消费，点「结账并空桌」（现金 / 刷卡 / 公司请款）</li>
+        <li>在结账页核对今晚合计</li></ul></div>`
     },
     en: {
       back: '← Store data', title: 'Store SOP', sub: 'Front-of-house steps for this restaurant only.',
       html: `<div class="sop-block"><h3>1. Booking</h3><ul>
         <li>Confirm party size, time, course, allergies</li>
         <li>Check the floor for a free table before confirming</li>
-        <li>Write it on the calendar and today’s orders</li></ul></div>
+        <li>Write one party onto calendar, floor and checks</li></ul></div>
         <div class="sop-block"><h3>2. Arrival</h3><ul>
-        <li>Doors at 17:00. Seat by name</li>
-        <li>Mark the table seated; add guest count and tags</li></ul></div>
+        <li>Doors at 17:00. No lunch. Seat by name</li>
+        <li>Mark the booking seated; add guest count and tags</li></ul></div>
         <div class="sop-block"><h3>3. Check</h3><ul>
-        <li>Enter spend, then close the table</li>
-        <li>Reconcile the day on the check log</li></ul></div>`
+        <li>Enter spend, then close (cash / card / company)</li>
+        <li>Reconcile the night on the check page</li></ul></div>`
     }
   };
   const t = pages[lang] || pages.ja;
