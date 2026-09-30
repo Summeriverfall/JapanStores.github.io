@@ -75,6 +75,15 @@
     </div>
   </section>
 
+  <section class="data-section" id="todayOrdersSection">
+    <h2 class="section-title">
+      <span id="todayOrdersTitle">当日注文</span>
+      <span class="order-section-date" id="todayOrdersSectionDate"></span>
+      <span class="order-count-badge" id="todayOrdersCount"></span>
+    </h2>
+    <div class="order-table-wrap" id="todayOrdersContent"></div>
+  </section>
+
   <div class="month-selector-row">
     <label class="input-label" id="labMonth">月を選択</label>
     <select id="monthSelector" class="input-field"></select>
@@ -84,7 +93,7 @@
 
   <section class="data-section">
     <h2 class="section-title" id="secStats">今月の実績</h2>
-    <div class="stats-grid">
+    <div class="stats-grid stats-grid-5">
       <div class="stat-card">
         <div class="stat-label" id="kOrders">注文数</div>
         <div class="stat-value" id="vOrders">0</div>
@@ -97,21 +106,20 @@
         <div class="stat-label" id="kSettle">決算金額</div>
         <div class="stat-value" id="vSettle">¥0</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label" id="kTables">卓数</div>
+        <div class="stat-value" id="vTables">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="kTurn">翻台率</div>
+        <div class="stat-value" id="vTurn">0%</div>
+      </div>
     </div>
   </section>
 
   <section class="data-section">
     <h2 class="section-title" id="secTrend">過去6ヶ月の推移</h2>
     <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
-  </section>
-
-  <section class="data-section" id="todayOrdersSection" hidden>
-    <h2 class="section-title">
-      <span id="todayOrdersTitle">当日注文</span>
-      <span class="order-section-date" id="todayOrdersSectionDate"></span>
-      <span class="order-count-badge" id="todayOrdersCount"></span>
-    </h2>
-    <div class="order-table-wrap" id="todayOrdersContent"></div>
   </section>
 </div>
 <script>
@@ -127,6 +135,7 @@
       floor: '卓フロア', floorSub: '空席 / 使用中', check: '会計ログ', checkSub: '卓ごとの消費',
       month: '月を選択', update: 'データを更新', now: '現在：', stats: '今月の実績',
       trend: '過去6ヶ月の推移', orders: '注文数', sales: '売上金額', settle: '決算金額',
+      tables: '卓数', turn: '翻台率',
       logout: 'ログアウト',
       th: ['開始', '終了', '内容', '備考', '人数', '金額', '決算']
     },
@@ -138,6 +147,7 @@
       floor: '桌位', floorSub: '空桌 / 使用中', check: '结账记录', checkSub: '每桌消费',
       month: '选择月份', update: '更新数据', now: '当前：', stats: '本月实绩',
       trend: '过去 6 个月趋势', orders: '订单数', sales: '营业额', settle: '结算额',
+      tables: '桌数', turn: '翻台率',
       logout: '退出',
       th: ['开始', '结束', '内容', '备注', '人数', '金额', '结算']
     },
@@ -149,6 +159,7 @@
       floor: 'Tables', floorSub: 'Free / seated', check: 'Checks', checkSub: 'Spend per table',
       month: 'Select month', update: 'Refresh', now: 'Now: ', stats: "This month",
       trend: 'Last 6 months', orders: 'Orders', sales: 'Sales', settle: 'Settlement',
+      tables: 'Tables', turn: 'Turnover',
       logout: 'Log out',
       th: ['Start', 'End', 'Title', 'Notes', 'People', 'Amount', 'Settle']
     }
@@ -180,6 +191,8 @@
   document.getElementById('kOrders').textContent = t.orders;
   document.getElementById('kSales').textContent = t.sales;
   document.getElementById('kSettle').textContent = t.settle;
+  document.getElementById('kTables').textContent = t.tables;
+  document.getElementById('kTurn').textContent = t.turn;
   document.getElementById('btnLogout').textContent = t.logout;
   document.getElementById('todayOrdersTitle').textContent = t.today;
 
@@ -203,6 +216,11 @@
   document.getElementById('vOrders').textContent = String(Tenjiku.MONTH_STATS.orders);
   document.getElementById('vSales').textContent = Tenjiku.yen(Tenjiku.MONTH_STATS.sales);
   document.getElementById('vSettle').textContent = Tenjiku.yen(Tenjiku.MONTH_STATS.settle);
+  const tableCount = Tenjiku.loadTables().length;
+  const turns = Tenjiku.TODAY_ORDERS.length + Tenjiku.loadLogs().length;
+  const turnRate = tableCount ? Math.round((turns / tableCount) * 1000) / 10 : 0;
+  document.getElementById('vTables').textContent = String(tableCount);
+  document.getElementById('vTurn').textContent = turnRate + '%';
 
   document.getElementById('updateMonthBtn').addEventListener('click', () => {
     document.getElementById('currentMonthText').textContent = t.now + sel.value;
@@ -218,9 +236,7 @@
   renderTodayTable();
 
   document.getElementById('todayOrderBtn').addEventListener('click', () => {
-    const sec = document.getElementById('todayOrdersSection');
-    sec.hidden = !sec.hidden;
-    if (!sec.hidden) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('todayOrdersSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   document.getElementById('btnLogout').addEventListener('click', () => {
     Tenjiku.logout();
