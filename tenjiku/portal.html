@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 - 店舗データ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="container">
+  <header class="header">
+    <div>
+      <div class="store-badge" id="storeBadge">天竺 広東倶楽部</div>
+      <h1 id="pageTitle">店舗データ</h1>
+      <p id="subtitle">今月の実績と過去6ヶ月の推移をご確認ください</p>
+    </div>
+    <div class="language-switcher">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      <button class="btn btn-ghost" type="button" id="btnLogout" style="padding:.4rem .85rem;">ログアウト</button>
+    </div>
+  </header>
+
+  <section class="data-section">
+    <h2 class="section-title" id="secQuick">クイックアクセス</h2>
+    <div class="quick-links">
+      <button class="quick-link-card" type="button" id="todayOrderBtn">
+        <div class="quick-icon">📋</div>
+        <div class="quick-label" id="labToday">当日注文</div>
+        <div class="quick-date" id="todayDateLabel"></div>
+      </button>
+      <a class="quick-link-card" href="yesterday.html">
+        <div class="quick-icon">📄</div>
+        <div class="quick-label" id="labYest">前日注文明細</div>
+        <div class="quick-date" id="yesterdayDateLabel"></div>
+      </a>
+      <a class="quick-link-card" href="sop.html">
+        <div class="quick-icon">📘</div>
+        <div class="quick-label" id="labSop">CS SOP</div>
+        <div class="quick-date" id="labSopSub">作業手順書</div>
+      </a>
+      <a class="quick-link-card" href="calendar.html">
+        <div class="quick-icon">📆</div>
+        <div class="quick-label" id="labCal">店舗カレンダー</div>
+        <div class="quick-date" id="labCalSub">予約カレンダー</div>
+      </a>
+      <a class="quick-link-card" href="flow.html">
+        <div class="quick-icon">🔄</div>
+        <div class="quick-label" id="labFlow">予約フロー</div>
+        <div class="quick-date" id="labFlowSub">業務フロー図</div>
+      </a>
+      <a class="quick-link-card" href="schedule.html">
+        <div class="quick-icon">👥</div>
+        <div class="quick-label" id="labShift">シフト</div>
+        <div class="quick-date" id="labShiftSub">本店排班</div>
+      </a>
+      <a class="quick-link-card" href="floor.html">
+        <div class="quick-icon">🪑</div>
+        <div class="quick-label" id="labFloor">卓フロア</div>
+        <div class="quick-date" id="labFloorSub">空席 / 使用中</div>
+      </a>
+      <a class="quick-link-card" href="checkout.html">
+        <div class="quick-icon">💴</div>
+        <div class="quick-label" id="labCheck">会計ログ</div>
+        <div class="quick-date" id="labCheckSub">卓ごとの消費</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="month-selector-row">
+    <label class="input-label" id="labMonth">月を選択</label>
+    <select id="monthSelector" class="input-field"></select>
+    <button class="btn" type="button" id="updateMonthBtn">データを更新</button>
+    <span class="muted" id="currentMonthText"></span>
+  </div>
+
+  <section class="data-section">
+    <h2 class="section-title" id="secStats">今月の実績</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label" id="kOrders">注文数</div>
+        <div class="stat-value" id="vOrders">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="kSales">売上金額</div>
+        <div class="stat-value" id="vSales">¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label" id="kSettle">決算金額</div>
+        <div class="stat-value" id="vSettle">¥0</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="data-section">
+    <h2 class="section-title" id="secTrend">過去6ヶ月の推移</h2>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </section>
+
+  <section class="data-section" id="todayOrdersSection" hidden>
+    <h2 class="section-title">
+      <span id="todayOrdersTitle">当日注文</span>
+      <span class="order-section-date" id="todayOrdersSectionDate"></span>
+      <span class="order-count-badge" id="todayOrdersCount"></span>
+    </h2>
+    <div class="order-table-wrap" id="todayOrdersContent"></div>
+  </section>
+</div>
+<script>
+(function () {
+  if (!Tenjiku.requireAuth()) return;
+  const lang = Tenjiku.getLang();
+  const i18n = {
+    ja: {
+      title: '店舗データ', sub: '今月の実績と過去6ヶ月の推移をご確認ください',
+      quick: 'クイックアクセス', today: '当日注文', yest: '前日注文明細',
+      sop: 'CS SOP', sopSub: '作業手順書', cal: '店舗カレンダー', calSub: '予約カレンダー',
+      flow: '予約フロー', flowSub: '業務フロー図', shift: 'シフト', shiftSub: '本店排班',
+      floor: '卓フロア', floorSub: '空席 / 使用中', check: '会計ログ', checkSub: '卓ごとの消費',
+      month: '月を選択', update: 'データを更新', now: '現在：', stats: '今月の実績',
+      trend: '過去6ヶ月の推移', orders: '注文数', sales: '売上金額', settle: '決算金額',
+      logout: 'ログアウト',
+      th: ['開始', '終了', '内容', '備考', '人数', '金額', '決算']
+    },
+    zh: {
+      title: '门店数据', sub: '查看本月实绩与过去 6 个月趋势',
+      quick: '快捷入口', today: '当日订单', yest: '前一日订单明细',
+      sop: 'CS SOP', sopSub: '作业手册', cal: '店铺日历', calSub: '预约日历',
+      flow: '预约流程', flowSub: '业务流程图', shift: '排班', shiftSub: '本店班次',
+      floor: '桌位', floorSub: '空桌 / 使用中', check: '结账记录', checkSub: '每桌消费',
+      month: '选择月份', update: '更新数据', now: '当前：', stats: '本月实绩',
+      trend: '过去 6 个月趋势', orders: '订单数', sales: '营业额', settle: '结算额',
+      logout: '退出',
+      th: ['开始', '结束', '内容', '备注', '人数', '金额', '结算']
+    },
+    en: {
+      title: 'Store data', sub: 'This month’s performance and 6-month trend',
+      quick: 'Quick access', today: "Today's orders", yest: "Yesterday's orders",
+      sop: 'CS SOP', sopSub: 'Procedures', cal: 'Store calendar', calSub: 'Bookings',
+      flow: 'Reservation flow', flowSub: 'Workflow', shift: 'Shifts', shiftSub: 'Staff schedule',
+      floor: 'Tables', floorSub: 'Free / seated', check: 'Checks', checkSub: 'Spend per table',
+      month: 'Select month', update: 'Refresh', now: 'Now: ', stats: "This month",
+      trend: 'Last 6 months', orders: 'Orders', sales: 'Sales', settle: 'Settlement',
+      logout: 'Log out',
+      th: ['Start', 'End', 'Title', 'Notes', 'People', 'Amount', 'Settle']
+    }
+  };
+  const t = i18n[lang] || i18n.ja;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  document.getElementById('pageTitle').textContent = Tenjiku.STORE_NAME + ' - ' + t.title;
+  document.title = Tenjiku.STORE_NAME + ' - ' + t.title;
+  document.getElementById('subtitle').textContent = t.sub;
+  document.getElementById('secQuick').textContent = t.quick;
+  document.getElementById('labToday').textContent = t.today;
+  document.getElementById('labYest').textContent = t.yest;
+  document.getElementById('labSop').textContent = t.sop;
+  document.getElementById('labSopSub').textContent = t.sopSub;
+  document.getElementById('labCal').textContent = t.cal;
+  document.getElementById('labCalSub').textContent = t.calSub;
+  document.getElementById('labFlow').textContent = t.flow;
+  document.getElementById('labFlowSub').textContent = t.flowSub;
+  document.getElementById('labShift').textContent = t.shift;
+  document.getElementById('labShiftSub').textContent = t.shiftSub;
+  document.getElementById('labFloor').textContent = t.floor;
+  document.getElementById('labFloorSub').textContent = t.floorSub;
+  document.getElementById('labCheck').textContent = t.check;
+  document.getElementById('labCheckSub').textContent = t.checkSub;
+  document.getElementById('labMonth').textContent = t.month;
+  document.getElementById('updateMonthBtn').textContent = t.update;
+  document.getElementById('secStats').textContent = t.stats;
+  document.getElementById('secTrend').textContent = t.trend;
+  document.getElementById('kOrders').textContent = t.orders;
+  document.getElementById('kSales').textContent = t.sales;
+  document.getElementById('kSettle').textContent = t.settle;
+  document.getElementById('btnLogout').textContent = t.logout;
+  document.getElementById('todayOrdersTitle').textContent = t.today;
+
+  const today = Tenjiku.tokyoYmd(0);
+  const yest = Tenjiku.tokyoYmd(-1);
+  document.getElementById('todayDateLabel').textContent = Tenjiku.jpDate(today);
+  document.getElementById('yesterdayDateLabel').textContent = Tenjiku.jpDate(yest);
+  document.getElementById('todayOrdersSectionDate').textContent = Tenjiku.jpDate(today);
+  document.getElementById('todayOrdersCount').textContent = String(Tenjiku.TODAY_ORDERS.length);
+
+  const sel = document.getElementById('monthSelector');
+  Tenjiku.TREND.labels.forEach((m, i) => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m.replace('-', '年') + '月';
+    if (i === Tenjiku.TREND.labels.length - 1) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('currentMonthText').textContent = t.now + sel.value;
+
+  document.getElementById('vOrders').textContent = String(Tenjiku.MONTH_STATS.orders);
+  document.getElementById('vSales').textContent = Tenjiku.yen(Tenjiku.MONTH_STATS.sales);
+  document.getElementById('vSettle').textContent = Tenjiku.yen(Tenjiku.MONTH_STATS.settle);
+
+  document.getElementById('updateMonthBtn').addEventListener('click', () => {
+    document.getElementById('currentMonthText').textContent = t.now + sel.value;
+  });
+
+  function renderTodayTable() {
+    const rows = Tenjiku.TODAY_ORDERS.map((r) =>
+      `<tr><td>${r.start}</td><td>${r.end}</td><td>${r.title}</td><td>${r.description}</td><td>${r.people}</td><td>${Tenjiku.yen(r.project)}</td><td>${Tenjiku.yen(r.settle)}</td></tr>`
+    ).join('');
+    document.getElementById('todayOrdersContent').innerHTML =
+      `<table class="data-table"><thead><tr>${t.th.map((h) => '<th>' + h + '</th>').join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  renderTodayTable();
+
+  document.getElementById('todayOrderBtn').addEventListener('click', () => {
+    const sec = document.getElementById('todayOrdersSection');
+    sec.hidden = !sec.hidden;
+    if (!sec.hidden) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    Tenjiku.logout();
+    location.replace('index.html');
+  });
+  Tenjiku.bindLangButtons();
+
+  const ctx = document.getElementById('trendChart');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Tenjiku.TREND.labels,
+      datasets: [
+        {
+          label: t.orders,
+          data: Tenjiku.TREND.orders,
+          borderColor: '#C9A961',
+          backgroundColor: 'rgba(201,169,97,.15)',
+          yAxisID: 'y',
+          tension: .35,
+          fill: false,
+        },
+        {
+          label: t.settle,
+          data: Tenjiku.TREND.settle,
+          borderColor: '#8a722e',
+          backgroundColor: 'rgba(138,114,46,.08)',
+          yAxisID: 'y1',
+          tension: .35,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y: { position: 'left', grid: { color: '#eee' } },
+        y1: { position: 'right', grid: { drawOnChartArea: false } },
+      },
+    },
+  });
+})();
+</script>
+</body>
+</html>

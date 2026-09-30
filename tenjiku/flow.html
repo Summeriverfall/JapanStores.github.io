@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 - 予約フロー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="container">
+  <a class="back-link" href="portal.html" id="backLink">← 店舗データ</a>
+  <header class="header">
+    <div>
+      <div class="store-badge">天竺 広東倶楽部</div>
+      <h1 id="pageTitle">予約フロー</h1>
+      <p id="subtitle">本店の予約業務だけ。マッサージ店のフロー図ではありません。</p>
+    </div>
+    <div class="language-switcher">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+    </div>
+  </header>
+  <section class="data-section" style="overflow-x:auto;">
+    <table class="flow-table" id="flowTable"></table>
+  </section>
+</div>
+<script>
+(function () {
+  if (!Tenjiku.requireAuth()) return;
+  const lang = Tenjiku.getLang();
+  const copy = {
+    ja: {
+      back: '← 店舗データ', title: '予約フロー', sub: '本店の予約業務だけ。他業態の図は使いません。',
+      heads: ['', 'お客様', 'プラットフォーム', '天竺 広東倶楽部'],
+      rows: [
+        ['STEP 1', 'Google マップで店舗を探す', '—', '店舗情報を掲載'],
+        ['STEP 2', '店舗ページへ', '多言語ページを表示', 'メニュー・席数を更新'],
+        ['STEP 3', '言語・コースを選ぶ', '日 / 中 / 英を切替', '—'],
+        ['STEP 4', '人数・日時を送る', '問い合わせを受付', '空席を確認'],
+        ['STEP 5', '確定を待つ', '店舗へ確認を回す', '卓を確保して返信'],
+        ['STEP 6', '予約完了', 'カレンダーへ書く', '当日注文・卓に反映'],
+        ['STEP 7', '来店・お支払い', '手数料を精算', '接客・会計']
+      ]
+    },
+    zh: {
+      back: '← 门店数据', title: '预约流程', sub: '只画本店预约，不是按摩店流程图。',
+      heads: ['', '顾客', '平台', '天竺 広東倶楽部'],
+      rows: [
+        ['STEP 1', '在地图搜店', '—', '维护店铺信息'],
+        ['STEP 2', '打开店铺页', '显示多语言页', '更新菜单和桌数'],
+        ['STEP 3', '选语言和套餐', '日/中/英切换', '—'],
+        ['STEP 4', '发送人数和时间', '接收咨询', '核对空桌'],
+        ['STEP 5', '等待确认', '转给本店', '锁桌并回复'],
+        ['STEP 6', '预约完成', '写入日历', '进入当日订单和桌位'],
+        ['STEP 7', '到店付款', '结算手续费', '接待与结账']
+      ]
+    },
+    en: {
+      back: '← Store data', title: 'Reservation flow', sub: 'This restaurant only.',
+      heads: ['', 'Guest', 'Platform', 'Tenjiku'],
+      rows: [
+        ['STEP 1', 'Find the shop on Maps', '—', 'Keep listing current'],
+        ['STEP 2', 'Open the store page', 'Show multilingual page', 'Update menu and tables'],
+        ['STEP 3', 'Pick language and course', 'JA / ZH / EN', '—'],
+        ['STEP 4', 'Send party size and time', 'Receive inquiry', 'Check a free table'],
+        ['STEP 5', 'Wait for confirm', 'Ask the shop', 'Hold the table, reply'],
+        ['STEP 6', 'Booked', 'Write calendar', 'Show on today + floor'],
+        ['STEP 7', 'Dine and pay', 'Settle fee', 'Serve and check out']
+      ]
+    }
+  };
+  const t = copy[lang] || copy.ja;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('pageTitle').textContent = t.title;
+  document.getElementById('subtitle').textContent = t.sub;
+  const th = '<tr>' + t.heads.map((h) => '<th>' + h + '</th>').join('') + '</tr>';
+  const tb = t.rows.map((r) => '<tr>' + r.map((c, i) => '<td' + (i === 0 ? ' class="step"' : '') + '>' + c + '</td>').join('') + '</tr>').join('');
+  document.getElementById('flowTable').innerHTML = th + tb;
+  Tenjiku.bindLangButtons();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 - シフト</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="container">
+  <a class="back-link" href="portal.html" id="backLink">← 店舗データ</a>
+  <header class="header">
+    <div>
+      <div class="store-badge">天竺 広東倶楽部</div>
+      <h1 id="pageTitle">本店シフト</h1>
+      <p id="subtitle">ホール / キッチンのみ。全社 CS 排班表ではありません。</p>
+    </div>
+    <div class="language-switcher">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+    </div>
+  </header>
+  <section class="data-section" style="overflow-x:auto;">
+    <table class="shift-table" id="shiftTable"></table>
+  </section>
+</div>
+<script>
+(function () {
+  if (!Tenjiku.requireAuth()) return;
+  const lang = Tenjiku.getLang();
+  const i18n = {
+    ja: {
+      back: '← 店舗データ', title: '本店シフト', sub: 'ホール / キッチンのみ。他店・全社 CS の表は使いません。',
+      days: ['', '月', '火', '水', '木', '金', '土', '日'],
+      rows: [
+        ['店長 李', '17–24', '17–24', '休', '17–24', '17–24', '17–24', '17–24'],
+        ['ホール 佐藤', '17–23', '17–23', '17–23', '休', '17–24', '17–24', '17–23'],
+        ['ホール 陳', '休', '17–24', '17–24', '17–24', '17–23', '17–24', '17–24'],
+        ['キッチン 王', '16–24', '16–24', '16–24', '16–24', '16–24', '16–24', '休']
+      ]
+    },
+    zh: {
+      back: '← 门店数据', title: '本店排班', sub: '只排本店厅面和厨房，不是全公司客服表。',
+      days: ['', '一', '二', '三', '四', '五', '六', '日'],
+      rows: [
+        ['店长 李', '17–24', '17–24', '休', '17–24', '17–24', '17–24', '17–24'],
+        ['厅面 佐藤', '17–23', '17–23', '17–23', '休', '17–24', '17–24', '17–23'],
+        ['厅面 陈', '休', '17–24', '17–24', '17–24', '17–23', '17–24', '17–24'],
+        ['厨房 王', '16–24', '16–24', '16–24', '16–24', '16–24', '16–24', '休']
+      ]
+    },
+    en: {
+      back: '← Store data', title: 'Shop shifts', sub: 'Floor and kitchen for this restaurant only.',
+      days: ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      rows: [
+        ['Manager Li', '17–24', '17–24', 'Off', '17–24', '17–24', '17–24', '17–24'],
+        ['Floor Sato', '17–23', '17–23', '17–23', 'Off', '17–24', '17–24', '17–23'],
+        ['Floor Chen', 'Off', '17–24', '17–24', '17–24', '17–23', '17–24', '17–24'],
+        ['Kitchen Wang', '16–24', '16–24', '16–24', '16–24', '16–24', '16–24', 'Off']
+      ]
+    }
+  };
+  const t = i18n[lang] || i18n.ja;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('pageTitle').textContent = t.title;
+  document.getElementById('subtitle').textContent = t.sub;
+  const th = '<tr>' + t.days.map((d) => '<th>' + d + '</th>').join('') + '</tr>';
+  const tb = t.rows.map((r) => '<tr>' + r.map((c) => '<td>' + c + '</td>').join('') + '</tr>').join('');
+  document.getElementById('shiftTable').innerHTML = th + tb;
+  Tenjiku.bindLangButtons();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 - SOP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="container">
+  <a class="back-link" href="portal.html" id="backLink">← 店舗データ</a>
+  <header class="header">
+    <div>
+      <div class="store-badge">天竺 広東倶楽部</div>
+      <h1 id="pageTitle">店舗 SOP</h1>
+      <p id="subtitle">本店の接客・予約対応手順。マッサージ店の SOP ではありません。</p>
+    </div>
+    <div class="language-switcher">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+    </div>
+  </header>
+  <section class="data-section" id="body"></section>
+</div>
+<script>
+(function () {
+  if (!Tenjiku.requireAuth()) return;
+  const lang = Tenjiku.getLang();
+  const pages = {
+    ja: {
+      back: '← 店舗データ', title: '店舗 SOP', sub: '本店の接客・予約対応手順。他店の手順書は使いません。',
+      html: `<div class="sop-block"><h3>1. 予約受付</h3><ul>
+        <li>人数・日時・コース・アレルギーを確認する</li>
+        <li>卓フロアで空席を確認してから確定する</li>
+        <li>確定後、カレンダーと当日注文に残す</li></ul></div>
+        <div class="sop-block"><h3>2. 来店</h3><ul>
+        <li>17:00 開店。名を確認し卓へ案内</li>
+        <li>卓カードを「使用中」にし、人数とタグ（宴会・常連など）を付ける</li></ul></div>
+        <div class="sop-block"><h3>3. 会計</h3><ul>
+        <li>卓の消費を入力し「会計して空ける」</li>
+        <li>会計ログで当日合計を確認する</li></ul></div>`
+    },
+    zh: {
+      back: '← 门店数据', title: '本店 SOP', sub: '只写本店接待和预约流程，不是按摩店手册。',
+      html: `<div class="sop-block"><h3>1. 接预约</h3><ul>
+        <li>确认人数、时间、套餐、过敏</li>
+        <li>先看桌位有没有空，再确认</li>
+        <li>确认后写入日历和当日订单</li></ul></div>
+        <div class="sop-block"><h3>2. 到店</h3><ul>
+        <li>17:00 开门。对名字带到桌</li>
+        <li>桌卡改成「使用中」，记下人数和标签</li></ul></div>
+        <div class="sop-block"><h3>3. 结账</h3><ul>
+        <li>录入此桌消费，点「结账并空桌」</li>
+        <li>在结账记录里核对当日合计</li></ul></div>`
+    },
+    en: {
+      back: '← Store data', title: 'Store SOP', sub: 'Front-of-house steps for this restaurant only.',
+      html: `<div class="sop-block"><h3>1. Booking</h3><ul>
+        <li>Confirm party size, time, course, allergies</li>
+        <li>Check the floor for a free table before confirming</li>
+        <li>Write it on the calendar and today’s orders</li></ul></div>
+        <div class="sop-block"><h3>2. Arrival</h3><ul>
+        <li>Doors at 17:00. Seat by name</li>
+        <li>Mark the table seated; add guest count and tags</li></ul></div>
+        <div class="sop-block"><h3>3. Check</h3><ul>
+        <li>Enter spend, then close the table</li>
+        <li>Reconcile the day on the check log</li></ul></div>`
+    }
+  };
+  const t = pages[lang] || pages.ja;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('pageTitle').textContent = t.title;
+  document.getElementById('subtitle').textContent = t.sub;
+  document.getElementById('body').innerHTML = t.html;
+  Tenjiku.bindLangButtons();
+})();
+</script>
+</body>
+</html>

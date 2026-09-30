@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 - 会計ログ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="container">
+  <a class="back-link" href="portal.html" id="backLink">← 店舗データ</a>
+  <header class="header">
+    <div>
+      <div class="store-badge">天竺 広東倶楽部</div>
+      <h1 id="pageTitle">会計ログ</h1>
+      <p id="subtitle">卓を会計するとここに残ります。タグと人数も記録されます。</p>
+    </div>
+    <div class="language-switcher">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+    </div>
+  </header>
+  <div class="stats-grid" style="margin-bottom:1.25rem;">
+    <div class="stat-card"><div class="stat-label" id="kLive">フロア上の消費</div><div class="stat-value" id="vLive">¥0</div></div>
+    <div class="stat-card"><div class="stat-label" id="kClosed">会計済み</div><div class="stat-value" id="vClosed">¥0</div></div>
+    <div class="stat-card"><div class="stat-label" id="kTotal">本日合計</div><div class="stat-value" id="vTotal">¥0</div></div>
+  </div>
+  <section class="data-section" id="list"></section>
+</div>
+<script>
+(function () {
+  if (!Tenjiku.requireAuth()) return;
+  const lang = Tenjiku.getLang();
+  const i18n = {
+    ja: { back: '← 店舗データ', title: '会計ログ', sub: '卓を会計するとここに残ります。', live: 'フロア上の消費', closed: '会計済み', total: '本日合計', empty: '本日の会計はまだありません。フロアで「会計して空ける」を押してください。', table: '卓' },
+    zh: { back: '← 门店数据', title: '结账记录', sub: '在桌位里点「结账并空桌」后会出现在这里。', live: '桌面上未结', closed: '已结账', total: '本日合计', empty: '今天还没有结账。请到桌位点「结账并空桌」。', table: '桌' },
+    en: { back: '← Store data', title: 'Check log', sub: 'Closed tables appear here.', live: 'Open tables', closed: 'Closed', total: 'Today total', empty: 'No closed checks yet.', table: 'T' }
+  };
+  const t = i18n[lang] || i18n.ja;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('pageTitle').textContent = t.title;
+  document.getElementById('subtitle').textContent = t.sub;
+  document.getElementById('kLive').textContent = t.live;
+  document.getElementById('kClosed').textContent = t.closed;
+  document.getElementById('kTotal').textContent = t.total;
+  const live = Tenjiku.loadTables().reduce((s, x) => s + (Number(x.spend) || 0), 0);
+  const logs = Tenjiku.loadLogs();
+  const closed = logs.reduce((s, x) => s + (Number(x.spend) || 0), 0);
+  document.getElementById('vLive').textContent = Tenjiku.yen(live);
+  document.getElementById('vClosed').textContent = Tenjiku.yen(closed);
+  document.getElementById('vTotal').textContent = Tenjiku.yen(live + closed);
+  const el = document.getElementById('list');
+  if (!logs.length) {
+    el.innerHTML = '<div class="empty">' + t.empty + '</div>';
+  } else {
+    el.innerHTML = logs.slice().reverse().map((row) => `
+      <div class="log-card">
+        <div>
+          <b>${lang === 'zh' ? t.table + ' ' + row.name : row.name + ' ' + t.table}</b>
+          <div class="muted">${(row.tags || []).join(' · ')}${row.guests ? ' · ' + row.guests : ''}</div>
+        </div>
+        <div><b>${Tenjiku.yen(row.spend)}</b></div>
+      </div>`).join('');
+  }
+  Tenjiku.bindLangButtons();
+})();
+</script>
+</body>
+</html>

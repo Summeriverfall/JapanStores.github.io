@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 - 店舗カレンダー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="container">
+  <a class="back-link" href="portal.html" id="backLink">← 店舗データ</a>
+  <header class="header">
+    <div>
+      <div class="store-badge">天竺 広東倶楽部</div>
+      <h1 id="pageTitle">店舗カレンダー</h1>
+      <p id="subtitle">本店の予約のみ。他店のカレンダーは表示しません。</p>
+    </div>
+    <div class="language-switcher">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+    </div>
+  </header>
+  <section class="data-section">
+    <h2 class="section-title" id="monthTitle"></h2>
+    <div id="cal"></div>
+  </section>
+</div>
+<script>
+(function () {
+  if (!Tenjiku.requireAuth()) return;
+  const lang = Tenjiku.getLang();
+  const i18n = {
+    ja: { back: '← 店舗データ', title: '店舗カレンダー', sub: '本店の予約のみ。他店のカレンダーは表示しません。', dow: ['日','月','火','水','木','金','土'] },
+    zh: { back: '← 门店数据', title: '店铺日历', sub: '只显示本店预约，不会出现其他店。', dow: ['日','一','二','三','四','五','六'] },
+    en: { back: '← Store data', title: 'Store calendar', sub: 'This restaurant only. No other shops.', dow: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] }
+  };
+  const t = i18n[lang] || i18n.ja;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  document.getElementById('backLink').textContent = t.back;
+  document.getElementById('pageTitle').textContent = t.title;
+  document.getElementById('subtitle').textContent = t.sub;
+  Tenjiku.bindLangButtons();
+
+  const today = Tenjiku.tokyoYmd(0);
+  const [ty, tm] = today.split('-').map(Number);
+  const events = {};
+  function add(ymd, text) {
+    if (!events[ymd]) events[ymd] = [];
+    events[ymd].push(text);
+  }
+  Tenjiku.TODAY_ORDERS.forEach((o) => add(today, o.start + ' ' + o.title));
+  const yest = Tenjiku.tokyoYmd(-1);
+  Tenjiku.YESTERDAY_ORDERS.forEach((o) => add(yest, o.start + ' ' + o.title));
+  add(ty + '-' + String(tm).padStart(2,'0') + '-06', '18:00 2人 点心コース');
+  add(ty + '-' + String(tm).padStart(2,'0') + '-12', '19:00 6人 宴会');
+  add(ty + '-' + String(tm).padStart(2,'0') + '-20', '18:30 4人 会社接待');
+
+  document.getElementById('monthTitle').textContent = ty + (lang === 'en' ? '-' : '年') + tm + (lang === 'en' ? '' : '月');
+
+  const first = new Date(ty, tm - 1, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(ty, tm, 0).getDate();
+  const cells = [];
+  t.dow.forEach((d) => cells.push('<div class="cal-dow">' + d + '</div>'));
+  for (let i = 0; i < startDow; i++) cells.push('<div class="cal-cell out"></div>');
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ymd = ty + '-' + String(tm).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const ev = (events[ymd] || []).map((x) => '<div class="cal-ev">' + x + '</div>').join('');
+    cells.push('<div class="cal-cell' + (ymd === today ? ' today' : '') + '"><div class="cal-num">' + d + '</div>' + ev + '</div>');
+  }
+  document.getElementById('cal').innerHTML = '<div class="cal-grid">' + cells.join('') + '</div>';
+})();
+</script>
+</body>
+</html>

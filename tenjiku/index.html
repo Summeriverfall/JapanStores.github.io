@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="カイプ株式会社 / reserveinjp">
+  <title>天竺 広東倶楽部 — ログイン</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="../brand-banner.js"></script>
+<script src="common.js"></script>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="language-switcher" style="justify-content:flex-end;margin-bottom:1rem;">
+      <button class="lang-btn" type="button" data-lang="ja">日本語</button>
+      <button class="lang-btn" type="button" data-lang="zh">中文</button>
+      <button class="lang-btn" type="button" data-lang="en">English</button>
+    </div>
+    <div class="login-svc">RESERVEINJP</div>
+    <h1 id="loginTitle">店舗管理</h1>
+    <p class="muted" id="loginSub" style="margin:.2rem 0 0;">このリンクはこの店舗専用です</p>
+    <div class="store-lock">
+      <span>🏮</span>
+      <div>
+        <b>天竺 広東倶楽部</b><br>
+        <span class="muted">京都市東山区 祇園町北側</span>
+      </div>
+    </div>
+    <form id="loginForm">
+      <div class="field">
+        <label id="pwdLabel">パスワード</label>
+        <input id="pwd" type="password" autocomplete="current-password">
+        <div class="hint" id="pwdHint">パスワード：tenjiku2026</div>
+      </div>
+      <button class="btn" type="submit" id="loginBtn" style="width:100%;">ログイン</button>
+      <div class="login-err" id="loginErr">パスワードが正しくありません</div>
+    </form>
+    <div class="corp">カイプ株式会社</div>
+  </div>
+</div>
+<script>
+(function () {
+  if (Tenjiku.isAuthed()) {
+    location.replace('portal.html');
+    return;
+  }
+  const i18n = {
+    ja: { title: '店舗管理', sub: 'このリンクはこの店舗専用です。他店は混在しません。', pwd: 'パスワード', hint: 'デモ用パスワード：tenjiku2026', btn: 'ログイン', err: 'パスワードが正しくありません' },
+    zh: { title: '店铺管理', sub: '这个入口只给本店用，不会和别的店混在一起。', pwd: '密码', hint: '演示密码：tenjiku2026', btn: '登录', err: '密码不对' },
+    en: { title: 'Store admin', sub: 'This link is for this restaurant only.', pwd: 'Password', hint: 'Demo password: tenjiku2026', btn: 'Log in', err: 'Incorrect password' }
+  };
+  const lang = Tenjiku.getLang();
+  const t = i18n[lang] || i18n.ja;
+  document.getElementById('loginTitle').textContent = t.title;
+  document.getElementById('loginSub').textContent = t.sub;
+  document.getElementById('pwdLabel').textContent = t.pwd;
+  document.getElementById('pwdHint').textContent = t.hint;
+  document.getElementById('loginBtn').textContent = t.btn;
+  document.getElementById('loginErr').textContent = t.err;
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+  Tenjiku.bindLangButtons();
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const err = document.getElementById('loginErr');
+    if (!Tenjiku.login(document.getElementById('pwd').value)) {
+      err.style.display = 'block';
+      return;
+    }
+    location.replace('portal.html');
+  });
+})();
+</script>
+</body>
+</html>
