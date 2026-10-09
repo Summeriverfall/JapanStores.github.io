@@ -11,7 +11,7 @@
   const KEY_BOOK = STORE_ID + '_bookings_v3';
   const KEY_SHIFT = STORE_ID + '_shift_v1';
   const VER_KEY = STORE_ID + '_data_ver';
-  const DATA_VER = '4';
+  const DATA_VER = '5';
   const MAP = 'https://maps.app.goo.gl/UBGXEeJifYKAGybHA';
   const TAGS = ['宴会', '常連', '初来', '会社', '記念日', 'VIP', 'アレルギー'];
   const PAYS = ['現金', 'カード', '会社請求'];
@@ -40,6 +40,44 @@
   function jpDate(ymd) {
     const [y, m, d] = String(ymd).split('-');
     return y + '年' + Number(m) + '月' + Number(d) + '日';
+  }
+
+  function mdDate(ymd) {
+    const p = String(ymd || '').split('-');
+    if (p.length < 3) return '';
+    return Number(p[1]) + '月' + Number(p[2]) + '日';
+  }
+
+  function createdYmd(b) {
+    const raw = b && b.createdAt ? String(b.createdAt) : '';
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+    if (raw) {
+      const dt = new Date(raw);
+      if (!Number.isNaN(dt.getTime())) return tokyoYmdFromDate(dt);
+    }
+    return '';
+  }
+
+  function tokyoYmdFromDate(d) {
+    const p = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tokyo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(d);
+    const g = (t) => p.find((i) => i.type === t).value;
+    return g('year') + '-' + g('month') + '-' + g('day');
+  }
+
+  function createdLabel(b, lang) {
+    const ymd = createdYmd(b);
+    if (!ymd) return '';
+    const md = lang === 'en'
+      ? Number(ymd.slice(5, 7)) + '/' + Number(ymd.slice(8, 10))
+      : mdDate(ymd);
+    if (lang === 'en') return 'Logged ' + md;
+    if (lang === 'zh') return '计入 ' + md;
+    return '計上 ' + md;
   }
 
   function yen(n) {
@@ -152,49 +190,49 @@
         id: 'b-today-1', date: today, start: '18:00', end: '20:00',
         people: 2, tableId: 't1', name: 'Chen', phone: '+81 90-1111-2222',
         course: '点心コース', amount: 12800, tags: ['常連'], allergy: '',
-        note: '', status: 'seated', payMethod: '',
+        note: '', status: 'seated', payMethod: '', createdAt: tokyoYmd(-18),
       },
       {
         id: 'b-today-2', date: today, start: '19:00', end: '21:30',
         people: 4, tableId: 't3', name: '田中', phone: '',
         course: '宴会コース', amount: 24600, tags: ['宴会', '記念日'], allergy: '',
-        note: '誕生日ケーキ', status: 'seated', payMethod: '',
+        note: '誕生日ケーキ', status: 'seated', payMethod: '', createdAt: tokyoYmd(-40),
       },
       {
         id: 'b-today-3', date: today, start: '19:30', end: '21:00',
         people: 3, tableId: 't5', name: '山田商事', phone: '',
         course: '接待コース', amount: 19600, tags: ['会社'], allergy: 'えび',
-        note: '', status: 'reserved', payMethod: '',
+        note: '', status: 'reserved', payMethod: '', createdAt: tokyoYmd(-12),
       },
       {
         id: 'b-yest-1', date: yest, start: '18:00', end: '20:00',
         people: 2, tableId: 't2', name: 'Imogen', phone: '+81 80-3333-4444',
         course: '点心コース', amount: 9800, tags: ['初来'], allergy: '',
-        note: '', status: 'paid', payMethod: 'カード',
+        note: '', status: 'paid', payMethod: 'カード', createdAt: tokyoYmd(-22),
       },
       {
         id: 'b-yest-2', date: yest, start: '18:30', end: '21:00',
         people: 5, tableId: 't8', name: '京都観光団体', phone: '',
         course: '宴会コース', amount: 32800, tags: ['宴会'], allergy: '',
-        note: '', status: 'paid', payMethod: '会社請求',
+        note: '', status: 'paid', payMethod: '会社請求', createdAt: tokyoYmd(-9),
       },
       {
         id: 'b-yest-3', date: yest, start: '19:00', end: '21:00',
         people: 2, tableId: 't4', name: '佐藤', phone: '',
         course: '記念日コース', amount: 15800, tags: ['記念日'], allergy: '',
-        note: '', status: 'paid', payMethod: '現金',
+        note: '', status: 'paid', payMethod: '現金', createdAt: tokyoYmd(-31),
       },
       {
         id: 'b-ago-1', date: tokyoYmd(-3), start: '18:00', end: '20:30',
         people: 4, tableId: 't6', name: '林', phone: '',
         course: '宴会コース', amount: 28600, tags: ['宴会'], allergy: '',
-        note: '', status: 'paid', payMethod: 'カード',
+        note: '', status: 'paid', payMethod: 'カード', createdAt: tokyoYmd(-28),
       },
       {
         id: 'b-ago-2', date: tokyoYmd(-5), start: '19:00', end: '21:00',
         people: 2, tableId: 't1', name: '高橋', phone: '',
         course: '点心コース', amount: 11200, tags: ['常連'], allergy: '',
-        note: '', status: 'paid', payMethod: '現金',
+        note: '', status: 'paid', payMethod: '現金', createdAt: tokyoYmd(-16),
       },
     ];
   }
@@ -231,6 +269,7 @@
       patch,
       { id }
     );
+    if (!next.createdAt) next.createdAt = tokyoYmd(0);
     if (i >= 0) list[i] = next;
     else list.push(next);
     saveBookings(list);
@@ -334,6 +373,9 @@
     tokyoYmd,
     tokyoWeekday,
     jpDate,
+    mdDate,
+    createdYmd,
+    createdLabel,
     yen,
     uid,
     getLang,

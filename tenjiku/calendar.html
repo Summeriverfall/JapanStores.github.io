@@ -83,7 +83,8 @@
     Tenjiku.loadBookings().forEach(function (b) {
       if (b.status === 'cancelled') return;
       if (!events[b.date]) events[b.date] = [];
-      events[b.date].push(b.start + ' ' + Tenjiku.tableName(b.tableId) + ' ' + b.name + ' ' + b.people);
+      const logged = Tenjiku.createdLabel(b, lang);
+      events[b.date].push(b.start + ' ' + Tenjiku.tableName(b.tableId) + ' ' + b.name + ' ' + b.people + (logged ? ' · ' + logged : ''));
     });
     const first = new Date(ty, tm - 1, 1);
     const startDow = first.getDay();

@@ -140,7 +140,7 @@
       month: '月を選択', update: 'データを更新', now: '現在：', stats: '今月の実績', trend: '過去6ヶ月の推移',
       logout: 'ログアウト', empty: '今夜の予約はありません',
       st: { reserved: '予約', seated: '着席', paid: '会計済' },
-      th: ['開始', '終了', '卓', 'お名前', 'コース', '人数', '金額', '状態', '注意']
+      th: ['開始', '終了', '卓', 'お名前', '計上日', 'コース', '人数', '金額', '状態', '注意']
     },
     zh: {
       title: '今晚台账', sub: '预约、桌位、结账是同一桌。17:00 开门，没有午市。',
@@ -153,7 +153,7 @@
       month: '选择月份', update: '更新数据', now: '当前：', stats: '本月实绩', trend: '过去 6 个月趋势',
       logout: '退出', empty: '今晚没有预约',
       st: { reserved: '预约', seated: '入座', paid: '已结' },
-      th: ['开始', '结束', '桌', '姓名', '套餐', '人数', '金额', '状态', '注意']
+      th: ['开始', '结束', '桌', '姓名', '计入日', '套餐', '人数', '金额', '状态', '注意']
     },
     en: {
       title: "Tonight's board", sub: 'Bookings, floor and checks share one party. Dinner from 17:00. No lunch.',
@@ -166,7 +166,7 @@
       month: 'Select month', update: 'Refresh', now: 'Now: ', stats: 'This month', trend: 'Last 6 months',
       logout: 'Log out', empty: 'No bookings tonight',
       st: { reserved: 'Reserved', seated: 'Seated', paid: 'Paid' },
-      th: ['Start', 'End', 'Table', 'Name', 'Course', 'Guests', 'Amount', 'Status', 'Note']
+      th: ['Start', 'End', 'Table', 'Name', 'Logged', 'Course', 'Guests', 'Amount', 'Status', 'Note']
     }
   };
   const t = i18n[lang] || i18n.ja;
@@ -229,7 +229,7 @@
       '<table class="data-table"><thead><tr>' + t.th.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
       list.map(function (b) {
         const warn = b.allergy ? '<span class="warn">' + E(b.allergy) + '</span>' : E(b.note || '—');
-        return '<tr data-table="' + E(b.tableId) + '"><td>' + E(b.start) + '</td><td>' + E(b.end) + '</td><td>' + E(Tenjiku.tableName(b.tableId)) + '</td><td>' + E(b.name) + '</td><td>' + E(b.course) + '</td><td>' + b.people + '</td><td>' + Tenjiku.yen(b.amount) + '</td><td>' + E(t.st[b.status] || b.status) + '</td><td>' + warn + '</td></tr>';
+        return '<tr data-table="' + E(b.tableId) + '"><td>' + E(b.start) + '</td><td>' + E(b.end) + '</td><td>' + E(Tenjiku.tableName(b.tableId)) + '</td><td>' + E(b.name) + '</td><td>' + E(Tenjiku.createdLabel(b, lang) || '—') + '</td><td>' + E(b.course) + '</td><td>' + b.people + '</td><td>' + Tenjiku.yen(b.amount) + '</td><td>' + E(t.st[b.status] || b.status) + '</td><td>' + warn + '</td></tr>';
       }).join('') + '</tbody></table>';
     document.querySelectorAll('#tonightContent tr[data-table]').forEach(function (row) {
       row.style.cursor = 'pointer';

@@ -201,7 +201,7 @@
     tagSet = ((live && live.tags) || []).slice();
     const st = Tenjiku.tableStatus(id, today);
     document.getElementById('drawerTitle').textContent = tableLabel(tb.name);
-    document.getElementById('drawerSeats').textContent = tb.seats + t.seats + (live && live.start ? ' · ' + live.start : '');
+    document.getElementById('drawerSeats').textContent = tb.seats + t.seats + (live && live.start ? ' · ' + live.start : '') + (live && Tenjiku.createdLabel(live, lang) ? ' · ' + Tenjiku.createdLabel(live, lang) : '');
     document.getElementById('guestName').value = live ? live.name : '';
     document.getElementById('guests').value = live ? live.people : 2;
     document.getElementById('course').value = (live && live.course) || Tenjiku.COURSES[0];

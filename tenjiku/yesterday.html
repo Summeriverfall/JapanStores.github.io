@@ -44,9 +44,9 @@
   if (!Tenjiku.requireAuth()) return;
   const lang = Tenjiku.getLang();
   const i18n = {
-    ja: { back: '← 店舗データ', title: '昨日の売上', count: '組数', guests: '人数', sales: '売上合計', avg: '客単価', turn: '翻台', list: '会計一覧', th: ['#', '開始', '終了', '卓', 'お名前', 'コース', '人数', '金額', '支払'] },
-    zh: { back: '← 门店数据', title: '昨日营业额', count: '组数', guests: '人数', sales: '营业额合计', avg: '客单价', turn: '翻台', list: '结账一览', th: ['#', '开始', '结束', '桌', '姓名', '套餐', '人数', '金额', '支付'] },
-    en: { back: '← Store data', title: 'Yesterday', count: 'Parties', guests: 'Guests', sales: 'Sales', avg: 'Avg / guest', turn: 'Turns', list: 'Checks', th: ['#', 'Start', 'End', 'Table', 'Name', 'Course', 'Guests', 'Amount', 'Pay'] }
+    ja: { back: '← 店舗データ', title: '昨日の売上', count: '組数', guests: '人数', sales: '売上合計', avg: '客単価', turn: '翻台', list: '会計一覧', th: ['#', '開始', '終了', '卓', 'お名前', '計上日', 'コース', '人数', '金額', '支払'] },
+    zh: { back: '← 门店数据', title: '昨日营业额', count: '组数', guests: '人数', sales: '营业额合计', avg: '客单价', turn: '翻台', list: '结账一览', th: ['#', '开始', '结束', '桌', '姓名', '计入日', '套餐', '人数', '金额', '支付'] },
+    en: { back: '← Store data', title: 'Yesterday', count: 'Parties', guests: 'Guests', sales: 'Sales', avg: 'Avg / guest', turn: 'Turns', list: 'Checks', th: ['#', 'Start', 'End', 'Table', 'Name', 'Logged', 'Course', 'Guests', 'Amount', 'Pay'] }
   };
   const t = i18n[lang] || i18n.ja;
   const E = Tenjiku.escapeHtml;
@@ -71,7 +71,7 @@
   document.getElementById('tableWrap').innerHTML =
     '<table class="data-table"><thead><tr>' + t.th.map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
     rows.map(function (r, i) {
-      return '<tr><td>' + (i + 1) + '</td><td>' + E(r.start) + '</td><td>' + E(r.end) + '</td><td>' + E(Tenjiku.tableName(r.tableId)) + '</td><td>' + E(r.name) + '</td><td>' + E(r.course) + '</td><td>' + r.people + '</td><td>' + Tenjiku.yen(r.amount) + '</td><td>' + E(r.payMethod || '—') + '</td></tr>';
+      return '<tr><td>' + (i + 1) + '</td><td>' + E(r.start) + '</td><td>' + E(r.end) + '</td><td>' + E(Tenjiku.tableName(r.tableId)) + '</td><td>' + E(r.name) + '</td><td>' + E(Tenjiku.createdLabel(r, lang) || '—') + '</td><td>' + E(r.course) + '</td><td>' + r.people + '</td><td>' + Tenjiku.yen(r.amount) + '</td><td>' + E(r.payMethod || '—') + '</td></tr>';
     }).join('') + '</tbody></table>';
   Tenjiku.bindLangButtons();
 })();
